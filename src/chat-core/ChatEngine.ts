@@ -18,7 +18,9 @@ export class ChatEngine {
   send(msg: BaseMessage) {
     // Kullanıcı mesajını hemen ekle
     const Component = useMessageTypeRegistry.resolve(msg.type);
-    useMessageStore.getState().addMessage({ ...msg, component: Component });
+    if (!this.adapter.dontAddToHistory) {
+      useMessageStore.getState().addMessage({ ...msg, component: Component });
+    }
     this.adapter.sendMessage(msg);
   }
 }

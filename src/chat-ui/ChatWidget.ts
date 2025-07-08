@@ -3,16 +3,19 @@ import { customElement, property } from "lit/decorators.js";
 import useMessageStore from "../chat-core/messageStore";
 import useThemeStore from "../chat-core/themeStore";
 import { ChatEngine } from "../chat-core/ChatEngine";
-import { DummyAdapter } from "../adapters/DummyAdapter";
 import { useAdapterRegistry } from "../chat-core/adapter";
 import { useMessageTypeRegistry } from "../chat-core/messageRegistry";
 import { DefaultTextMessage } from "./DefaultTextMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
+import { DirectLineAdapter } from "../adapters/DirectLineAdapter";
+//import { DummyAdapter } from "../adapters/DummyAdapter";
 
-const dummy = new DummyAdapter();
-useAdapterRegistry.register("default", dummy);
+const directLine = new DirectLineAdapter();
+//const dummy = new DummyAdapter();
+//useAdapterRegistry.register("default", dummy);
+useAdapterRegistry.register("default", directLine);
 useMessageTypeRegistry.register("text", DefaultTextMessage);
 
 @customElement("chat-iva")
