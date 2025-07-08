@@ -1,36 +1,40 @@
-# 📄 Product Requirements Document (PRD) – `Chativa`
+# 📄 Product Requirements Document (PRD) – **Chativa**
 
 ---
 
 ## 🎯 Objective
 
-Build a **modular**, **themed**, and **adapter-compatible** Web Component chat interface using LitElement, with full integration of **Shoelace UI components** and a **zustand-like global state layer**.
+Develop **Chativa**, a **modular**, **themeable**, **adapter-extensible** web component chat widget based on LitElement. It should integrate **Shoelace UI** components and manage global state with a minimal Zustand-like store. Users can **register custom message types and adapters externally**, enabling flexible extension without modifying core code.
 
 ---
 
-## 📁 Project Structure
+## 🔧 Architecture Overview
+
+### Project Structure
 
 ```
-lit-chat/
-├── chat-core/             → state, registry, engine
-├── chat-ui/               → LitElement components (ChatWidget, Message types)
-├── adapters/              → DirectLine, WebSocket, REST, etc.
-├── themes/                → Built-in + custom theme support
-├── styles/                → Shoelace styling integration
+src/
+├── chat-core/             # Global state, message registry, chat engine
+├── chat-ui/               # LitElement components (ChatWidget, message types)
+├── adapters/              # Built-in adapters (DirectLine, WebSocket, REST, etc.)
+├── themes/                # Default and custom themes
+├── styles/                # Shoelace styling integration
 ```
 
 ---
 
-## 🧠 Global State – Zustand-style Store
+## 🧠 Global State Management (`chat-core/messageStore.ts`)
 
-### `chat-core/messageStore.ts`
+- Uses a Zustand-inspired minimal store.
+- Stores messages with a unique ID set to **prevent duplicate renders**.
+- Supports subscriptions for UI updates.
 
 ```ts
 type ChatMessage = {
   id: string;
   type: string;
   data: any;
-  component?: any;
+  component?: typeof HTMLElement;
 };
 
 let state = {
@@ -63,9 +67,10 @@ export const useMessageStore = {
 
 ---
 
-## 📦 Message Type Registry
+## 📦 Message Type Registry (`chat-core/messageRegistry.ts`)
 
-### `chat-core/messageRegistry.ts`
+- Registry stores message type keys and their corresponding LitElement components.
+- Supports external registration of message components.
 
 ```ts
 const registry = new Map<string, typeof HTMLElement>();
@@ -82,29 +87,14 @@ export const useMessageTypeRegistry = {
 
 ---
 
-## 🎨 Theme Support
+## 🖌️ Theme Support (`chat-core/themeStore.ts`)
 
-### `themes/defaultThemes.ts`
-
-```ts
-export const defaultThemes = {
-  light: {
-    "--chat-bg": "#fff",
-    "--chat-color": "#1f2937",
-    "--chat-bot-bg": "#f3f4f6",
-  },
-  dark: {
-    "--chat-bg": "#1f2937",
-    "--chat-color": "#f9fafb",
-    "--chat-bot-bg": "#111827",
-  },
-};
-```
-
-### `chat-core/themeStore.ts`
+- Holds current theme variables.
+- Supports subscriptions for dynamic theme updates.
 
 ```ts
-let currentTheme = {};
+let currentTheme: Record<string, string> = {};
+
 const listeners = new Set<() => void>();
 
 export const useThemeStore = {
@@ -122,9 +112,11 @@ export const useThemeStore = {
 
 ---
 
-## 🧩 Chat Engine
+## 🧩 Chat Engine (`chat-core/ChatEngine.ts`)
 
-### `chat-core/ChatEngine.ts`
+- Bridges between the adapter and UI state.
+- Listens for incoming messages and adds them to the global message store.
+- Sends outgoing messages via the adapter.
 
 ```ts
 import { useMessageStore } from "./messageStore";
@@ -135,8 +127,8 @@ export class ChatEngine {
 
   init() {
     this.adapter.onMessage((msg) => {
-      const Comp = useMessageTypeRegistry.resolve(msg.type);
-      useMessageStore.addMessage({ ...msg, component: Comp });
+      const Component = useMessageTypeRegistry.resolve(msg.type);
+      useMessageStore.addMessage({ ...msg, component: Component });
     });
   }
 
@@ -148,39 +140,83 @@ export class ChatEngine {
 
 ---
 
-## 🧱 ChatWidget Component
+## 🔌 Adapter Interface & Registration (`chat-core/adapter.ts`)
 
-### `chat-ui/ChatWidget.ts`
+- Defines adapter contract for sending/receiving messages.
+- Supports **external adapter registration** so users can add their own adapters dynamically.
+
+```ts
+export interface ChatAdapter {
+  sendMessage(message: BaseMessage): void;
+  onMessage(callback: (msg: BaseMessage) => void): void;
+}
+
+const adapterRegistry = new Map<string, ChatAdapter>();
+
+export const useAdapterRegistry = {
+  register(name: string, adapter: ChatAdapter) {
+    adapterRegistry.set(name, adapter);
+  },
+  get(name: string) {
+    return adapterRegistry.get(name);
+  },
+};
+```
+
+---
+
+## 🧱 ChatWidget Component (`chat-ui/ChatWidget.ts`)
+
+- Uses LitElement, subscribes to message and theme stores.
+- Renders messages using their registered components.
+- Accepts adapter selection and exposes APIs for external adapter and message registrations.
 
 ```ts
 @customElement("chat-iva")
 export class ChatWidget extends LitElement {
-  private unsubscribe!: () => void;
-  private engine = new ChatEngine(new WebSocketAdapter());
+  private unsubscribeMessages!: () => void;
+  private unsubscribeTheme!: () => void;
+  private engine!: ChatEngine;
+
+  @property({ type: String }) adapterName = "default";
 
   connectedCallback() {
     super.connectedCallback();
-    this.unsubscribe = useMessageStore.subscribe(() => this.requestUpdate());
+
+    // Get adapter instance from registry (can be custom-registered externally)
+    const adapter = useAdapterRegistry.get(this.adapterName);
+    if (!adapter) throw new Error(`Adapter ${this.adapterName} not found`);
+
+    this.engine = new ChatEngine(adapter);
     this.engine.init();
+
+    this.unsubscribeMessages = useMessageStore.subscribe(() =>
+      this.requestUpdate()
+    );
+    this.unsubscribeTheme = useThemeStore.subscribe(() => this.requestUpdate());
   }
 
   disconnectedCallback() {
-    this.unsubscribe?.();
+    this.unsubscribeMessages?.();
+    this.unsubscribeTheme?.();
     super.disconnectedCallback();
   }
 
   render() {
     const messages = useMessageStore.getMessages();
+    const theme = useThemeStore.getTheme();
 
     return html`
       <div
         part="container"
-        style="background: var(--chat-bg); color: var(--chat-color)"
+        style=${Object.entries(theme)
+          .map(([k, v]) => `${k}: ${v};`)
+          .join(" ")}
       >
-        ${messages.map((msg) => {
-          const Comp = msg.component;
-          return html`<${Comp} .messageData=${msg.data}></${Comp}>`;
-        })}
+        ${messages.map(
+          (msg) =>
+            html`<${msg.component} .messageData=${msg.data}></${msg.component}>`
+        )}
       </div>
     `;
   }
@@ -189,83 +225,46 @@ export class ChatWidget extends LitElement {
 
 ---
 
-## 🧾 Message Component Example: `ProductCard`
-
-### `chat-ui/messages/ProductCardMessage.ts`
+## 🛠️ Example: Registering Custom Message & Adapter Externally
 
 ```ts
-export class ProductCardMessage extends BaseMessage {
-  render() {
-    const { image, name, price } = this.messageData;
+import { useMessageTypeRegistry } from "./chat-core/messageRegistry";
+import { useAdapterRegistry } from "./chat-core/adapter";
 
-    return html`
-      <sl-card class="product-card">
-        <img slot="image" src="${image}" alt="${name}" />
-        <strong>${name}</strong>
-        <p>Price: $${price}</p>
-        <sl-button variant="primary" @click=${this.addToCart}
-          >Add to Cart</sl-button
-        >
-      </sl-card>
-    `;
-  }
-
-  private addToCart() {
-    // handle click
-  }
+class CustomMessage extends BaseMessage {
+  /* ... */
 }
-```
+class CustomAdapter implements ChatAdapter {
+  /* ... */
+}
 
-Register it:
+// Register message type
+useMessageTypeRegistry.register("custom-message", CustomMessage);
 
-```ts
-useMessageTypeRegistry.register("product-card", ProductCardMessage);
+// Register adapter
+const myAdapter = new CustomAdapter();
+useAdapterRegistry.register("my-adapter", myAdapter);
+
+// Then use in HTML
+// <chat-iva adapter-name="my-adapter"></chat-iva>
 ```
 
 ---
 
-## 🔌 Adapter Interface
+## 🎨 Shoelace Integration
 
-### `chat-core/adapter.ts`
-
-```ts
-export interface ChatAdapter {
-  sendMessage(message: any): void;
-  onMessage(callback: (msg: any) => void): void;
-}
-```
-
----
-
-## 💡 Shoelace Integration Notes
-
-- Use Shoelace components (`<sl-card>`, `<sl-button>`, `<sl-input>`) across all message types and layouts.
-- Shoelace CSS variables and theming system can be applied alongside chat's theme via CSS custom properties.
-- You can inject Shoelace themes by extending `useThemeStore.setTheme()`.
+- All UI parts use Shoelace components like `<sl-card>`, `<sl-button>`, etc.
+- Chat theme and Shoelace themes combined through CSS custom properties.
 
 ---
 
 ## ✅ Summary
 
-| Feature                  | Description                                        |
-| ------------------------ | -------------------------------------------------- |
-| 🔌 Adapter Architecture  | Pluggable connectors (WebSocket, DirectLine, etc.) |
-| 💬 Message Extensibility | Register any message type with a Lit component     |
-| 🧠 Global State          | Zustand-like, minimal, no external deps            |
-| 🎨 Shoelace Styling      | All UI uses Shoelace components                    |
-| ⚡ Optimized Rendering   | Prevents duplicate renders using `renderedIds`     |
-| 📦 Component-Based UI    | Uses `BaseMessage` & Lit’s reactive lifecycle      |
-
----
-
-## 🚀 Example Usage
-
-```html
-<chat-iva theme="dark"></chat-iva>
-
-<script type="module">
-  import "./chat-ui/ChatWidget.js";
-  import { ProductCardMessage } from "./chat-ui/messages/ProductCardMessage.js";
-  useMessageTypeRegistry.register("product-card", ProductCardMessage);
-</script>
-```
+| Feature                   | Description                                              |
+| ------------------------- | -------------------------------------------------------- |
+| Modular Architecture      | External registration of adapters & messages             |
+| LitElement + Shoelace UI  | Modern, accessible components                            |
+| Zustand-like Global Store | Efficient message state with duplicate render prevention |
+| Flexible Theming          | Dynamic theme switching with CSS variables               |
+| Adapter System            | Plug & play backend connectors                           |
+| Optimized Rendering       | Only new messages cause re-render                        |
