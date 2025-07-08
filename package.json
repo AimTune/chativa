@@ -1,0 +1,51 @@
+{
+  "name": "chativa",
+  "version": "0.0.1",
+  "description": "A flexible, lightweight web component chat widget built with LitElement. Easily customizable with theme support, extensible message types, and seamless adapter integrations for modern web apps.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "keywords": [
+    "web-component",
+    "lit-element",
+    "chat-widget",
+    "chat-component",
+    "customizable-chat",
+    "chat-ui",
+    "webchat",
+    "chat-library",
+    "messaging",
+    "chat",
+    "real-time-chat",
+    "adapter",
+    "extensible-chat",
+    "frontend-chat",
+    "chat-widget-lit",
+    "progressive-web-app",
+    "component-library",
+    "ui-component",
+    "modular-chat",
+    "interactive-chat"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "lit": "^3.3.0",
+    "@shoelace-style/shoelace": "^2.20.1"
+  },
+  "devDependencies": {
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3"
+  }
+}
