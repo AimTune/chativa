@@ -37,3 +37,5 @@ class ChatInput extends LitElement {
     `;
   }
 }
+
+export default ChatInput;

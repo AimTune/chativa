@@ -7,3 +7,5 @@ class ChatHeader extends LitElement {
     return html`<div class="chat-header">Chativa</div>`;
   }
 }
+
+export default ChatHeader;

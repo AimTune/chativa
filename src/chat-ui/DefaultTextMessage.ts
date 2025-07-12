@@ -14,3 +14,5 @@ export class DefaultTextMessage extends LitElement {
     </div>`;
   }
 }
+
+export default DefaultTextMessage;

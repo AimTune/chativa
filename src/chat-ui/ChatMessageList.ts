@@ -40,3 +40,5 @@ class ChatMessageList extends LitElement {
     `;
   }
 }
+
+export default ChatMessageList;
