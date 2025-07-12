@@ -38,8 +38,6 @@ class ChatBotButton extends LitElement {
 
         // Defaults
         const position = theme.position || 'bottom-right';
-        const marginX = theme.marginX || '20px';
-        const marginY = theme.marginY || '20px';
         const styles: Partial<CSSStyleDeclaration> = {
             position: 'fixed',
             cursor: 'pointer',
@@ -47,9 +45,9 @@ class ChatBotButton extends LitElement {
 
         position.split('-').forEach((pos) => {
             if (['right', 'left'].includes(pos)) {
-                styles[pos as 'right' | 'left'] = marginX;
+                styles[pos as 'right' | 'left'] = theme.positionMargin ? `${theme.positionMargin}em` : "1em";
             } else if (['top', 'bottom'].includes(pos)) {
-                styles[pos as 'top' | 'bottom'] = marginY;
+                styles[pos as 'top' | 'bottom'] = theme.positionMargin ? `${theme.positionMargin}em` : "1em";
             }
         });
 

@@ -7,8 +7,7 @@ export interface IThemeSettings {
     textColor: string;
     borderColor: string;
     position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
-    marginX?: string; // e.g. '20px'
-    marginY?: string; // e.g. '20px'
+    positionMargin?: "1" | "2" | "3" | "4" | "5";
     size?: "small" | "medium" | "large";
 }
 
