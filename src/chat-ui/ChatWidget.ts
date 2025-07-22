@@ -9,7 +9,6 @@ import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
 import { DirectLineAdapter } from "../adapters/DirectLineAdapter";
-import 'primeflex/primeflex.css';
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 //import { DummyAdapter } from "../adapters/DummyAdapter";
@@ -19,6 +18,7 @@ const directLine = new DirectLineAdapter();
 //useAdapterRegistry.register("default", dummy);
 useAdapterRegistry.register("default", directLine);
 useMessageTypeRegistry.register("text", DefaultTextMessage);
+
 
 @customElement("chat-iva")
 export class ChatWidget extends ChatbotMixin(LitElement) {
@@ -58,15 +58,17 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   render() {
     return this.themeState.isOpened ? html`
       <div
-        part="container"
-        style=${Object.entries(this.theme)
-        .map(([k, v]) => `${k}: ${v};`)
-        .join(" ")}
+        .style="
+          bottom: 0; ${["bottom-right", "top-right"].includes(this.theme.position!) ? 'right' : 'left'}: 70px;
+          background-color: ${this.theme.secondaryColor || "#000"};
+        "
+        class="absolute bottom-1 w-${this.theme.layout?.width || '18rem'} h-${this.theme.layout?.height || '25rem'}"
       >
         <chat-header></chat-header>
         <chat-message-list></chat-message-list>
         <chat-input
           @send-message=${this.handleSendMessage.bind(this)}
+          class="absolute bottom-0 w-full p-1"
         ></chat-input>
       </div>
     ` : nothing;

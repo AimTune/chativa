@@ -2,6 +2,7 @@ import { LitElement } from "lit";
 import useChatBotStore, { type IThemeSettings } from "../chat-core/chatbotStore";
 import { state } from "lit/decorators.js";
 import i18next from "../i18n/i18n";
+import commonStyles from "../styles/commonStyles?inline" with { type: "css" };
 
 type Constructor<T = {}> = new (...args: any[]) => T;
 
@@ -22,6 +23,8 @@ export const ChatbotMixin = <T extends Constructor<LitElement>>(
     get lang() {
       return this._lang;
     }
+
+    static styles = [commonStyles];
 
     private unsubscribeChatBot!: () => void;
 

@@ -1,4 +1,5 @@
 import { createStore } from "zustand/vanilla";
+import type { remSizes } from "../styles/calculatedTypes";
 
 export interface IThemeSettings {
     primaryColor: string;
@@ -9,6 +10,13 @@ export interface IThemeSettings {
     position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
     positionMargin?: "1" | "2" | "3" | "4" | "5";
     size?: "small" | "medium" | "large";
+
+    layout?: {
+        width?: remSizes | string;
+        height?: remSizes | string;
+        maxWidth?: string | number;
+        maxHeight?: string | number;
+    }
 }
 
 export interface IChatBotStore {
@@ -28,7 +36,7 @@ export interface IChatBotStore {
 
 const store = createStore<IChatBotStore>((setState) => ({
     // Chat widget state management
-    isOpened: false,
+    isOpened: true,
     isRendered: false,
     toggle: () => setState((state) => ({ isOpened: !state.isOpened })),
     close: () => setState(() => ({ isOpened: false })),
@@ -45,6 +53,12 @@ const store = createStore<IChatBotStore>((setState) => ({
         marginX: "20px",
         marginY: "20px",
         size: "medium",
+        layout: {
+            width: "18rem",
+            height: "20rem",
+            maxWidth: "100%",
+            maxHeight: "100%",
+        }
     },
     setTheme: (theme: IThemeSettings) => setState({ theme }),
     getTheme: (): IThemeSettings => store.getState().theme,
