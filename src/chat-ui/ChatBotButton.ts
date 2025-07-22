@@ -4,25 +4,15 @@ import '@shoelace-style/shoelace/dist/components/icon/icon.js';
 import '@shoelace-style/shoelace/dist/components/button/button.js';
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import useChatBotStore from "../chat-core/chatbotStore";
 import { setBasePath } from '@shoelace-style/shoelace/dist/utilities/base-path.js';
 setBasePath('node_modules/@shoelace-style/shoelace/dist');
 
 import '@shoelace-style/shoelace/dist/themes/light.css';
+import { ChatbotMixin } from '../mixins/ChatbotMixin';
+import i18next from '../i18n/i18n';
 
 @customElement("chat-bot-button")
-class ChatBotButton extends LitElement {
-    private unsubscribeChatBot!: () => void;
-
-    connectedCallback() {
-        super.connectedCallback();
-        this.unsubscribeChatBot = useChatBotStore.subscribe(() => this.requestUpdate());
-    }
-
-    disconnectedCallback() {
-        this.unsubscribeChatBot?.();
-        super.disconnectedCallback();
-    }
+class ChatBotButton extends ChatbotMixin(LitElement) {
 
     static styles = css`
         .chat-bot-button {
@@ -34,10 +24,9 @@ class ChatBotButton extends LitElement {
 
 
     #getButtonStyle() {
-        const theme = useChatBotStore.getState().getTheme();
 
         // Defaults
-        const position = theme.position || 'bottom-right';
+        const position = this.theme.position || 'bottom-right';
         const styles: Partial<CSSStyleDeclaration> = {
             position: 'fixed',
             cursor: 'pointer',
@@ -45,9 +34,9 @@ class ChatBotButton extends LitElement {
 
         position.split('-').forEach((pos) => {
             if (['right', 'left'].includes(pos)) {
-                styles[pos as 'right' | 'left'] = theme.positionMargin ? `${theme.positionMargin}em` : "1em";
+                styles[pos as 'right' | 'left'] = this.theme.positionMargin ? `${this.theme.positionMargin}em` : "1em";
             } else if (['top', 'bottom'].includes(pos)) {
-                styles[pos as 'top' | 'bottom'] = theme.positionMargin ? `${theme.positionMargin}em` : "1em";
+                styles[pos as 'top' | 'bottom'] = this.theme.positionMargin ? `${this.theme.positionMargin}em` : "1em";
             }
         });
 
@@ -57,22 +46,21 @@ class ChatBotButton extends LitElement {
     }
 
     #changeLocation() {
-        const theme = useChatBotStore.getState().getTheme();
-        const position = theme.position || 'bottom-right';
+        const position = this.theme.position || 'bottom-right';
+        i18next.changeLanguage(this.lang === 'en' ? 'tr' : 'en');
 
-        useChatBotStore.getState().setTheme({
-            ...theme,
+        this.themeState.setTheme({
+            ...this.theme,
             position: position === 'bottom-right' ? 'bottom-left' : 'bottom-right',
         });
 
     }
 
     render() {
-        const theme = useChatBotStore.getState().getTheme();
-        const size = theme.size || 'large';
+        const size = this.theme.size || 'large';
 
         return html`
-        <button @click=${this.#changeLocation}>${theme.position}</button>
+        <button @click=${this.#changeLocation}>${this.theme.position}</button>
         <sl-button
           variant="primary"
           size="${size}"
@@ -86,7 +74,7 @@ class ChatBotButton extends LitElement {
     }
 
     #openChatWidget() {
-        useChatBotStore.getState().toggle();
+        this.themeState.toggle();
     }
 }
 

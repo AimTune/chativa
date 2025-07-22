@@ -1,7 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import useMessageStore from "../chat-core/messageStore";
-import useChatBotStore from "../chat-core/chatbotStore";
 import { ChatEngine } from "../chat-core/ChatEngine";
 import { useAdapterRegistry } from "../chat-core/adapter";
 import { useMessageTypeRegistry } from "../chat-core/messageRegistry";
@@ -11,6 +10,7 @@ import "./ChatMessageList";
 import "./ChatHeader";
 import { DirectLineAdapter } from "../adapters/DirectLineAdapter";
 import 'primeflex/primeflex.css';
+import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 //import { DummyAdapter } from "../adapters/DummyAdapter";
 
@@ -21,9 +21,8 @@ useAdapterRegistry.register("default", directLine);
 useMessageTypeRegistry.register("text", DefaultTextMessage);
 
 @customElement("chat-iva")
-export class ChatWidget extends LitElement {
+export class ChatWidget extends ChatbotMixin(LitElement) {
   private unsubscribeMessages!: () => void;
-  private unsubscribeChatBot!: () => void;
   private engine!: ChatEngine;
 
   @property({ type: String }) adapterName = "default";
@@ -37,12 +36,10 @@ export class ChatWidget extends LitElement {
     this.unsubscribeMessages = useMessageStore.subscribe(() =>
       this.requestUpdate()
     );
-    this.unsubscribeChatBot = useChatBotStore.subscribe(() => this.requestUpdate());
   }
 
   disconnectedCallback() {
     this.unsubscribeMessages?.();
-    this.unsubscribeChatBot?.();
     super.disconnectedCallback();
   }
 
@@ -59,12 +56,10 @@ export class ChatWidget extends LitElement {
   }
 
   render() {
-    const chatBotState = useChatBotStore.getState();
-    const theme = chatBotState.getTheme();
-    return chatBotState.isOpened ? html`
+    return this.themeState.isOpened ? html`
       <div
         part="container"
-        style=${Object.entries(theme)
+        style=${Object.entries(this.theme)
         .map(([k, v]) => `${k}: ${v};`)
         .join(" ")}
       >
