@@ -38,7 +38,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@shoelace-style/shoelace": "^2.20.1",
@@ -51,7 +55,11 @@
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.12",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/ui": "^4.0.18",
+    "jsdom": "^28.1.0",
     "typescript": "~5.8.3",
-    "vite": "^7.0.3"
+    "vite": "^7.0.3",
+    "vitest": "^4.0.18"
   }
 }

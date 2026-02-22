@@ -2,11 +2,12 @@ import { LitElement, css, html } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import litLogo from "./assets/lit.svg";
 import viteLogo from "/vite.svg";
-import { DummyAdapter } from "./adapters/DummyAdapter";
-import { useAdapterRegistry } from "./chat-core/adapter";
+import { DummyConnector } from "./infrastructure/connectors/DummyConnector";
+import { ConnectorRegistry } from "./application/registries/ConnectorRegistry";
 
-const dummy = new DummyAdapter();
-useAdapterRegistry.register("default", dummy);
+if (!ConnectorRegistry.has("dummy")) {
+  ConnectorRegistry.register(new DummyConnector());
+}
 
 /**
  * An example element.

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/aimtune/Projects/chativa log --oneline -20)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

@@ -1,68 +1,96 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import useMessageStore from "../chat-core/messageStore";
-import { ChatEngine } from "../chat-core/ChatEngine";
-import { useAdapterRegistry } from "../chat-core/adapter";
-import { useMessageTypeRegistry } from "../chat-core/messageRegistry";
-import { DefaultTextMessage } from "./DefaultTextMessage";
+import { ChatEngine } from "../application/ChatEngine";
+import { ConnectorRegistry } from "../application/registries/ConnectorRegistry";
+import { MessageTypeRegistry } from "../application/registries/MessageTypeRegistry";
+import messageStore from "../application/stores/MessageStore";
+import { createOutgoingMessage } from "../domain/entities/Message";
+import { DummyConnector } from "../infrastructure/connectors/DummyConnector";
+import { ChatbotMixin } from "../mixins/ChatbotMixin";
+
+// Register the fallback message component
+import "./DefaultTextMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
-import { DirectLineAdapter } from "../adapters/DirectLineAdapter";
-import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
-//import { DummyAdapter } from "../adapters/DummyAdapter";
-
-const directLine = new DirectLineAdapter();
-//const dummy = new DummyAdapter();
-//useAdapterRegistry.register("default", dummy);
-useAdapterRegistry.register("default", directLine);
-useMessageTypeRegistry.register("text", DefaultTextMessage);
-
+// Register the default connector once
+if (!ConnectorRegistry.has("dummy")) {
+  ConnectorRegistry.register(new DummyConnector());
+}
+// Set DefaultTextMessage as fallback for unknown message types
+MessageTypeRegistry.setFallback(
+  customElements.get("default-text-message") as unknown as typeof HTMLElement
+);
 
 @customElement("chat-iva")
 export class ChatWidget extends ChatbotMixin(LitElement) {
-  private unsubscribeMessages!: () => void;
-  private engine!: ChatEngine;
+  private _unsubscribeMessages!: () => void;
+  private _engine!: ChatEngine;
 
-  @property({ type: String }) adapterName = "default";
+  /** Name of the registered connector to use. Defaults to "dummy". */
+  @property({ type: String }) connector = "dummy";
 
   connectedCallback() {
     super.connectedCallback();
-    const adapter = useAdapterRegistry.get(this.adapterName);
-    if (!adapter) throw new Error(`Adapter ${this.adapterName} not found`);
-    this.engine = new ChatEngine(adapter);
-    this.engine.init();
-    this.unsubscribeMessages = useMessageStore.subscribe(() =>
+
+    const adapter = ConnectorRegistry.get(this.connector);
+    this._engine = new ChatEngine(adapter);
+    this._engine.init().catch((err: unknown) => {
+      console.error("[ChatWidget] Engine init failed:", err);
+    });
+
+    this._unsubscribeMessages = messageStore.subscribe(() =>
       this.requestUpdate()
     );
   }
 
   disconnectedCallback() {
-    this.unsubscribeMessages?.();
+    this._unsubscribeMessages?.();
+    this._engine?.destroy().catch(() => {});
     super.disconnectedCallback();
   }
 
-  private handleSendMessage(e: CustomEvent) {
-    const text = e.detail;
-    console.log("handleSendMessage çağrıldı:", text);
-    if (text && text.trim()) {
-      this.engine.send({
-        id: Date.now().toString(),
-        type: "text",
-        data: { text },
-      });
-    }
+  private handleSendMessage(e: CustomEvent<string>) {
+    const text = e.detail?.trim();
+    if (!text) return;
+    this._engine
+      .send(createOutgoingMessage(text))
+      .catch((err: unknown) => console.error("[ChatWidget] Send failed:", err));
+  }
+
+  private get _isAlignedRight() {
+    const p = this.theme.position;
+    return p === "bottom-right" || p === "top-right";
+  }
+
+  private get _isAlignedBottom() {
+    const p = this.theme.position;
+    return p === "bottom-right" || p === "bottom-left";
+  }
+
+  private get _containerClasses() {
+    const { layout } = this.theme;
+    const vSpace = layout?.verticalSpace ?? "2";
+    const hSpace = layout?.horizontalSpace ?? "2";
+    return (
+      "absolute " +
+      `${this._isAlignedBottom ? `b-${vSpace}` : `t-${vSpace}`} ` +
+      `${this._isAlignedRight ? `r-${hSpace}` : `l-${hSpace}`} ` +
+      `w-${layout?.width ?? "18rem"} h-${layout?.height ?? "25rem"}`
+    );
   }
 
   render() {
-    return this.themeState.isOpened ? html`
+    if (!this.themeState.isOpened) return nothing;
+
+    const bgColor = this.theme.colors.secondary ?? "#000";
+    const side = this._isAlignedRight ? "right" : "left";
+
+    return html`
       <div
-        .style="
-          bottom: 0; ${["bottom-right", "top-right"].includes(this.theme.position!) ? 'right' : 'left'}: 70px;
-          background-color: ${this.theme.secondaryColor || "#000"};
-        "
-        class="absolute bottom-1 w-${this.theme.layout?.width || '18rem'} h-${this.theme.layout?.height || '25rem'}"
+        .style="${side}: 70px; background-color: ${bgColor};"
+        class="${this._containerClasses}"
       >
         <chat-header></chat-header>
         <chat-message-list></chat-message-list>
@@ -71,7 +99,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
           class="absolute bottom-0 w-full p-1"
         ></chat-input>
       </div>
-    ` : nothing;
+    `;
   }
 }
 

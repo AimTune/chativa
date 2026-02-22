@@ -1,0 +1,27 @@
+:root {
+    --primary-color: #4f46e5;
+    --secondary-color: #000000;
+    --background-color: #ffffff;
+    --font-color: #000000;
+
+    --font-size-small: 0.75em;
+    --font-size-medium: 1em;
+    --font-size-large: 1.25em;
+
+}
+
+.b-1 {
+    bottom: calc(var(--font-size-medium));
+}
+
+.b-2 {
+    bottom: calc(var(--font-size-medium) * 2);
+}
+
+.b-3 {
+    bottom: calc(var(--font-size-medium) * 3);
+}
+
+.b-4 {
+    bottom: calc(var(--font-size-medium) * 4);
+}
