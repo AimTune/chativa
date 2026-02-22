@@ -1,13 +1,6 @@
-import "@shoelace-style/shoelace/dist/components/icon/icon.js";
-import "@shoelace-style/shoelace/dist/components/button/button.js";
 import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
-import { setBasePath } from "@shoelace-style/shoelace/dist/utilities/base-path.js";
-setBasePath("node_modules/@shoelace-style/shoelace/dist");
-
-import "@shoelace-style/shoelace/dist/themes/light.css";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
-import i18next from "../i18n/i18n";
 
 @customElement("chat-bot-button")
 class ChatBotButton extends ChatbotMixin(LitElement) {
@@ -15,59 +8,119 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
     :host {
       display: block;
     }
+
+    .launcher {
+      position: fixed;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(
+        135deg,
+        var(--chativa-primary-color, #4f46e5) 0%,
+        var(--chativa-primary-dark, #7c3aed) 100%
+      );
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 20px rgba(79, 70, 229, 0.45),
+        0 2px 8px rgba(0, 0, 0, 0.12);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+        box-shadow 0.2s ease;
+      z-index: 10000;
+      padding: 0;
+    }
+
+    .launcher:hover {
+      transform: scale(1.08);
+      box-shadow: 0 6px 28px rgba(79, 70, 229, 0.55),
+        0 4px 14px rgba(0, 0, 0, 0.18);
+    }
+
+    .launcher:active {
+      transform: scale(0.94);
+    }
+
+    .icon-wrap {
+      position: relative;
+      width: 24px;
+      height: 24px;
+    }
+
+    .icon-wrap svg {
+      position: absolute;
+      inset: 0;
+      width: 24px;
+      height: 24px;
+      transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .icon-chat {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    .icon-close {
+      opacity: 0;
+      transform: scale(0.4) rotate(-90deg);
+    }
+
+    .launcher.is-open .icon-chat {
+      opacity: 0;
+      transform: scale(0.4) rotate(90deg);
+    }
+
+    .launcher.is-open .icon-close {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
   `;
 
-  #getButtonStyle(): string {
-    const position = this.theme.position ?? "bottom-right";
-    const margin = this.theme.positionMargin
-      ? `${this.theme.positionMargin}em`
-      : "1em";
-
-    const styles: Partial<CSSStyleDeclaration> = {
-      position: "fixed",
-      cursor: "pointer",
-    };
-
-    position.split("-").forEach((pos) => {
-      if (pos === "right" || pos === "left") styles[pos] = margin;
-      else if (pos === "top" || pos === "bottom") styles[pos] = margin;
-    });
-
-    return Object.entries(styles)
-      .map(([k, v]) => `${k}: ${v}`)
-      .join("; ");
-  }
-
-  #changeLocation() {
-    const position = this.theme.position ?? "bottom-right";
-    i18next.changeLanguage(this.lang === "en" ? "tr" : "en");
-    // setTheme now accepts DeepPartial — no need to spread the full theme
-    this.themeState.setTheme({
-      position: position === "bottom-right" ? "bottom-left" : "bottom-right",
-    });
-  }
-
-  #openChatWidget() {
-    this.themeState.toggle();
+  #positionStyle(): string {
+    const { position, positionMargin } = this.theme;
+    const m = positionMargin ? `${Number(positionMargin) * 0.5 + 0.5}rem` : "1rem";
+    const [v, h] = (position ?? "bottom-right").split("-");
+    return `${v}: ${m}; ${h}: ${m};`;
   }
 
   render() {
-    const size = this.theme.size ?? "large";
-
+    const isOpen = this.themeState.isOpened;
     return html`
-      <button @click=${this.#changeLocation}>${this.theme.position}</button>
-      <sl-button
-        variant="primary"
-        size="${size}"
-        circle
-        style="${this.#getButtonStyle()}"
-        @click=${this.#openChatWidget}
+      <button
+        class="launcher ${isOpen ? "is-open" : ""}"
+        style="${this.#positionStyle()}"
+        @click=${() => this.themeState.toggle()}
+        aria-label="${isOpen ? "Close chat" : "Open chat"}"
       >
-        <sl-icon
-          src="https://shoelace.style/assets/images/shoe.svg"
-          style="font-size: 1.6em; vertical-align: -6px;"
-        ></sl-icon>
-      </sl-button>
+        <span class="icon-wrap">
+          <!-- Chat bubble icon -->
+          <svg
+            class="icon-chat"
+            viewBox="0 0 24 24"
+            fill="currentColor"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
+            />
+          </svg>
+          <!-- Close icon -->
+          <svg
+            class="icon-close"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </span>
+      </button>
     `;
   }
 }

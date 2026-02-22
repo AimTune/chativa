@@ -3,9 +3,12 @@
  * No external dependencies allowed in this file.
  */
 
+export type MessageSender = "user" | "bot";
+
 export interface IncomingMessage {
   id: string;
   type: string;
+  from?: MessageSender;
   data: Record<string, unknown>;
   timestamp?: number;
 }

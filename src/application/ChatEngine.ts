@@ -17,7 +17,7 @@ export class ChatEngine {
       if (transformed === null) return; // extension blocked it
 
       const Component = MessageTypeRegistry.resolve(transformed.type);
-      messageStore.getState().addMessage({ ...transformed, component: Component });
+      messageStore.getState().addMessage({ ...transformed, from: "bot", component: Component });
     });
 
     await this.connector.connect();
@@ -29,7 +29,7 @@ export class ChatEngine {
 
     if (this.connector.addSentToHistory !== false) {
       const Component = MessageTypeRegistry.resolve(transformed.type);
-      messageStore.getState().addMessage({ ...transformed, component: Component });
+      messageStore.getState().addMessage({ ...transformed, from: "user", component: Component });
     }
 
     await this.connector.sendMessage(transformed);
