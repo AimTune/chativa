@@ -21,6 +21,10 @@ export class ChatEngine {
       messageStore.getState().addMessage({ ...transformed, from: "bot", component: Component });
     });
 
+    this.connector.onDisconnect?.(() => {
+      chatStore.getState().setConnectorStatus("disconnected");
+    });
+
     chatStore.getState().setConnectorStatus("connecting");
     try {
       await this.connector.connect();

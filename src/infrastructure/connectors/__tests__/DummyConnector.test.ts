@@ -56,4 +56,39 @@ describe("DummyConnector", () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(handler).not.toHaveBeenCalled();
   });
+
+  it("/disconnect command triggers onDisconnect callback", async () => {
+    await connector.connect();
+    const disconnectHandler = vi.fn();
+    connector.onDisconnect(disconnectHandler);
+    await connector.sendMessage({
+      id: "3",
+      type: "text",
+      data: { text: "/disconnect" },
+      timestamp: Date.now(),
+    });
+    expect(disconnectHandler).toHaveBeenCalledOnce();
+    expect(disconnectHandler).toHaveBeenCalledWith("user");
+  });
+
+  it("/disconnect command clears message handler", async () => {
+    await connector.connect();
+    const msgHandler = vi.fn();
+    connector.onMessage(msgHandler);
+    await connector.sendMessage({
+      id: "4",
+      type: "text",
+      data: { text: "/disconnect" },
+      timestamp: Date.now(),
+    });
+    // Subsequent messages should not reach the handler
+    await connector.sendMessage({
+      id: "5",
+      type: "text",
+      data: { text: "hello?" },
+      timestamp: Date.now(),
+    });
+    await new Promise((r) => setTimeout(r, 20));
+    expect(msgHandler).not.toHaveBeenCalled();
+  });
 });

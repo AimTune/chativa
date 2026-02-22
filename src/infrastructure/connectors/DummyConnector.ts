@@ -1,16 +1,22 @@
-import type { IConnector, MessageHandler } from "../../domain/ports/IConnector";
+import type {
+  IConnector,
+  MessageHandler,
+  DisconnectHandler,
+} from "../../domain/ports/IConnector";
 import type { OutgoingMessage } from "../../domain/entities/Message";
 
 /**
  * DummyConnector — local mock connector for development and testing.
  * Automatically replies after a configurable delay.
  * `connectDelay` simulates a real connection handshake (default 2000ms).
+ * Sending "/disconnect" as a message triggers a graceful disconnect.
  */
 export class DummyConnector implements IConnector {
   readonly name = "dummy";
   readonly addSentToHistory = true;
 
   private messageHandler: MessageHandler | null = null;
+  private disconnectHandler: DisconnectHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
 
@@ -27,16 +33,23 @@ export class DummyConnector implements IConnector {
 
   async disconnect(): Promise<void> {
     this.messageHandler = null;
+    this.disconnectHandler?.("user");
+    this.disconnectHandler = null;
   }
 
   async sendMessage(message: OutgoingMessage): Promise<void> {
+    const text = (message.data as { text?: string }).text ?? "";
+
+    if (text.trim() === "/disconnect") {
+      await this.disconnect();
+      return;
+    }
+
     setTimeout(() => {
       this.messageHandler?.({
         id: `dummy-reply-${Date.now()}`,
         type: "text",
-        data: {
-          text: `Echo: ${(message.data as { text?: string }).text ?? ""}`,
-        },
+        data: { text: `Echo: ${text}` },
         timestamp: Date.now(),
       });
     }, this.replyDelay);
@@ -44,5 +57,9 @@ export class DummyConnector implements IConnector {
 
   onMessage(callback: MessageHandler): void {
     this.messageHandler = callback;
+  }
+
+  onDisconnect(callback: DisconnectHandler): void {
+    this.disconnectHandler = callback;
   }
 }
