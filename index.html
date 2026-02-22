@@ -65,15 +65,19 @@
       <h1>Chativa</h1>
       <p>Customizable · Extensible · Plug-and-play chat widget</p>
       <div class="hint">
-        <span class="hint-arrow">👇</span>
-        Click the button in the corner to open the chat
+        <span class="hint-arrow">←</span>
+        Use the panel on the left to customize the widget live
       </div>
     </div>
+
+    <!-- Customization panel (sandbox only) -->
+    <sandbox-controls></sandbox-controls>
 
     <!-- Chativa web components -->
     <chat-bot-button></chat-bot-button>
     <chat-iva></chat-iva>
 
+    <script type="module" src="/src/sandbox/SandboxControls.ts"></script>
     <script type="module" src="/src/chat-ui/ChatWidget.ts"></script>
     <script type="module" src="/src/chat-ui/ChatBotButton.ts"></script>
   </body>
