@@ -9,6 +9,7 @@ describe("ChatStore", () => {
       isOpened: false,
       isRendered: false,
       activeConnector: "dummy",
+      connectorStatus: "idle",
       theme: DEFAULT_THEME,
     });
   });
@@ -59,5 +60,18 @@ describe("ChatStore", () => {
   it("setConnector updates activeConnector", () => {
     chatStore.getState().setConnector("websocket");
     expect(chatStore.getState().activeConnector).toBe("websocket");
+  });
+
+  it("connectorStatus starts as idle", () => {
+    expect(chatStore.getState().connectorStatus).toBe("idle");
+  });
+
+  it("setConnectorStatus updates connectorStatus", () => {
+    chatStore.getState().setConnectorStatus("connecting");
+    expect(chatStore.getState().connectorStatus).toBe("connecting");
+    chatStore.getState().setConnectorStatus("connected");
+    expect(chatStore.getState().connectorStatus).toBe("connected");
+    chatStore.getState().setConnectorStatus("error");
+    expect(chatStore.getState().connectorStatus).toBe("error");
   });
 });

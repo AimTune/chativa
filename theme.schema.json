@@ -1,0 +1,137 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chativa.io/schemas/theme.schema.json",
+  "title": "ThemeConfig",
+  "description": "Chativa widget theme and positioning configuration. Pass a partial object to chatStore.getState().setTheme() — only the fields you provide will be overridden.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "colors": {
+      "type": "object",
+      "description": "Brand color palette. All values are CSS color strings (hex, rgb, hsl, etc.).",
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "string",
+          "description": "Primary accent color — used for the chat button, user message bubbles, focus rings, and the header gradient start.",
+          "default": "#4f46e5",
+          "examples": ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b"]
+        },
+        "secondary": {
+          "type": "string",
+          "description": "Secondary accent color — used for the header gradient end and hover states.",
+          "default": "#6c757d",
+          "examples": ["#7c3aed", "#0284c7", "#059669"]
+        },
+        "background": {
+          "type": "string",
+          "description": "Widget panel background color.",
+          "default": "#ffffff",
+          "examples": ["#ffffff", "#1e1e2e"]
+        },
+        "text": {
+          "type": "string",
+          "description": "Primary text color used inside the widget.",
+          "default": "#212529",
+          "examples": ["#0f172a", "#f8fafc"]
+        },
+        "border": {
+          "type": "string",
+          "description": "Border color for inputs, dividers, and card outlines.",
+          "default": "#dee2e6",
+          "examples": ["#e2e8f0", "#334155"]
+        }
+      }
+    },
+    "position": {
+      "type": "string",
+      "description": "Corner of the screen where the chat button (and widget) appears.",
+      "enum": ["bottom-right", "bottom-left", "top-right", "top-left"],
+      "default": "bottom-right"
+    },
+    "positionMargin": {
+      "type": "string",
+      "description": "Distance from the screen edge. Each level equals 0.5rem increments starting at 0.5rem (level 1 = 0.5rem, level 5 = 2.5rem).",
+      "enum": ["1", "2", "3", "4", "5"],
+      "default": "2"
+    },
+    "size": {
+      "type": "string",
+      "description": "Size of the launcher button. Affects the button diameter.",
+      "enum": ["small", "medium", "large"],
+      "default": "medium",
+      "x-size-map": {
+        "small": "44px",
+        "medium": "56px",
+        "large": "68px"
+      }
+    },
+    "layout": {
+      "type": "object",
+      "description": "Widget panel dimensions.",
+      "additionalProperties": false,
+      "properties": {
+        "width": {
+          "type": "string",
+          "description": "CSS width of the chat panel.",
+          "default": "360px",
+          "examples": ["360px", "400px", "100%"]
+        },
+        "height": {
+          "type": "string",
+          "description": "CSS height of the chat panel.",
+          "default": "520px",
+          "examples": ["520px", "600px", "80vh"]
+        },
+        "maxWidth": {
+          "type": "string",
+          "description": "CSS max-width constraint — useful on mobile.",
+          "default": "100%",
+          "examples": ["100%", "480px"]
+        },
+        "maxHeight": {
+          "type": "string",
+          "description": "CSS max-height constraint.",
+          "default": "100%",
+          "examples": ["100%", "90vh"]
+        },
+        "horizontalSpace": {
+          "type": "string",
+          "description": "Horizontal gap between the panel edge and the viewport edge (same scale as positionMargin).",
+          "enum": ["1", "2", "3", "4", "5"],
+          "default": "2"
+        },
+        "verticalSpace": {
+          "type": "string",
+          "description": "Vertical gap between the panel and the launcher button.",
+          "enum": ["1", "2", "3", "4", "5"],
+          "default": "2"
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "colors": {
+        "primary": "#0ea5e9",
+        "secondary": "#0284c7"
+      },
+      "position": "bottom-left",
+      "positionMargin": "3",
+      "size": "large"
+    },
+    {
+      "colors": {
+        "primary": "#10b981",
+        "secondary": "#059669",
+        "background": "#f0fdf4",
+        "text": "#064e3b",
+        "border": "#a7f3d0"
+      },
+      "layout": {
+        "width": "400px",
+        "height": "600px"
+      }
+    }
+  ]
+}

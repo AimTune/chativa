@@ -1,5 +1,6 @@
 import { LitElement, html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
+import "./EmojiPicker";
 
 @customElement("chat-input")
 class ChatInput extends LitElement {
@@ -7,6 +8,7 @@ class ChatInput extends LitElement {
     :host {
       display: block;
       flex-shrink: 0;
+      position: relative;
     }
 
     .input-area {
@@ -37,6 +39,11 @@ class ChatInput extends LitElement {
     .emoji-btn:hover {
       color: #64748b;
       background: #f1f5f9;
+    }
+
+    .emoji-btn.active {
+      color: var(--chativa-primary-color, #4f46e5);
+      background: #ede9fe;
     }
 
     .emoji-btn svg {
@@ -103,9 +110,18 @@ class ChatInput extends LitElement {
       width: 18px;
       height: 18px;
     }
+
+    /* Emoji picker popup */
+    .picker-popup {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 8px;
+      z-index: 100;
+    }
   `;
 
   @property({ type: String }) value = "";
+  @state() private _pickerOpen = false;
 
   private _onInput(e: Event) {
     this.value = (e.target as HTMLInputElement).value;
@@ -115,6 +131,9 @@ class ChatInput extends LitElement {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       this._send();
+    }
+    if (e.key === "Escape" && this._pickerOpen) {
+      this._pickerOpen = false;
     }
   }
 
@@ -131,11 +150,72 @@ class ChatInput extends LitElement {
     this.value = "";
   }
 
+  private _togglePicker() {
+    this._pickerOpen = !this._pickerOpen;
+  }
+
+  private _onEmojiSelect(e: CustomEvent<string>) {
+    const emoji = e.detail;
+    const input = this.shadowRoot?.querySelector<HTMLInputElement>(".text-input");
+    if (input) {
+      const start = input.selectionStart ?? this.value.length;
+      const end = input.selectionEnd ?? this.value.length;
+      this.value =
+        this.value.slice(0, start) + emoji + this.value.slice(end);
+      // Restore focus + cursor after LitElement re-renders
+      this.updateComplete.then(() => {
+        const el = this.shadowRoot?.querySelector<HTMLInputElement>(".text-input");
+        if (el) {
+          el.focus();
+          const pos = start + emoji.length;
+          el.setSelectionRange(pos, pos);
+        }
+      });
+    } else {
+      this.value += emoji;
+    }
+    this._pickerOpen = false;
+  }
+
+  private _onHostClick(e: MouseEvent) {
+    // Close picker when clicking outside of it
+    if (!this._pickerOpen) return;
+    const path = e.composedPath();
+    const picker = this.shadowRoot?.querySelector("emoji-picker");
+    const emojiBtn = this.shadowRoot?.querySelector(".emoji-btn");
+    if (picker && !path.includes(picker) && !path.includes(emojiBtn as EventTarget)) {
+      this._pickerOpen = false;
+    }
+  }
+
+  connectedCallback() {
+    super.connectedCallback();
+    document.addEventListener("click", this._onDocumentClick);
+  }
+
+  disconnectedCallback() {
+    document.removeEventListener("click", this._onDocumentClick);
+    super.disconnectedCallback();
+  }
+
+  private _onDocumentClick = (e: MouseEvent) => {
+    if (!this._pickerOpen) return;
+    const path = e.composedPath();
+    if (!path.includes(this)) {
+      this._pickerOpen = false;
+    }
+  };
+
   render() {
     const hasText = this.value.trim().length > 0;
     return html`
-      <div class="input-area">
-        <button class="emoji-btn" type="button" aria-label="Emoji">
+      <div class="input-area" @click=${this._onHostClick}>
+        <button
+          class="emoji-btn ${this._pickerOpen ? "active" : ""}"
+          type="button"
+          aria-label="Emoji"
+          @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
+        >
           <svg
             viewBox="0 0 24 24"
             fill="none"
@@ -177,6 +257,14 @@ class ChatInput extends LitElement {
           </svg>
         </button>
       </div>
+
+      ${this._pickerOpen
+        ? html`
+            <div class="picker-popup" @click=${(e: MouseEvent) => e.stopPropagation()}>
+              <emoji-picker @emoji-select=${this._onEmojiSelect}></emoji-picker>
+            </div>
+          `
+        : ""}
     `;
   }
 }
