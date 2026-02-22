@@ -1,270 +1,318 @@
-# 📄 Product Requirements Document (PRD) – **Chativa**
+# PRD — Chativa
+
+> Customizable, extensible, plug-and-play web component chat widget.
 
 ---
 
-## 🎯 Objective
+## 1. Vision
 
-Develop **Chativa**, a **modular**, **themeable**, **adapter-extensible** web component chat widget based on LitElement. It should integrate **Shoelace UI** components and manage global state with a minimal Zustand-like store. Users can **register custom message types and adapters externally**, enabling flexible extension without modifying core code.
+Chativa is an open-source chat widget library built on Web Components (LitElement). Developers embed a single script tag and get a fully functional, themeable chat button and window. They can swap backends (connectors), extend UI with custom message types, and write plugins (extensions) — all without touching core library code.
 
 ---
 
-## 🔧 Architecture Overview
+## 2. Goals
 
-### Project Structure
+| # | Goal |
+|---|------|
+| G1 | Zero-config embed: one script + one HTML tag |
+| G2 | Full visual customization via CSS variables and a JSON config object |
+| G3 | Plug-and-play connectors (WebSocket, SignalR, DirectLine, custom) |
+| G4 | Custom message type components (cards, images, carousels, etc.) |
+| G5 | Extension API for hooks, middleware, analytics, etc. |
+| G6 | Framework-agnostic (works in React, Vue, Angular, plain HTML) |
+| G7 | Fully testable — unit + integration tests at every layer |
+
+---
+
+## 3. User Personas
+
+### 3.1 Embedder Developer
+Wants to drop a chat widget into an existing site with minimal config.
+
+**Needs:**
+- Single script include
+- JSON-based theme config
+- Works out of the box with a mock/dummy connector
+
+### 3.2 Integration Developer
+Wants to connect Chativa to their backend (custom API, SignalR hub, Azure Bot, etc.).
+
+**Needs:**
+- Well-defined `IConnector` interface
+- TypeScript types exported
+- Clear lifecycle (connect, send, receive, disconnect)
+
+### 3.3 Extension Developer
+Wants to add analytics, custom commands, message transformers, or rich UI components.
+
+**Needs:**
+- `IExtension` install/uninstall hooks
+- Access to message pipeline
+- Ability to register custom message renderers
+
+---
+
+## 4. Features
+
+### 4.1 Customizable Chat Button (F1)
+
+- Floating action button with configurable position: `bottom-right | bottom-left | top-right | top-left`
+- Size: `small | medium | large`
+- Color, icon, label — all configurable
+
+**CSS Variables (runtime override):**
+```css
+--chativa-primary-color
+--chativa-secondary-color
+--chativa-background-color
+--chativa-text-color
+--chativa-border-color
+--chativa-button-size
+--chativa-border-radius
+--chativa-font-family
+--chativa-position-x        /* horizontal margin */
+--chativa-position-y        /* vertical margin */
+```
+
+**JSON Config (programmatic):**
+```json
+{
+  "theme": {
+    "colors": {
+      "primary": "#4f46e5",
+      "secondary": "#6c757d",
+      "background": "#ffffff",
+      "text": "#212529",
+      "border": "#dee2e6"
+    },
+    "position": "bottom-right",
+    "positionMargin": "2",
+    "size": "medium",
+    "layout": {
+      "width": "360px",
+      "height": "520px",
+      "maxWidth": "100%",
+      "maxHeight": "100%"
+    }
+  }
+}
+```
+
+### 4.2 Connector System — Port & Adapters (F2)
+
+Each connector implements `IConnector` (the Port). Connectors are registered by name and selected at runtime.
+
+**Built-in connectors:**
+```
+IConnector (Port / Interface)
+├── DummyConnector        — local mock, no network, for dev/testing
+├── WebSocketConnector    — native browser WebSocket
+├── SignalRConnector      — @microsoft/signalr hub
+└── DirectLineConnector   — Azure Bot Framework DirectLine v3
+```
+
+**Custom connector:**
+```ts
+class MyApiConnector implements IConnector {
+  readonly name = "my-api";
+  async connect() { ... }
+  async disconnect() { ... }
+  async sendMessage(msg: OutgoingMessage) { ... }
+  onMessage(cb: MessageHandler) { ... }
+}
+
+ConnectorRegistry.register(new MyApiConnector());
+// <chat-iva connector="my-api">
+```
+
+**IConnector interface contract:**
+```ts
+interface IConnector {
+  readonly name: string;
+  connect(): Promise<void>;
+  disconnect(): Promise<void>;
+  sendMessage(message: OutgoingMessage): Promise<void>;
+  onMessage(callback: MessageHandler): void;
+  onConnect?(callback: () => void): void;
+  onDisconnect?(callback: (reason?: string) => void): void;
+  readonly addSentToHistory?: boolean;  // default true
+}
+```
+
+### 4.3 Custom Message Types (F3)
+
+Register a LitElement component for any message type:
+```ts
+MessageTypeRegistry.register("product-card", ProductCardMessage);
+// Incoming { type: "product-card", data: {...} } → renders ProductCardMessage
+```
+
+All message components implement `IMessageRenderer`:
+```ts
+interface IMessageRenderer {
+  messageData: IncomingMessage["data"];
+}
+```
+
+### 4.4 Extensions (F4)
+
+```ts
+ExtensionRegistry.install(new AnalyticsExtension({ trackingId: "UA-..." }));
+ExtensionRegistry.install(new CommandExtension({ prefix: "/" }));
+```
+
+Extension lifecycle:
+- `install(context: ExtensionContext)` — called once on registration
+- `uninstall()` — cleanup
+- `onBeforeSend?(msg) → msg | null` — transform or block outgoing messages
+- `onAfterReceive?(msg) → msg | null` — transform or block incoming messages
+- `onWidgetOpen?()` / `onWidgetClose?()` — lifecycle hooks
+
+### 4.5 i18n (F5)
+
+- Runtime language detection via i18next
+- Translation key namespaces extensible via extensions
+- Default: English (en), Turkish (tr)
+
+---
+
+## 5. Architecture
+
+### 5.1 Layered Hexagonal (Ports & Adapters)
+
+```
+┌──────────────────────────────────────────────────┐
+│                    UI Layer                      │
+│  ChatBotButton  ChatWidget  ChatMessageList      │
+│               (LitElement Web Components)        │
+└─────────────────────┬────────────────────────────┘
+                      │ uses
+┌─────────────────────▼────────────────────────────┐
+│               Application Layer                  │
+│  ChatEngine  ConnectorRegistry                   │
+│  MessageTypeRegistry  ExtensionRegistry          │
+│  ChatStore  MessageStore                         │
+└──────┬───────────────────────────┬───────────────┘
+       │ depends on                │ instantiates
+┌──────▼──────────┐   ┌────────────▼───────────────┐
+│  Domain Layer   │   │   Infrastructure Layer     │
+│  IConnector     │   │   DummyConnector           │
+│  IExtension     │   │   WebSocketConnector       │
+│  IMessageRend.  │   │   SignalRConnector         │
+│  Message        │   │   DirectLineConnector      │
+│  Theme          │   │   [YourConnector]          │
+└─────────────────┘   └────────────────────────────┘
+```
+
+**Dependency rule:** Inner layers never import from outer layers.
+
+### 5.2 Directory Structure
 
 ```
 src/
-├── chat-core/             # Global state, message registry, chat engine
-├── chat-ui/               # LitElement components (ChatWidget, message types)
-├── adapters/              # Built-in adapters (DirectLine, WebSocket, REST, etc.)
-├── themes/                # Default and custom themes
-├── styles/                # Shoelace styling integration
+├── domain/                      # Pure types — zero external deps
+│   ├── entities/
+│   │   └── Message.ts           # IncomingMessage, OutgoingMessage
+│   ├── ports/
+│   │   ├── IConnector.ts        # Connector port (interface)
+│   │   ├── IExtension.ts        # Extension port (interface)
+│   │   └── IMessageRenderer.ts  # Message component contract
+│   └── value-objects/
+│       └── Theme.ts             # ThemeConfig type
+├── application/                 # Orchestration — depends only on domain
+│   ├── ChatEngine.ts
+│   ├── registries/
+│   │   ├── ConnectorRegistry.ts
+│   │   ├── MessageTypeRegistry.ts
+│   │   └── ExtensionRegistry.ts
+│   └── stores/
+│       ├── ChatStore.ts
+│       └── MessageStore.ts
+├── infrastructure/              # Concrete connector implementations
+│   └── connectors/
+│       ├── DummyConnector.ts
+│       ├── WebSocketConnector.ts
+│       ├── SignalRConnector.ts
+│       └── DirectLineConnector.ts
+├── ui/                          # LitElement components
+│   ├── components/
+│   │   ├── ChatWidget.ts
+│   │   ├── ChatBotButton.ts
+│   │   ├── ChatHeader.ts
+│   │   ├── ChatInput.ts
+│   │   ├── ChatMessageList.ts
+│   │   └── messages/
+│   │       └── DefaultTextMessage.ts
+│   └── mixins/
+│       └── ChatbotMixin.ts
+└── i18n/
+    ├── i18n.ts
+    ├── en.json
+    └── tr.json
 ```
 
 ---
 
-## 🧠 Global State Management (`chat-core/messageStore.ts`)
-
-- Uses a Zustand-inspired minimal store.
-- Stores messages with a unique ID set to **prevent duplicate renders**.
-- Supports subscriptions for UI updates.
+## 6. Public API Surface
 
 ```ts
-type ChatMessage = {
-  id: string;
-  type: string;
-  data: any;
-  component?: typeof HTMLElement;
-};
+// HTML usage
+<chat-bot-button></chat-bot-button>
+<chat-iva connector="websocket"></chat-iva>
 
-let state = {
-  messages: [] as ChatMessage[],
-  renderedIds: new Set<string>(),
-};
+// Programmatic configuration
+import { Chativa } from "chativa";
 
-const listeners = new Set<() => void>();
+Chativa.configure({
+  theme: { colors: { primary: "#4f46e5" } },
+  connector: "websocket",
+});
 
-export const useMessageStore = {
-  addMessage(msg: ChatMessage) {
-    if (!state.renderedIds.has(msg.id)) {
-      state.messages.push(msg);
-      state.renderedIds.add(msg.id);
-      listeners.forEach((cb) => cb());
-    }
-  },
-  getMessages: () => state.messages,
-  subscribe(cb: () => void) {
-    listeners.add(cb);
-    return () => listeners.delete(cb);
-  },
-  clear() {
-    state.messages = [];
-    state.renderedIds.clear();
-    listeners.forEach((cb) => cb());
-  },
-};
+// Register connectors
+import { ConnectorRegistry } from "chativa";
+ConnectorRegistry.register(new WebSocketConnector({ url: "wss://..." }));
+
+// Register custom message type
+import { MessageTypeRegistry } from "chativa";
+MessageTypeRegistry.register("card", CardMessageComponent);
+
+// Register extension
+import { ExtensionRegistry } from "chativa";
+ExtensionRegistry.install(new AnalyticsExtension());
 ```
 
 ---
 
-## 📦 Message Type Registry (`chat-core/messageRegistry.ts`)
+## 7. Non-Functional Requirements
 
-- Registry stores message type keys and their corresponding LitElement components.
-- Supports external registration of message components.
-
-```ts
-const registry = new Map<string, typeof HTMLElement>();
-
-export const useMessageTypeRegistry = {
-  register(type: string, component: typeof HTMLElement) {
-    registry.set(type, component);
-  },
-  resolve(type: string) {
-    return registry.get(type) ?? DefaultTextMessage;
-  },
-};
-```
+| Requirement | Target |
+|---|---|
+| Bundle size | < 50 KB gzipped (excl. connector deps) |
+| First render | < 100ms |
+| Zero framework deps | Works in plain HTML |
+| TypeScript | Strict mode, full types exported |
+| Test coverage | >= 80% domain + application layers |
+| Browser support | Evergreen + Safari 16+ |
 
 ---
 
-## 🖌️ Theme Support (`chat-core/themeStore.ts`)
+## 8. Testing Strategy
 
-- Holds current theme variables.
-- Supports subscriptions for dynamic theme updates.
+| Layer | Tool | Coverage target |
+|---|---|---|
+| Domain (types/interfaces) | Vitest | 100% (compile-time) |
+| Application (engine, registries, stores) | Vitest | >= 90% |
+| Infrastructure (connectors) | Vitest + mocks | >= 80% |
+| UI (components) | Vitest + @open-wc/testing | >= 70% |
 
-```ts
-let currentTheme: Record<string, string> = {};
-
-const listeners = new Set<() => void>();
-
-export const useThemeStore = {
-  setTheme(theme: Record<string, string>) {
-    currentTheme = theme;
-    listeners.forEach((cb) => cb());
-  },
-  getTheme: () => currentTheme,
-  subscribe(cb: () => void) {
-    listeners.add(cb);
-    return () => listeners.delete(cb);
-  },
-};
-```
+Tests run with: `npm test`
+Coverage report: `npm run test:coverage`
 
 ---
 
-## 🧩 Chat Engine (`chat-core/ChatEngine.ts`)
+## 9. Out of Scope (v1)
 
-- Bridges between the adapter and UI state.
-- Listens for incoming messages and adds them to the global message store.
-- Sends outgoing messages via the adapter.
-
-```ts
-import { useMessageStore } from "./messageStore";
-import { useMessageTypeRegistry } from "./messageRegistry";
-
-export class ChatEngine {
-  constructor(private adapter: ChatAdapter) {}
-
-  init() {
-    this.adapter.onMessage((msg) => {
-      const Component = useMessageTypeRegistry.resolve(msg.type);
-      useMessageStore.addMessage({ ...msg, component: Component });
-    });
-  }
-
-  send(msg: any) {
-    this.adapter.sendMessage(msg);
-  }
-}
-```
-
----
-
-## 🔌 Adapter Interface & Registration (`chat-core/adapter.ts`)
-
-- Defines adapter contract for sending/receiving messages.
-- Supports **external adapter registration** so users can add their own adapters dynamically.
-
-```ts
-export interface ChatAdapter {
-  sendMessage(message: BaseMessage): void;
-  onMessage(callback: (msg: BaseMessage) => void): void;
-}
-
-const adapterRegistry = new Map<string, ChatAdapter>();
-
-export const useAdapterRegistry = {
-  register(name: string, adapter: ChatAdapter) {
-    adapterRegistry.set(name, adapter);
-  },
-  get(name: string) {
-    return adapterRegistry.get(name);
-  },
-};
-```
-
----
-
-## 🧱 ChatWidget Component (`chat-ui/ChatWidget.ts`)
-
-- Uses LitElement, subscribes to message and theme stores.
-- Renders messages using their registered components.
-- Accepts adapter selection and exposes APIs for external adapter and message registrations.
-
-```ts
-@customElement("chat-iva")
-export class ChatWidget extends LitElement {
-  private unsubscribeMessages!: () => void;
-  private unsubscribeTheme!: () => void;
-  private engine!: ChatEngine;
-
-  @property({ type: String }) adapterName = "default";
-
-  connectedCallback() {
-    super.connectedCallback();
-
-    // Get adapter instance from registry (can be custom-registered externally)
-    const adapter = useAdapterRegistry.get(this.adapterName);
-    if (!adapter) throw new Error(`Adapter ${this.adapterName} not found`);
-
-    this.engine = new ChatEngine(adapter);
-    this.engine.init();
-
-    this.unsubscribeMessages = useMessageStore.subscribe(() =>
-      this.requestUpdate()
-    );
-    this.unsubscribeTheme = useThemeStore.subscribe(() => this.requestUpdate());
-  }
-
-  disconnectedCallback() {
-    this.unsubscribeMessages?.();
-    this.unsubscribeTheme?.();
-    super.disconnectedCallback();
-  }
-
-  render() {
-    const messages = useMessageStore.getMessages();
-    const theme = useThemeStore.getTheme();
-
-    return html`
-      <div
-        part="container"
-        style=${Object.entries(theme)
-          .map(([k, v]) => `${k}: ${v};`)
-          .join(" ")}
-      >
-        ${messages.map(
-          (msg) =>
-            html`<${msg.component} .messageData=${msg.data}></${msg.component}>`
-        )}
-      </div>
-    `;
-  }
-}
-```
-
----
-
-## 🛠️ Example: Registering Custom Message & Adapter Externally
-
-```ts
-import { useMessageTypeRegistry } from "./chat-core/messageRegistry";
-import { useAdapterRegistry } from "./chat-core/adapter";
-
-class CustomMessage extends BaseMessage {
-  /* ... */
-}
-class CustomAdapter implements ChatAdapter {
-  /* ... */
-}
-
-// Register message type
-useMessageTypeRegistry.register("custom-message", CustomMessage);
-
-// Register adapter
-const myAdapter = new CustomAdapter();
-useAdapterRegistry.register("my-adapter", myAdapter);
-
-// Then use in HTML
-// <chat-iva adapter-name="my-adapter"></chat-iva>
-```
-
----
-
-## 🎨 Shoelace Integration
-
-- All UI parts use Shoelace components like `<sl-card>`, `<sl-button>`, etc.
-- Chat theme and Shoelace themes combined through CSS custom properties.
-
----
-
-## ✅ Summary
-
-| Feature                   | Description                                              |
-| ------------------------- | -------------------------------------------------------- |
-| Modular Architecture      | External registration of adapters & messages             |
-| LitElement + Shoelace UI  | Modern, accessible components                            |
-| Zustand-like Global Store | Efficient message state with duplicate render prevention |
-| Flexible Theming          | Dynamic theme switching with CSS variables               |
-| Adapter System            | Plug & play backend connectors                           |
-| Optimized Rendering       | Only new messages cause re-render                        |
+- Server-side rendering
+- React/Vue/Angular wrapper packages (planned v2)
+- File/media upload UI (can be built as extension)
+- Native mobile apps
