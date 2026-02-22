@@ -67,6 +67,25 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       border-radius: 50%;
       background: #4ade80;
       flex-shrink: 0;
+      transition: background 0.3s ease;
+    }
+
+    .status-dot.connecting {
+      background: #fbbf24;
+      animation: pulse 1.2s ease-in-out infinite;
+    }
+
+    .status-dot.error {
+      background: #f87171;
+    }
+
+    .status-dot.disconnected {
+      background: #94a3b8;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.45; transform: scale(0.75); }
     }
 
     .status-text {
@@ -101,7 +120,18 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     }
   `;
 
+  private get _statusLabel(): string {
+    switch (this.themeState.connectorStatus) {
+      case "connecting": return "Connecting…";
+      case "connected": return "Online";
+      case "error": return "Connection error";
+      case "disconnected": return "Disconnected";
+      default: return "Offline";
+    }
+  }
+
   render() {
+    const { connectorStatus } = this.themeState;
     return html`
       <div class="header">
         <div class="avatar">
@@ -124,8 +154,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         <div class="info">
           <span class="title">${t("title")}</span>
           <div class="status">
-            <span class="status-dot"></span>
-            <span class="status-text">Online</span>
+            <span class="status-dot ${connectorStatus}"></span>
+            <span class="status-text">${this._statusLabel}</span>
           </div>
         </div>
 

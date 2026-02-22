@@ -5,7 +5,7 @@ describe("DummyConnector", () => {
   let connector: DummyConnector;
 
   beforeEach(() => {
-    connector = new DummyConnector({ replyDelay: 0 });
+    connector = new DummyConnector({ replyDelay: 0, connectDelay: 0 });
   });
 
   it("has name 'dummy'", () => {

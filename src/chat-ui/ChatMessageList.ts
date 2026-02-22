@@ -3,6 +3,7 @@ import { customElement } from "lit/decorators.js";
 import { unsafeStatic } from "lit/static-html.js";
 import { html as staticHtml } from "lit/static-html.js";
 import messageStore from "../application/stores/MessageStore";
+import chatStore from "../application/stores/ChatStore";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);
@@ -83,19 +84,55 @@ class ChatMessageList extends LitElement {
       color: #64748b;
       margin: 0;
     }
+
+    /* Loading state */
+    .connecting {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #e2e8f0;
+      border-top-color: var(--chativa-primary-color, #4f46e5);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .connecting-text {
+      font-size: 0.8125rem;
+      color: #64748b;
+      margin: 0;
+    }
   `;
 
   private _unsubscribeMessages!: () => void;
+  private _unsubscribeChatStore!: () => void;
 
   connectedCallback() {
     super.connectedCallback();
     this._unsubscribeMessages = messageStore.subscribe(() =>
       this.requestUpdate()
     );
+    this._unsubscribeChatStore = chatStore.subscribe(() =>
+      this.requestUpdate()
+    );
   }
 
   disconnectedCallback() {
     this._unsubscribeMessages?.();
+    this._unsubscribeChatStore?.();
     super.disconnectedCallback();
   }
 
@@ -107,6 +144,18 @@ class ChatMessageList extends LitElement {
 
   render() {
     const messages = messageStore.getState().messages;
+    const { connectorStatus } = chatStore.getState();
+
+    if (connectorStatus === "connecting" && messages.length === 0) {
+      return html`
+        <div class="list">
+          <div class="connecting">
+            <div class="spinner"></div>
+            <p class="connecting-text">Connecting…</p>
+          </div>
+        </div>
+      `;
+    }
 
     return html`
       <div class="list">

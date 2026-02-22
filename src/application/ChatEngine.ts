@@ -3,6 +3,7 @@ import type { OutgoingMessage } from "../domain/entities/Message";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
+import chatStore from "./stores/ChatStore";
 
 export class ChatEngine {
   private connector: IConnector;
@@ -20,7 +21,14 @@ export class ChatEngine {
       messageStore.getState().addMessage({ ...transformed, from: "bot", component: Component });
     });
 
-    await this.connector.connect();
+    chatStore.getState().setConnectorStatus("connecting");
+    try {
+      await this.connector.connect();
+      chatStore.getState().setConnectorStatus("connected");
+    } catch (err) {
+      chatStore.getState().setConnectorStatus("error");
+      throw err;
+    }
   }
 
   async send(message: OutgoingMessage): Promise<void> {
@@ -37,5 +45,6 @@ export class ChatEngine {
 
   async destroy(): Promise<void> {
     await this.connector.disconnect();
+    chatStore.getState().setConnectorStatus("disconnected");
   }
 }

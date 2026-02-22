@@ -4,6 +4,7 @@ import type { OutgoingMessage } from "../../domain/entities/Message";
 /**
  * DummyConnector — local mock connector for development and testing.
  * Automatically replies after a configurable delay.
+ * `connectDelay` simulates a real connection handshake (default 2000ms).
  */
 export class DummyConnector implements IConnector {
   readonly name = "dummy";
@@ -11,13 +12,17 @@ export class DummyConnector implements IConnector {
 
   private messageHandler: MessageHandler | null = null;
   private replyDelay: number;
+  private connectDelay: number;
 
-  constructor(options: { replyDelay?: number } = {}) {
+  constructor(options: { replyDelay?: number; connectDelay?: number } = {}) {
     this.replyDelay = options.replyDelay ?? 500;
+    this.connectDelay = options.connectDelay ?? 2000;
   }
 
   async connect(): Promise<void> {
-    // No-op — dummy connector is always "connected"
+    if (this.connectDelay > 0) {
+      await new Promise<void>((resolve) => setTimeout(resolve, this.connectDelay));
+    }
   }
 
   async disconnect(): Promise<void> {
