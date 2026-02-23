@@ -1,5 +1,5 @@
-import type { IConnector, MessageHandler } from "../../domain/ports/IConnector";
-import type { OutgoingMessage } from "../../domain/entities/Message";
+import type { IConnector, MessageHandler } from "@chativa/core";
+import type { OutgoingMessage } from "@chativa/core";
 import { DirectLine } from "botframework-directlinejs";
 
 export interface DirectLineConnectorOptions {

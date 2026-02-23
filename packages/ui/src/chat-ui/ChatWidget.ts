@@ -6,8 +6,8 @@ import {
   MessageTypeRegistry,
   messageStore,
   createOutgoingMessage,
-  DummyConnector,
 } from "@chativa/core";
+import { DummyConnector } from "@chativa/connector-dummy";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 import "./DefaultTextMessage";

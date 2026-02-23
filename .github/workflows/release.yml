@@ -39,6 +39,30 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish @chativa/connector-dummy
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-dummy
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @chativa/connector-websocket
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-websocket
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @chativa/connector-signalr
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-signalr
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @chativa/connector-directline
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-directline
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish @chativa/ui
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/ui

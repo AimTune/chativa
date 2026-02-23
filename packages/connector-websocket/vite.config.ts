@@ -9,7 +9,9 @@ export default defineConfig({
       formats: ["es", "cjs"],
       fileName: (fmt) => `index.${fmt === "es" ? "js" : "cjs"}`,
     },
-    rollupOptions: {},
+    rollupOptions: {
+      external: ["@chativa/core"],
+    },
     sourcemap: true,
   },
   plugins: [dts({ rollupTypes: true })],

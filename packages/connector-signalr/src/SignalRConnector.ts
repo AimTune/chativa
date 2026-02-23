@@ -3,8 +3,8 @@ import type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
-} from "../../domain/ports/IConnector";
-import type { OutgoingMessage } from "../../domain/entities/Message";
+} from "@chativa/core";
+import type { OutgoingMessage } from "@chativa/core";
 
 export interface SignalRConnectorOptions {
   url: string;

@@ -1,7 +1,7 @@
 {
   "name": "@chativa/core",
   "version": "0.0.1",
-  "description": "Chativa core — connectors, registries, stores and domain interfaces (framework-agnostic).",
+  "description": "Chativa core — domain interfaces, registries, stores and chat engine (framework-agnostic).",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     }
   },
   "files": ["dist"],
-  "keywords": ["chativa", "chat", "connector", "adapter", "bot", "websocket", "signalr", "directline"],
+  "keywords": ["chativa", "chat", "connector", "adapter", "bot"],
   "homepage": "https://github.com/AimTune/chativa#readme",
   "bugs": { "url": "https://github.com/AimTune/chativa/issues" },
   "repository": { "type": "git", "url": "git+https://github.com/AimTune/chativa.git" },
@@ -26,15 +26,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "botframework-directlinejs": "^0.15.6",
-    "lodash-es": "^4.17.21",
     "zustand": "^5.0.6"
   },
-  "optionalDependencies": {
-    "@microsoft/signalr": ">=7.0.0"
-  },
   "devDependencies": {
-    "@types/lodash-es":   "^4.17.12",
     "@vitest/coverage-v8": "^4.0.18",
     "jsdom":              "^28.1.0",
     "typescript":        "~5.8.3",

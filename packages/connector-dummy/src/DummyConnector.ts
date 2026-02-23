@@ -2,8 +2,8 @@ import type {
   IConnector,
   MessageHandler,
   DisconnectHandler,
-} from "../../domain/ports/IConnector";
-import type { OutgoingMessage } from "../../domain/entities/Message";
+} from "@chativa/core";
+import type { OutgoingMessage } from "@chativa/core";
 
 /**
  * DummyConnector — local mock connector for development and testing.

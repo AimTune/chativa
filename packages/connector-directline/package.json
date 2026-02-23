@@ -1,7 +1,7 @@
 {
-  "name": "@chativa/ui",
+  "name": "@chativa/connector-directline",
   "version": "0.0.1",
-  "description": "Chativa UI — LitElement web components for the chat widget (chat-iva, chat-bot-button).",
+  "description": "Chativa DirectLine connector — Azure Bot Framework DirectLine v3 adapter.",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
@@ -16,7 +16,7 @@
     }
   },
   "files": ["dist"],
-  "keywords": ["chativa", "chat", "web-component", "lit-element", "chat-widget", "ui"],
+  "keywords": ["chativa", "chat", "connector", "directline", "azure", "botframework"],
   "homepage": "https://github.com/AimTune/chativa#readme",
   "bugs": { "url": "https://github.com/AimTune/chativa/issues" },
   "repository": { "type": "git", "url": "git+https://github.com/AimTune/chativa.git" },
@@ -26,19 +26,13 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "i18next":                       "^25.3.2",
-    "i18next-browser-languagedetector": "^8.2.0"
+    "botframework-directlinejs": "^0.15.6"
   },
   "peerDependencies": {
-    "@chativa/core": ">=0.0.1",
-    "@chativa/connector-dummy": ">=0.0.1",
-    "lit": ">=3.0.0"
+    "@chativa/core": ">=0.0.1"
   },
   "devDependencies": {
     "@chativa/core": "workspace:*",
-    "@chativa/connector-dummy": "workspace:*",
-    "jsdom":         "^28.1.0",
-    "lit":           "^3.3.0",
     "typescript":   "~5.8.3",
     "vite":         "^7.0.3",
     "vite-plugin-dts": "^4.5.4",
