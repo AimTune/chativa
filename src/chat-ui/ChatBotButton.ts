@@ -1,6 +1,8 @@
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
+
+const SIZE_PX: Record<string, number> = { small: 44, medium: 56, large: 68 };
 
 @customElement("chat-bot-button")
 class ChatBotButton extends ChatbotMixin(LitElement) {
@@ -9,13 +11,20 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       display: block;
     }
 
+    /**
+     * .launcher — the positioned wrapper that handles placement + click.
+     * Expose via ::part(launcher) so consumers can fully override appearance.
+     *
+     * Default slot: if no children are provided the gradient circle + animated
+     * icons are shown.  When children ARE slotted in, the wrapper stays
+     * positioned and handles the toggle, but the visual is entirely up to the
+     * consumer.
+     */
     .launcher {
       position: fixed;
       cursor: pointer;
       border: none;
       outline: none;
-      width: 56px;
-      height: 56px;
       border-radius: 50%;
       background: linear-gradient(
         135deg,
@@ -34,16 +43,30 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       padding: 0;
     }
 
+    /* When the slot has custom content, reset the background so it doesn't
+       interfere with user styles. Consumers can keep the gradient by NOT
+       targeting ::part(launcher). */
+    .launcher.has-slot {
+      background: transparent;
+      box-shadow: none;
+    }
+
     .launcher:hover {
       transform: scale(1.08);
       box-shadow: 0 6px 28px rgba(79, 70, 229, 0.55),
         0 4px 14px rgba(0, 0, 0, 0.18);
     }
 
+    .launcher.has-slot:hover {
+      transform: scale(1.08);
+      box-shadow: none;
+    }
+
     .launcher:active {
       transform: scale(0.94);
     }
 
+    /* Default icon animation (only shown when no slot content) */
     .icon-wrap {
       position: relative;
       width: 24px;
@@ -77,49 +100,76 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       opacity: 1;
       transform: scale(1) rotate(0deg);
     }
+
+    /* Slotted content fills the launcher area */
+    ::slotted(*) {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
   `;
 
+  /** True when consumer has placed content in the default slot */
+  @state() private _hasSlot = false;
+
+  private _onSlotChange(e: Event) {
+    const slot = e.target as HTMLSlotElement;
+    this._hasSlot = slot.assignedNodes({ flatten: true }).length > 0;
+  }
+
   #positionStyle(): string {
-    const { position, positionMargin } = this.theme;
+    const { position, positionMargin, size } = this.theme;
     const m = positionMargin ? `${Number(positionMargin) * 0.5 + 0.5}rem` : "1rem";
     const [v, h] = (position ?? "bottom-right").split("-");
-    return `${v}: ${m}; ${h}: ${m};`;
+    const px = SIZE_PX[size ?? "medium"] ?? 56;
+    return `${v}: ${m}; ${h}: ${m}; width: ${px}px; height: ${px}px;`;
   }
 
   render() {
     const isOpen = this.themeState.isOpened;
+    const classes = [
+      "launcher",
+      isOpen ? "is-open" : "",
+      this._hasSlot ? "has-slot" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return html`
       <button
-        class="launcher ${isOpen ? "is-open" : ""}"
+        class="${classes}"
+        part="launcher"
         style="${this.#positionStyle()}"
         @click=${() => this.themeState.toggle()}
         aria-label="${isOpen ? "Close chat" : "Open chat"}"
+        aria-expanded="${isOpen}"
       >
-        <span class="icon-wrap">
-          <!-- Chat bubble icon -->
-          <svg
-            class="icon-chat"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
-            />
-          </svg>
-          <!-- Close icon -->
-          <svg
-            class="icon-close"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </span>
+        <slot @slotchange=${this._onSlotChange}>
+          <!-- Default: animated chat / close icons -->
+          <span class="icon-wrap">
+            <svg
+              class="icon-chat"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
+              />
+            </svg>
+            <svg
+              class="icon-close"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.5"
+              stroke-linecap="round"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </span>
+        </slot>
       </button>
     `;
   }

@@ -1,0 +1,257 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chativa.io/schemas/config.schema.json",
+  "title": "ChatConfig",
+  "description": "Full Chativa widget configuration. All fields are optional — only provide what you want to override.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+
+    "theme": {
+      "type": "object",
+      "description": "Visual theming for the widget.",
+      "additionalProperties": false,
+      "properties": {
+        "colors": {
+          "type": "object",
+          "description": "Brand color palette. All values accept any CSS color string.",
+          "additionalProperties": false,
+          "properties": {
+            "primary": {
+              "type": "string",
+              "description": "Main accent color — launcher button, user message bubbles, header gradient start, focus rings.",
+              "default": "#4f46e5",
+              "examples": ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b"]
+            },
+            "secondary": {
+              "type": "string",
+              "description": "Secondary accent — header gradient end, hover states.",
+              "default": "#6c757d",
+              "examples": ["#7c3aed", "#0284c7"]
+            },
+            "background": {
+              "type": "string",
+              "description": "Widget panel background.",
+              "default": "#ffffff"
+            },
+            "text": {
+              "type": "string",
+              "description": "Primary text color.",
+              "default": "#212529"
+            },
+            "border": {
+              "type": "string",
+              "description": "Border and divider color.",
+              "default": "#dee2e6"
+            }
+          }
+        },
+        "position": {
+          "type": "string",
+          "description": "Corner of the screen where the launcher button appears.",
+          "enum": ["bottom-right", "bottom-left", "top-right", "top-left"],
+          "default": "bottom-right"
+        },
+        "positionMargin": {
+          "type": "string",
+          "description": "Edge margin level. 1 = ~0.5rem, 2 = ~1rem … 5 = ~3rem.",
+          "enum": ["1", "2", "3", "4", "5"],
+          "default": "2"
+        },
+        "size": {
+          "type": "string",
+          "description": "Launcher button diameter.",
+          "enum": ["small", "medium", "large"],
+          "default": "medium",
+          "x-size-map": { "small": "44px", "medium": "56px", "large": "68px" }
+        },
+        "layout": {
+          "type": "object",
+          "description": "Chat panel dimensions.",
+          "additionalProperties": false,
+          "properties": {
+            "width":         { "type": "string", "default": "360px" },
+            "height":        { "type": "string", "default": "520px" },
+            "maxWidth":      { "type": "string", "default": "100%" },
+            "maxHeight":     { "type": "string", "default": "100%" },
+            "horizontalSpace": { "type": "string", "enum": ["1","2","3","4","5"], "default": "2" },
+            "verticalSpace":   { "type": "string", "enum": ["1","2","3","4","5"], "default": "2" }
+          }
+        }
+      }
+    },
+
+    "behavior": {
+      "type": "object",
+      "description": "Widget behavior and capabilities.",
+      "additionalProperties": false,
+      "properties": {
+        "isFullscreen": {
+          "type": "boolean",
+          "description": "Start the widget in fullscreen mode. On mobile (<480 px) the widget is always fullscreen regardless of this setting.",
+          "default": false
+        },
+        "allowFullscreen": {
+          "type": "boolean",
+          "description": "Show the fullscreen toggle button in the chat header. Set to false to lock the widget in its configured size (useful when deploying as a fullscreen-only experience).",
+          "default": true
+        },
+        "draggable": {
+          "type": "boolean",
+          "description": "Allow users to drag the chat panel to any position on screen by clicking and holding the header. Drag is automatically disabled in fullscreen and on mobile.",
+          "default": true
+        }
+      }
+    },
+
+    "connector": {
+      "type": "object",
+      "description": "Active connector selection and its options.",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Identifier of the registered connector to use.",
+          "enum": ["dummy", "websocket", "signalr", "directline"],
+          "default": "dummy"
+        },
+        "dummy": {
+          "type": "object",
+          "description": "Options for DummyConnector (dev/test).",
+          "additionalProperties": false,
+          "properties": {
+            "connectDelay": {
+              "type": "number",
+              "description": "Milliseconds to wait before resolving connect() — simulates a real connection handshake. Set to 0 in tests.",
+              "default": 2000,
+              "minimum": 0
+            },
+            "replyDelay": {
+              "type": "number",
+              "description": "Milliseconds before the echo reply is returned after a message is sent.",
+              "default": 500,
+              "minimum": 0
+            }
+          }
+        },
+        "websocket": {
+          "type": "object",
+          "description": "Options for WebSocketConnector.",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "WebSocket server URL.",
+              "format": "uri",
+              "examples": ["wss://my-server.example.com/chat"]
+            },
+            "reconnectDelay": {
+              "type": "number",
+              "description": "Milliseconds before attempting to reconnect after a connection drop.",
+              "default": 3000,
+              "minimum": 0
+            }
+          }
+        },
+        "signalr": {
+          "type": "object",
+          "description": "Options for SignalRConnector (requires @microsoft/signalr peer dep).",
+          "additionalProperties": false,
+          "required": ["url"],
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "SignalR hub URL.",
+              "format": "uri"
+            },
+            "hubName": {
+              "type": "string",
+              "description": "Hub method name used for incoming messages.",
+              "default": "ReceiveMessage"
+            }
+          }
+        },
+        "directline": {
+          "type": "object",
+          "description": "Options for DirectLineConnector (Azure Bot Framework).",
+          "additionalProperties": false,
+          "required": ["token"],
+          "properties": {
+            "token": {
+              "type": "string",
+              "description": "DirectLine channel secret or token."
+            },
+            "domain": {
+              "type": "string",
+              "description": "Custom DirectLine endpoint domain.",
+              "format": "uri",
+              "default": "https://directline.botframework.com/v3/directline"
+            }
+          }
+        }
+      }
+    },
+
+    "i18n": {
+      "type": "object",
+      "description": "Localization settings.",
+      "additionalProperties": false,
+      "properties": {
+        "defaultLanguage": {
+          "type": "string",
+          "description": "BCP-47 language tag used when browser language cannot be detected.",
+          "default": "en",
+          "examples": ["en", "tr", "de", "fr", "es"]
+        },
+        "fallbackLanguage": {
+          "type": "string",
+          "description": "Language used when a translation key is missing in the active language.",
+          "default": "en"
+        }
+      }
+    }
+
+  },
+
+  "examples": [
+    {
+      "theme": {
+        "colors": { "primary": "#0ea5e9", "secondary": "#0284c7" },
+        "position": "bottom-left",
+        "size": "large"
+      },
+      "behavior": {
+        "isFullscreen": false,
+        "allowFullscreen": true
+      },
+      "connector": {
+        "name": "websocket",
+        "websocket": { "url": "wss://my-server.example.com/chat" }
+      }
+    },
+    {
+      "theme": {
+        "colors": { "primary": "#10b981" },
+        "position": "bottom-right",
+        "layout": { "width": "400px", "height": "600px" }
+      },
+      "behavior": {
+        "isFullscreen": true,
+        "allowFullscreen": false
+      },
+      "connector": {
+        "name": "directline",
+        "directline": { "token": "YOUR_DIRECTLINE_TOKEN" }
+      }
+    },
+    {
+      "theme": { "colors": { "primary": "#4f46e5" } },
+      "behavior": { "isFullscreen": false, "allowFullscreen": true },
+      "connector": {
+        "name": "dummy",
+        "dummy": { "connectDelay": 2000, "replyDelay": 500 }
+      }
+    }
+  ]
+}

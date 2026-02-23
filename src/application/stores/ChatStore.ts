@@ -10,6 +10,9 @@ export type ConnectorStatus = "idle" | "connecting" | "connected" | "error" | "d
 export interface ChatStoreState {
   isOpened: boolean;
   isRendered: boolean;
+  isFullscreen: boolean;
+  /** When false the fullscreen toggle button in the header is hidden. */
+  allowFullscreen: boolean;
   activeConnector: string;
   connectorStatus: ConnectorStatus;
   theme: ThemeConfig;
@@ -17,6 +20,9 @@ export interface ChatStoreState {
   toggle: () => void;
   open: () => void;
   close: () => void;
+  toggleFullscreen: () => void;
+  setFullscreen: (v: boolean) => void;
+  setAllowFullscreen: (v: boolean) => void;
 
   setTheme: (theme: DeepPartial<ThemeConfig>) => void;
   getTheme: () => ThemeConfig;
@@ -31,6 +37,8 @@ export type { DeepPartial };
 const store = createStore<ChatStoreState>((setState, getState) => ({
   isOpened: false,
   isRendered: false,
+  isFullscreen: false,
+  allowFullscreen: true,
   activeConnector: "dummy",
   connectorStatus: "idle",
   theme: DEFAULT_THEME,
@@ -43,6 +51,13 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
 
   open: () => setState(() => ({ isOpened: true, isRendered: true })),
   close: () => setState(() => ({ isOpened: false })),
+
+  toggleFullscreen: () =>
+    setState((s) => ({ isFullscreen: !s.isFullscreen })),
+
+  setFullscreen: (v: boolean) => setState(() => ({ isFullscreen: v })),
+
+  setAllowFullscreen: (v: boolean) => setState(() => ({ allowFullscreen: v })),
 
   setTheme: (overrides) =>
     setState((s) => ({ theme: mergeTheme(s.theme, overrides) })),

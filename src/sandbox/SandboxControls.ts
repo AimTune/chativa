@@ -338,6 +338,7 @@ export class SandboxControls extends LitElement {
   @state() private _isOpen = true;
   @state() private _theme: ThemeConfig = chatStore.getState().theme;
   @state() private _chatOpen = chatStore.getState().isOpened;
+  @state() private _isFullscreen = chatStore.getState().isFullscreen;
   @state() private _colorHex = chatStore.getState().theme.colors.primary;
 
   private _unsub!: () => void;
@@ -348,6 +349,7 @@ export class SandboxControls extends LitElement {
       const s = chatStore.getState();
       this._theme = s.theme;
       this._chatOpen = s.isOpened;
+      this._isFullscreen = s.isFullscreen;
       this._colorHex = s.theme.colors.primary;
     });
   }
@@ -547,9 +549,20 @@ export class SandboxControls extends LitElement {
               ${this._chatOpen ? "Close Chat" : "Open Chat"}
             </button>
             <button
+              class="btn ${this._isFullscreen ? "btn-primary" : "btn-ghost"}"
+              @click=${() => chatStore.getState().toggleFullscreen()}
+              title="Toggle fullscreen"
+            >
+              ${this._isFullscreen ? "⛶ Exit" : "⛶ Full"}
+            </button>
+          </div>
+
+          <div class="actions">
+            <button
               class="btn btn-ghost"
               @click=${() => chatStore.getState().setTheme(DEFAULT_THEME)}
               title="Reset to defaults"
+              style="flex: 1"
             >
               Reset
             </button>

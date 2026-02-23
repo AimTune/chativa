@@ -1,4 +1,4 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement } from "lit/decorators.js";
 import { t } from "i18next";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
@@ -21,6 +21,12 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         var(--chativa-primary-color, #4f46e5) 0%,
         var(--chativa-primary-dark, #7c3aed) 100%
       );
+      cursor: grab;
+      user-select: none;
+    }
+
+    .header:active {
+      cursor: grabbing;
     }
 
     .avatar {
@@ -32,6 +38,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      pointer-events: none;
     }
 
     .avatar svg {
@@ -43,6 +50,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     .info {
       flex: 1;
       min-width: 0;
+      pointer-events: none;
     }
 
     .title {
@@ -94,7 +102,14 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       font-weight: 400;
     }
 
-    .close-btn {
+    .actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .icon-btn {
       width: 32px;
       height: 32px;
       border-radius: 50%;
@@ -110,11 +125,11 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       padding: 0;
     }
 
-    .close-btn:hover {
+    .icon-btn:hover {
       background: rgba(255, 255, 255, 0.25);
     }
 
-    .close-btn svg {
+    .icon-btn svg {
       width: 15px;
       height: 15px;
     }
@@ -130,10 +145,38 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     }
   }
 
+  private _onHeaderMouseDown(e: MouseEvent) {
+    if ((e.target as Element).closest(".actions")) return;
+    e.preventDefault();
+    this.dispatchEvent(
+      new CustomEvent("chat-drag-start", {
+        detail: { clientX: e.clientX, clientY: e.clientY },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
+  private _onHeaderTouchStart(e: TouchEvent) {
+    if ((e.target as Element).closest(".actions")) return;
+    const touch = e.touches[0];
+    this.dispatchEvent(
+      new CustomEvent("chat-drag-start", {
+        detail: { clientX: touch.clientX, clientY: touch.clientY },
+        bubbles: true,
+        composed: true,
+      })
+    );
+  }
+
   render() {
-    const { connectorStatus } = this.themeState;
+    const { connectorStatus, isFullscreen, allowFullscreen } = this.themeState;
     return html`
-      <div class="header">
+      <div
+        class="header"
+        @mousedown=${this._onHeaderMouseDown}
+        @touchstart=${this._onHeaderTouchStart}
+      >
         <div class="avatar">
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <rect x="5" y="8" width="14" height="12" rx="2.5" />
@@ -159,22 +202,35 @@ class ChatHeader extends ChatbotMixin(LitElement) {
           </div>
         </div>
 
-        <button
-          class="close-btn"
-          @click=${() => this.themeState.close()}
-          aria-label="Close chat"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            xmlns="http://www.w3.org/2000/svg"
+        <div class="actions">
+          ${allowFullscreen ? html`
+            <button
+              class="icon-btn"
+              @click=${() => this.themeState.toggleFullscreen()}
+              aria-label="${isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}"
+              title="${isFullscreen ? "Exit fullscreen" : "Fullscreen"}"
+            >
+              ${isFullscreen
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
+                  </svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
+                  </svg>`}
+            </button>
+          ` : nothing}
+
+          <button
+            class="icon-btn"
+            @click=${() => this.themeState.close()}
+            aria-label="Close chat"
+            title="Close"
           >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
-        </button>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
     `;
   }

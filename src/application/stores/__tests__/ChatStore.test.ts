@@ -8,6 +8,8 @@ describe("ChatStore", () => {
     chatStore.setState({
       isOpened: false,
       isRendered: false,
+      isFullscreen: false,
+      allowFullscreen: true,
       activeConnector: "dummy",
       connectorStatus: "idle",
       theme: DEFAULT_THEME,
@@ -73,5 +75,34 @@ describe("ChatStore", () => {
     expect(chatStore.getState().connectorStatus).toBe("connected");
     chatStore.getState().setConnectorStatus("error");
     expect(chatStore.getState().connectorStatus).toBe("error");
+  });
+
+  it("isFullscreen starts as false", () => {
+    expect(chatStore.getState().isFullscreen).toBe(false);
+  });
+
+  it("toggleFullscreen flips isFullscreen", () => {
+    chatStore.getState().toggleFullscreen();
+    expect(chatStore.getState().isFullscreen).toBe(true);
+    chatStore.getState().toggleFullscreen();
+    expect(chatStore.getState().isFullscreen).toBe(false);
+  });
+
+  it("setFullscreen sets isFullscreen directly", () => {
+    chatStore.getState().setFullscreen(true);
+    expect(chatStore.getState().isFullscreen).toBe(true);
+    chatStore.getState().setFullscreen(false);
+    expect(chatStore.getState().isFullscreen).toBe(false);
+  });
+
+  it("allowFullscreen starts as true", () => {
+    expect(chatStore.getState().allowFullscreen).toBe(true);
+  });
+
+  it("setAllowFullscreen updates allowFullscreen", () => {
+    chatStore.getState().setAllowFullscreen(false);
+    expect(chatStore.getState().allowFullscreen).toBe(false);
+    chatStore.getState().setAllowFullscreen(true);
+    expect(chatStore.getState().allowFullscreen).toBe(true);
   });
 });
