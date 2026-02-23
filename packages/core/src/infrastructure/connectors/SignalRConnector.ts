@@ -45,7 +45,6 @@ export class SignalRConnector implements IConnector {
 
   async connect(): Promise<void> {
     // Dynamic import so @microsoft/signalr is an optional peer dep
-    // @ts-expect-error — @microsoft/signalr is an optional peer dependency
     const signalR = await import("@microsoft/signalr").catch(() => {
       throw new Error(
         "SignalRConnector: @microsoft/signalr not installed. " +

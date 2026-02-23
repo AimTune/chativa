@@ -1,7 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { MessageTypeRegistry } from "../application/registries/MessageTypeRegistry";
-import type { MessageSender } from "../domain/entities/Message";
+import { MessageTypeRegistry, type MessageSender } from "@chativa/core";
+
 
 @customElement("default-text-message")
 export class DefaultTextMessage extends LitElement {

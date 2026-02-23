@@ -2,8 +2,8 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { unsafeStatic } from "lit/static-html.js";
 import { html as staticHtml } from "lit/static-html.js";
-import messageStore from "../application/stores/MessageStore";
-import chatStore from "../application/stores/ChatStore";
+
+import { messageStore, chatStore } from "@chativa/core";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);

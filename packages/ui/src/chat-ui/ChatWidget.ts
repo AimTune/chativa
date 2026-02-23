@@ -1,11 +1,13 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { ChatEngine } from "../application/ChatEngine";
-import { ConnectorRegistry } from "../application/registries/ConnectorRegistry";
-import { MessageTypeRegistry } from "../application/registries/MessageTypeRegistry";
-import messageStore from "../application/stores/MessageStore";
-import { createOutgoingMessage } from "../domain/entities/Message";
-import { DummyConnector } from "../infrastructure/connectors/DummyConnector";
+import {
+  ChatEngine,
+  ConnectorRegistry,
+  MessageTypeRegistry,
+  messageStore,
+  createOutgoingMessage,
+  DummyConnector,
+} from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 import "./DefaultTextMessage";

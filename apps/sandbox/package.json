@@ -1,0 +1,20 @@
+{
+  "name": "sandbox",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev":     "vite",
+    "build":   "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*",
+    "@chativa/ui":   "workspace:*",
+    "@shoelace-style/shoelace": "^2.20.1"
+  },
+  "devDependencies": {
+    "lit":        "^3.3.0",
+    "typescript": "~5.8.3",
+    "vite":       "^7.0.3"
+  }
+}

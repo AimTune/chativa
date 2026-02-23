@@ -1,14 +1,14 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import chatStore from "../application/stores/ChatStore";
-import { DEFAULT_THEME } from "../domain/value-objects/Theme";
-import type {
-  ThemeConfig,
-  ButtonPosition,
-  ButtonSize,
-  SpaceLevel,
-  DeepPartial,
-} from "../domain/value-objects/Theme";
+import {
+  chatStore,
+  DEFAULT_THEME,
+  type ThemeConfig,
+  type ButtonPosition,
+  type ButtonSize,
+  type SpaceLevel,
+  type DeepPartial,
+} from "@chativa/core";
 
 const COLOR_PRESETS: { label: string; value: string }[] = [
   { label: "Indigo",   value: "#4f46e5" },

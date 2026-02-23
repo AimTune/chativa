@@ -1,5 +1,5 @@
 // Domain — pure types and interfaces
-export type { IncomingMessage, OutgoingMessage } from "./entities/Message";
+export type { IncomingMessage, OutgoingMessage, MessageSender } from "./entities/Message";
 export { createOutgoingMessage } from "./entities/Message";
 export type {
   IConnector,

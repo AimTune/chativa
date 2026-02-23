@@ -1,7 +1,6 @@
 import { css, LitElement, unsafeCSS } from "lit";
 import { state } from "lit/decorators.js";
-import chatStore, { type ChatStoreState } from "../application/stores/ChatStore";
-import type { ThemeConfig } from "../domain/value-objects/Theme";
+import { chatStore, type ChatStoreState, type ThemeConfig } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import commonStyles from "../styles/commonStyles?inline" with { type: "css" };
 import styless from "../styles.css?inline" with { type: "css" };
