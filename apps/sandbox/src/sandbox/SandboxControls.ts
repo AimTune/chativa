@@ -12,14 +12,14 @@ import {
 import { i18n } from "@chativa/ui";
 
 const COLOR_PRESETS: { label: string; value: string }[] = [
-  { label: "Indigo",   value: "#4f46e5" },
-  { label: "Violet",   value: "#7c3aed" },
-  { label: "Pink",     value: "#db2777" },
-  { label: "Red",      value: "#dc2626" },
-  { label: "Orange",   value: "#ea580c" },
-  { label: "Green",    value: "#16a34a" },
-  { label: "Sky",      value: "#0284c7" },
-  { label: "Slate",    value: "#475569" },
+  { label: "Indigo", value: "#4f46e5" },
+  { label: "Violet", value: "#7c3aed" },
+  { label: "Pink", value: "#db2777" },
+  { label: "Red", value: "#dc2626" },
+  { label: "Orange", value: "#ea580c" },
+  { label: "Green", value: "#16a34a" },
+  { label: "Sky", value: "#0284c7" },
+  { label: "Slate", value: "#475569" },
 ];
 
 @customElement("sandbox-controls")
@@ -285,6 +285,36 @@ export class SandboxControls extends LitElement {
       box-shadow: 0 1px 5px rgba(0, 0, 0, 0.09);
     }
 
+    /* ── Message type demo buttons ── */
+    .msg-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .msg-btn {
+      padding: 7px 6px;
+      border-radius: 8px;
+      border: 1.5px solid #e2e8f0;
+      background: #f8fafc;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #475569;
+      cursor: pointer;
+      text-align: center;
+      font-family: inherit;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .msg-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #0f172a;
+    }
+
     /* ── Actions ── */
     .actions {
       display: flex;
@@ -367,6 +397,136 @@ export class SandboxControls extends LitElement {
   private _set(overrides: DeepPartial<ThemeConfig>) {
     chatStore.getState().setTheme(overrides);
   }
+
+  private _inject(msg: Record<string, unknown>) {
+    const inject = (window as unknown as Record<string, unknown>).chativaInject as
+      | ((msg: Record<string, unknown>) => void)
+      | undefined;
+    if (!inject) return;
+    // Open chat if closed so the message is visible
+    if (!chatStore.getState().isOpened) chatStore.getState().toggle();
+    inject(msg);
+  }
+
+  private _demoMessages: Array<{ label: string; msg: Record<string, unknown> }> = [
+    {
+      label: "💬 Text",
+      msg: { type: "text", data: { text: "Hello! This is a **text** message with _markdown_ support." } },
+    },
+    {
+      label: "⚡ Quick Reply",
+      msg: {
+        type: "quick-reply",
+        data: {
+          text: "Which option do you prefer?",
+          actions: [{ label: "Option A" }, { label: "Option B" }, { label: "Option C" }],
+        },
+      },
+    },
+    {
+      label: "🖼️ Image",
+      msg: {
+        type: "image",
+        data: {
+          src: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80",
+          alt: "Mountain landscape",
+          caption: "Beautiful mountain view",
+        },
+      },
+    },
+    {
+      label: "🃏 Card",
+      msg: {
+        type: "card",
+        data: {
+          image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=400&q=80",
+          title: "Getting Started",
+          subtitle: "Learn how to use Chativa in your project.",
+          buttons: [{ label: "Read Docs", value: "/docs" }, { label: "View Demo", value: "/demo" }],
+        },
+      },
+    },
+    {
+      label: "🔘 Buttons",
+      msg: {
+        type: "buttons",
+        data: {
+          text: "How can I help you today?",
+          buttons: [
+            { label: "Track my order" },
+            { label: "Return a product" },
+            { label: "Talk to an agent" },
+          ],
+        },
+      },
+    },
+    {
+      label: "🔘 Buttons (Persistent)",
+      msg: {
+        type: "buttons",
+        data: {
+          text: "How can I help you today?",
+          buttons: [
+            { label: "Track my order" },
+            { label: "Return a product" },
+            { label: "Talk to an agent" },
+          ],
+          persistent: true,
+        },
+      },
+    },
+    {
+      label: "📁 File",
+      msg: {
+        type: "file",
+        data: {
+          url: "https://example.com/report.pdf",
+          name: "Q4-Report-2024.pdf",
+          size: 2457600,
+          mimeType: "application/pdf",
+        },
+      },
+    },
+    {
+      label: "🎬 Video",
+      msg: {
+        type: "video",
+        data: {
+          src: "https://www.w3schools.com/html/mov_bbb.mp4",
+          poster: "https://www.w3schools.com/html/pic_trulli.jpg",
+          caption: "Big Buck Bunny sample clip",
+        },
+      },
+    },
+    {
+      label: "🎠 Carousel",
+      msg: {
+        type: "carousel",
+        data: {
+          cards: [
+            {
+              image: "https://images.unsplash.com/photo-1568702846914-96b305d2aaeb?w=300&q=80",
+              title: "Fresh Apples",
+              subtitle: "Crispy and delicious",
+              buttons: [{ label: "Add to cart", value: "/cart/apple" }],
+            },
+            {
+              image: "https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=300&q=80",
+              title: "Ripe Bananas",
+              subtitle: "Rich in potassium",
+              buttons: [{ label: "Add to cart", value: "/cart/banana" }],
+            },
+            {
+              image: "https://images.unsplash.com/photo-1550258987-190a2d41a8ba?w=300&q=80",
+              title: "Juicy Oranges",
+              subtitle: "Full of vitamin C",
+              buttons: [{ label: "Add to cart", value: "/cart/orange" }],
+            },
+          ],
+        },
+      },
+    },
+  ];
 
   private _applyHex() {
     if (/^#[0-9a-fA-F]{6}$/.test(this._colorHex)) {
@@ -454,7 +614,7 @@ export class SandboxControls extends LitElement {
             <div class="section-label">Primary Color</div>
             <div class="colors">
               ${COLOR_PRESETS.map(
-                (c) => html`
+      (c) => html`
                   <button
                     class="color-swatch ${colors.primary === c.value ? "active" : ""}"
                     style="background: ${c.value}; color: ${c.value}"
@@ -462,7 +622,7 @@ export class SandboxControls extends LitElement {
                     title="${c.label}"
                   ></button>
                 `
-              )}
+    )}
             </div>
             <div class="color-row">
               <input
@@ -470,9 +630,9 @@ export class SandboxControls extends LitElement {
                 class="color-native"
                 .value=${colors.primary}
                 @input=${(e: Event) => {
-                  const v = (e.target as HTMLInputElement).value;
-                  this._set({ colors: { primary: v } });
-                }}
+        const v = (e.target as HTMLInputElement).value;
+        this._set({ colors: { primary: v } });
+      }}
                 title="Custom color"
               />
               <input
@@ -482,12 +642,12 @@ export class SandboxControls extends LitElement {
                 maxlength="7"
                 placeholder="#4f46e5"
                 @input=${(e: Event) => {
-                  this._colorHex = (e.target as HTMLInputElement).value;
-                }}
+        this._colorHex = (e.target as HTMLInputElement).value;
+      }}
                 @change=${this._applyHex}
                 @keydown=${(e: KeyboardEvent) => {
-                  if (e.key === "Enter") this._applyHex();
-                }}
+        if (e.key === "Enter") this._applyHex();
+      }}
               />
             </div>
           </div>
@@ -499,13 +659,13 @@ export class SandboxControls extends LitElement {
             <div class="section-label">Button Size</div>
             <div class="toggle-group">
               ${(
-                [
-                  { label: "Small",  value: "small"  },
-                  { label: "Medium", value: "medium" },
-                  { label: "Large",  value: "large"  },
-                ] as { label: string; value: ButtonSize }[]
-              ).map(
-                (s) => html`
+        [
+          { label: "Small", value: "small" },
+          { label: "Medium", value: "medium" },
+          { label: "Large", value: "large" },
+        ] as { label: string; value: ButtonSize }[]
+      ).map(
+        (s) => html`
                   <button
                     class="tg-btn ${size === s.value ? "active" : ""}"
                     @click=${() => this._set({ size: s.value })}
@@ -513,7 +673,7 @@ export class SandboxControls extends LitElement {
                     ${s.label}
                   </button>
                 `
-              )}
+      )}
             </div>
           </div>
 
@@ -524,7 +684,7 @@ export class SandboxControls extends LitElement {
             <div class="section-label">Edge Margin</div>
             <div class="toggle-group">
               ${(["1", "2", "3", "4", "5"] as SpaceLevel[]).map(
-                (m) => html`
+        (m) => html`
                   <button
                     class="tg-btn ${positionMargin === m ? "active" : ""}"
                     @click=${() => this._set({ positionMargin: m })}
@@ -532,7 +692,7 @@ export class SandboxControls extends LitElement {
                     ${m}
                   </button>
                 `
-              )}
+      )}
             </div>
           </div>
 
@@ -543,16 +703,34 @@ export class SandboxControls extends LitElement {
             <div class="section-label">Language</div>
             <div class="toggle-group">
               ${([
-                { label: "English", value: "en" },
-                { label: "Türkçe", value: "tr" },
-              ] as { label: string; value: string }[]).map(
-                (l) => html`
+        { label: "English", value: "en" },
+        { label: "Türkçe", value: "tr" },
+      ] as { label: string; value: string }[]).map(
+        (l) => html`
                   <button
                     class="tg-btn ${this._lang.startsWith(l.value) ? "active" : ""}"
                     @click=${() => i18n.changeLanguage(l.value)}
                   >${l.label}</button>
                 `
-              )}
+      )}
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Message Type Examples -->
+          <div>
+            <div class="section-label">Message Types</div>
+            <div class="msg-grid">
+              ${this._demoMessages.map(
+        ({ label, msg }) => html`
+                  <button
+                    class="msg-btn"
+                    type="button"
+                    @click=${() => this._inject(msg)}
+                  >${label}</button>
+                `
+      )}
             </div>
           </div>
 

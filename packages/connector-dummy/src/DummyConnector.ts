@@ -4,6 +4,7 @@ import type {
   DisconnectHandler,
   TypingHandler,
   FeedbackType,
+  IncomingMessage,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -74,5 +75,17 @@ export class DummyConnector implements IConnector {
 
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
     console.log(`[DummyConnector] Feedback received — messageId: ${messageId}, feedback: ${feedback}`);
+  }
+
+  /**
+   * Directly inject a bot message — used by the sandbox demo buttons.
+   * Does not go through the extension pipeline.
+   */
+  injectMessage(msg: Omit<IncomingMessage, "id" | "timestamp">): void {
+    this.messageHandler?.({
+      id: `demo-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      timestamp: Date.now(),
+      ...msg,
+    });
   }
 }

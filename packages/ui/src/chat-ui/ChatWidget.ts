@@ -11,6 +11,12 @@ import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 import "./DefaultTextMessage";
 import "./QuickReplyMessage";
+import "./ImageMessage";
+import "./CardMessage";
+import "./ButtonsMessage";
+import "./FileMessage";
+import "./VideoMessage";
+import "./CarouselMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
