@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chativa — Live Demo</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                "Helvetica Neue", Arial, sans-serif;
+            background: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0f172a;
+        }
+
+        .demo {
+            max-width: 800px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .demo h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .demo p {
+            color: #64748b;
+            font-size: 1.125rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 3rem;
+        }
+
+        .feature {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .feature h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+
+        .feature p {
+            font-size: 0.875rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .hint {
+            margin-top: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 24px;
+            background: white;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 32px;
+            font-size: 0.875rem;
+            color: #64748b;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .hint-arrow {
+            font-size: 1.5rem;
+        }
+
+        .links {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .links a {
+            padding: 10px 20px;
+            background: #4f46e5;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        .links a:hover {
+            background: #4338ca;
+        }
+
+        .links a.secondary {
+            background: white;
+            color: #4f46e5;
+            border: 1.5px solid #4f46e5;
+        }
+
+        .links a.secondary:hover {
+            background: #f8fafc;
+        }
+    </style>
+
+    <!-- Import map for dependencies -->
+    <script type="importmap">
+        {
+            "imports": {
+                "lit": "https://esm.sh/lit@3.3.0",
+                "lit/": "https://esm.sh/lit@3.3.0/",
+                "@lit/reactive-element": "https://esm.sh/@lit/reactive-element@2.0.4",
+                "@lit/reactive-element/": "https://esm.sh/@lit/reactive-element@2.0.4/",
+                "lit-element/lit-element.js": "https://esm.sh/lit-element@4.1.1",
+                "lit-html": "https://esm.sh/lit-html@3.2.1",
+                "lit-html/": "https://esm.sh/lit-html@3.2.1/",
+                "zustand/vanilla": "https://esm.sh/zustand@5.0.2/vanilla",
+                "i18next": "https://esm.sh/i18next@24.2.0"
+            }
+        }
+    </script>
+</head>
+
+<body>
+    <div class="demo">
+        <h1>Chativa</h1>
+        <p>Customizable · Extensible · Plug-and-play chat widget built with Web Components</p>
+
+        <div class="features">
+            <div class="feature">
+                <h3>🎨 Customizable</h3>
+                <p>Full theme support with CSS custom properties</p>
+            </div>
+            <div class="feature">
+                <h3>🔌 Extensible</h3>
+                <p>Plugin system for custom message types</p>
+            </div>
+            <div class="feature">
+                <h3>🏗️ Hexagonal</h3>
+                <p>Clean architecture with strict layer separation</p>
+            </div>
+            <div class="feature">
+                <h3>⚡ Modern</h3>
+                <p>Built with LitElement, Zustand, and TypeScript</p>
+            </div>
+        </div>
+
+        <div class="hint">
+            <span class="hint-arrow">↘</span>
+            Click the button to start chatting
+        </div>
+
+        <div class="links">
+            <a href="https://github.com/aimtune/chativa" target="_blank">GitHub</a>
+            <a href="https://www.npmjs.com/package/@chativa/core" target="_blank" class="secondary">NPM</a>
+        </div>
+    </div>
+
+    <!-- Load from CDN with esm.sh -->
+    <script type="module">
+        // Import from esm.sh CDN (handles dependencies automatically)
+        import { ConnectorRegistry } from "https://esm.sh/@chativa/core@latest";
+        import { DummyConnector } from "https://esm.sh/@chativa/connector-dummy@latest";
+
+        // Register connector
+        const connector = new DummyConnector({ replyDelay: 800 });
+        ConnectorRegistry.register(connector);
+
+        // Expose for demo purposes
+        window.chativaInject = connector.injectMessage.bind(connector);
+
+        // Load UI components
+        import("https://esm.sh/@chativa/ui@latest");
+    </script>
+
+    <!-- Chativa web components -->
+    <chat-bot-button></chat-bot-button>
+    <chat-iva></chat-iva>
+</body>
+
+</html>

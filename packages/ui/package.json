@@ -41,18 +41,17 @@
   },
   "dependencies": {
     "@lit-labs/virtualizer": "^2.1.1",
+    "lit": "3.3.2",
     "i18next": "^25.3.2",
     "i18next-browser-languagedetector": "^8.2.0",
-    "marked": "^13.0.0"
+    "marked": "^13.0.0",
+    "@chativa/core": "workspace:*"
   },
   "peerDependencies": {
-    "@chativa/core": ">=0.0.1",
-    "lit": ">=3.0.0"
+    "@chativa/core": ">=0.0.1"
   },
   "devDependencies": {
-    "@chativa/core": "workspace:*",
     "jsdom": "^28.1.0",
-    "lit": "^3.3.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.3",
     "vite-plugin-dts": "^4.5.4",
