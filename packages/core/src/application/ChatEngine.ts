@@ -1,4 +1,4 @@
-import type { IConnector } from "../domain/ports/IConnector";
+import type { IConnector, FeedbackType } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
@@ -75,6 +75,10 @@ export class ChatEngine {
         this._scheduleReconnect(attempt + 1);
       }
     }, delay);
+  }
+
+  async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
+    await this.connector.sendFeedback?.(messageId, feedback);
   }
 
   async send(message: OutgoingMessage): Promise<void> {

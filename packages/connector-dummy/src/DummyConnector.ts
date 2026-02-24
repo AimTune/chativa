@@ -3,6 +3,7 @@ import type {
   MessageHandler,
   DisconnectHandler,
   TypingHandler,
+  FeedbackType,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -69,5 +70,9 @@ export class DummyConnector implements IConnector {
 
   onTyping(callback: TypingHandler): void {
     this.typingHandler = callback;
+  }
+
+  async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
+    console.log(`[DummyConnector] Feedback received — messageId: ${messageId}, feedback: ${feedback}`);
   }
 }

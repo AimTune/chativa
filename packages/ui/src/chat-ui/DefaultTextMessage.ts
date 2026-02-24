@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
 import { MessageTypeRegistry, type MessageSender } from "@chativa/core";
@@ -107,13 +107,74 @@ export class DefaultTextMessage extends LitElement {
       color: #94a3b8;
       padding: 0 4px;
     }
+
+    .feedback {
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.15s;
+      padding: 0 2px;
+    }
+
+    .message.bot:hover .feedback,
+    .feedback.active {
+      opacity: 1;
+    }
+
+    .feedback-btn {
+      background: none;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 2px 5px;
+      cursor: pointer;
+      font-size: 0.75rem;
+      line-height: 1;
+      color: #94a3b8;
+      transition: border-color 0.15s, background 0.15s, color 0.15s;
+    }
+
+    .feedback-btn:hover {
+      border-color: #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+    }
+
+    .feedback-btn.selected-like {
+      border-color: #bbf7d0;
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .feedback-btn.selected-dislike {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #dc2626;
+    }
   `;
 
   @property({ type: Object }) messageData: Record<string, unknown> = {};
   @property({ type: String }) sender: MessageSender = "bot";
+  @property({ type: String }) messageId = "";
   @property({ type: Number }) timestamp = 0;
   /** When true the avatar is invisible (still occupies space for alignment). */
   @property({ type: Boolean }) hideAvatar = false;
+
+  @state() private _feedback: "like" | "dislike" | null = null;
+
+  private _onFeedback(type: "like" | "dislike") {
+    if (this._feedback === type) {
+      this._feedback = null;
+      return;
+    }
+    this._feedback = type;
+    this.dispatchEvent(
+      new CustomEvent("chativa-feedback", {
+        bubbles: true,
+        composed: true,
+        detail: { messageId: this.messageId, feedback: type },
+      })
+    );
+  }
 
   private get _time(): string {
     if (!this.timestamp) return "";
@@ -153,6 +214,20 @@ export class DefaultTextMessage extends LitElement {
           : nothing}
         <div class="content">
           <div class="bubble">${bubbleContent}</div>
+          ${!isUser ? html`
+            <div class="feedback ${this._feedback ? "active" : ""}">
+              <button
+                class="feedback-btn ${this._feedback === "like" ? "selected-like" : ""}"
+                title="Like"
+                @click=${() => this._onFeedback("like")}
+              >👍</button>
+              <button
+                class="feedback-btn ${this._feedback === "dislike" ? "selected-dislike" : ""}"
+                title="Dislike"
+                @click=${() => this._onFeedback("dislike")}
+              >👎</button>
+            </div>
+          ` : nothing}
           ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
         </div>
       </div>

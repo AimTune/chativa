@@ -120,6 +120,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.addEventListener("chat-action", this._onChatAction as EventListener);
     this.addEventListener("chat-retry", this._onChatRetry as EventListener);
+    this.addEventListener("chativa-feedback", this._onFeedback as EventListener);
   }
 
   disconnectedCallback() {
@@ -128,6 +129,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
     this.removeEventListener("chat-retry", this._onChatRetry as EventListener);
+    this.removeEventListener("chativa-feedback", this._onFeedback as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -231,6 +233,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine
       .send(createOutgoingMessage(text))
       .catch((err: unknown) => console.error("[ChatWidget] Action send failed:", err));
+  };
+
+  private _onFeedback = (e: CustomEvent<{ messageId: string; feedback: "like" | "dislike" }>) => {
+    this._engine
+      .sendFeedback(e.detail.messageId, e.detail.feedback)
+      .catch((err: unknown) => console.error("[ChatWidget] Feedback failed:", err));
   };
 
   private _onChatRetry = () => {

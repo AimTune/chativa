@@ -417,6 +417,7 @@ class ChatMessageList extends LitElement {
               return staticHtml`<${unsafeStatic(tag)}
                 .messageData=${msg.data}
                 .sender=${msg.from ?? "bot"}
+                .messageId=${msg.id}
                 .timestamp=${isLastInGroup ? (msg.timestamp ?? 0) : 0}
                 .hideAvatar=${!isLastInGroup}
               ></${unsafeStatic(tag)}>`;
