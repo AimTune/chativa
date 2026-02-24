@@ -3,18 +3,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev":     "vite",
-    "build":   "vite build",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {
     "@chativa/core": "workspace:*",
-    "@chativa/ui":   "workspace:*",
-    "@shoelace-style/shoelace": "^2.20.1"
+    "@chativa/ui": "workspace:*"
   },
   "devDependencies": {
-    "lit":        "^3.3.0",
+    "lit": "^3.3.0",
     "typescript": "~5.8.3",
-    "vite":       "^7.0.3"
+    "vite": "^7.0.3"
   }
 }

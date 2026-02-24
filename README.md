@@ -331,7 +331,6 @@ pnpm build
 - [i18next](https://www.i18next.com/) — Internationalization
 - [Vite 7](https://vite.dev/) — Build tool
 - [Vitest 4](https://vitest.dev/) — Unit & integration testing
-- [@shoelace-style/shoelace](https://shoelace.style/) — UI primitives
 
 ---
 

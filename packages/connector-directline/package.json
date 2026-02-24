@@ -15,14 +15,28 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
-  "keywords": ["chativa", "chat", "connector", "directline", "azure", "botframework"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "connector",
+    "directline",
+    "azure",
+    "botframework"
+  ],
   "homepage": "https://github.com/AimTune/chativa#readme",
-  "bugs": { "url": "https://github.com/AimTune/chativa/issues" },
-  "repository": { "type": "git", "url": "git+https://github.com/AimTune/chativa.git" },
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
   "scripts": {
-    "build":     "vite build",
-    "test":      "vitest run --passWithNoTests",
+    "build": "vite build",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -33,9 +47,9 @@
   },
   "devDependencies": {
     "@chativa/core": "workspace:*",
-    "typescript":   "~5.8.3",
-    "vite":         "^7.0.3",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
     "vite-plugin-dts": "^4.5.4",
-    "vitest":       "^4.0.18"
+    "vitest": "^4.0.18"
   }
 }
