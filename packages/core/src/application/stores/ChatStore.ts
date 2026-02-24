@@ -1,6 +1,7 @@
 import { createStore } from "zustand/vanilla";
 import { DEFAULT_THEME, mergeTheme, type ThemeConfig } from "../../domain/value-objects/Theme";
 import type { DeepPartial } from "../../domain/value-objects/Theme";
+import { EventBus } from "../EventBus";
 
 // Re-export for backwards compatibility
 export type { ThemeConfig };
@@ -68,15 +69,24 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   isLoadingHistory: false,
   historyCursor: undefined,
 
-  toggle: () =>
+  toggle: () => {
     setState((s) => ({
       isOpened: !s.isOpened,
       isRendered: true,
       unreadCount: 0,
-    })),
+    }));
+    EventBus.emit(getState().isOpened ? "widget_opened" : "widget_closed", undefined);
+  },
 
-  open: () => setState(() => ({ isOpened: true, isRendered: true, unreadCount: 0 })),
-  close: () => setState(() => ({ isOpened: false })),
+  open: () => {
+    setState(() => ({ isOpened: true, isRendered: true, unreadCount: 0 }));
+    EventBus.emit("widget_opened", undefined);
+  },
+
+  close: () => {
+    setState(() => ({ isOpened: false }));
+    EventBus.emit("widget_closed", undefined);
+  },
 
   toggleFullscreen: () =>
     setState((s) => ({ isFullscreen: !s.isFullscreen })),

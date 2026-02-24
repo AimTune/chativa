@@ -5,6 +5,8 @@ import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
 import chatStore from "./stores/ChatStore";
+import type { ConnectorStatus } from "./stores/ChatStore";
+import { EventBus } from "./EventBus";
 
 export class ChatEngine {
   private connector: IConnector;
@@ -17,6 +19,12 @@ export class ChatEngine {
 
   constructor(connector: IConnector) {
     this.connector = connector;
+  }
+
+  /** Set connector status in store and emit EventBus event. */
+  private _setStatus(status: ConnectorStatus): void {
+    chatStore.getState().setConnectorStatus(status);
+    EventBus.emit("connector_status_changed", { status });
   }
 
   async init(): Promise<void> {
@@ -35,10 +43,11 @@ export class ChatEngine {
 
       const Component = MessageTypeRegistry.resolve(transformed.type);
       messageStore.getState().addMessage({ ...transformed, from: "bot", component: Component });
+      EventBus.emit("message_received", transformed);
     });
 
     this.connector.onDisconnect?.((reason) => {
-      chatStore.getState().setConnectorStatus("disconnected");
+      this._setStatus("disconnected");
       // Auto-reconnect unless destroyed or user-initiated disconnect
       if (!this._destroyed && reason !== "user") {
         this._scheduleReconnect(1);
@@ -57,36 +66,36 @@ export class ChatEngine {
       this._handleGenUIChunk(streamId, chunk, done);
     });
 
-    chatStore.getState().setConnectorStatus("connecting");
+    this._setStatus("connecting");
     try {
       await this.connector.connect();
-      chatStore.getState().setConnectorStatus("connected");
+      this._setStatus("connected");
       // Load initial history if supported
       if (this.connector.loadHistory) {
         await this.loadHistory();
       }
     } catch (err) {
-      chatStore.getState().setConnectorStatus("error");
+      this._setStatus("error");
       throw err;
     }
   }
 
   private _scheduleReconnect(attempt: number): void {
     if (this._destroyed || attempt > 3) {
-      chatStore.getState().setConnectorStatus("error");
+      this._setStatus("error");
       chatStore.getState().setReconnectAttempt(0);
       return;
     }
 
     chatStore.getState().setReconnectAttempt(attempt);
-    chatStore.getState().setConnectorStatus("connecting");
+    this._setStatus("connecting");
 
     const delay = 2000 * attempt; // 2s, 4s, 6s
     this._reconnectTimer = setTimeout(async () => {
       if (this._destroyed) return;
       try {
         await this.connector.connect();
-        chatStore.getState().setConnectorStatus("connected");
+        this._setStatus("connected");
         chatStore.getState().setReconnectAttempt(0);
       } catch {
         this._scheduleReconnect(attempt + 1);
@@ -113,6 +122,7 @@ export class ChatEngine {
     }
 
     await this.connector.sendMessage(transformed);
+    EventBus.emit("message_sent", transformed);
 
     if (this.connector.addSentToHistory !== false) {
       messageStore.getState().updateById(transformed.id, { status: "sent" });
@@ -120,7 +130,10 @@ export class ChatEngine {
   }
 
   async sendFile(file: File, metadata?: Record<string, unknown>): Promise<void> {
-    await this.connector.sendFile?.(file, metadata);
+    if (this.connector.sendFile) {
+      await this.connector.sendFile(file, metadata);
+      EventBus.emit("file_uploaded", { name: file.name, size: file.size });
+    }
   }
 
   async loadHistory(): Promise<void> {
@@ -139,6 +152,7 @@ export class ChatEngine {
       messageStore.getState().prependMessages(msgs);
       chatStore.getState().setHasMoreHistory(result.hasMore);
       chatStore.getState().setHistoryCursor(result.cursor);
+      EventBus.emit("history_loaded", { count: msgs.length });
     } finally {
       chatStore.getState().setIsLoadingHistory(false);
     }
@@ -165,6 +179,7 @@ export class ChatEngine {
       if (!chatStore.getState().isOpened) {
         chatStore.getState().incrementUnread();
       }
+      EventBus.emit("genui_stream_started", { streamId });
     } else {
       // Subsequent chunk — append to existing message
       const current = messageStore.getState().messages.find((m) => m.id === msgId);
@@ -185,6 +200,7 @@ export class ChatEngine {
     }
 
     if (done) {
+      EventBus.emit("genui_stream_completed", { streamId });
       this._genUIStreams.delete(streamId);
       this._msgToStream.delete(msgId);
     }
@@ -208,6 +224,6 @@ export class ChatEngine {
     }
     chatStore.getState().setReconnectAttempt(0);
     await this.connector.disconnect();
-    chatStore.getState().setConnectorStatus("disconnected");
+    this._setStatus("disconnected");
   }
 }

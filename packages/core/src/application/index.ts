@@ -8,3 +8,5 @@ export { default as chatStore } from "./stores/ChatStore";
 export { default as messageStore } from "./stores/MessageStore";
 export type { ChatStoreState, ConnectorStatus } from "./stores/ChatStore";
 export type { StoredMessage, MessageStoreState } from "./stores/MessageStore";
+export { EventBus } from "./EventBus";
+export type { EventBusPayloadMap, EventBusEventName } from "./EventBus";
