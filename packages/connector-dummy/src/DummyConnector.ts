@@ -4,8 +4,10 @@ import type {
   DisconnectHandler,
   TypingHandler,
   IncomingMessage,
+  MessageStatus,
+  HistoryResult,
 } from "@chativa/core";
-import type { FeedbackType } from "../../core/src/domain/ports/IConnector";
+import type { FeedbackType, MessageStatusHandler } from "../../core/src/domain/ports/IConnector";
 import type { OutgoingMessage } from "@chativa/core";
 
 /**
@@ -21,8 +23,27 @@ export class DummyConnector implements IConnector {
   private messageHandler: MessageHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
   private typingHandler: TypingHandler | null = null;
+  private statusHandler: MessageStatusHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
+
+  /** Fake history pages — two pages of 5 messages each. */
+  private static _historyPages: IncomingMessage[][] = [
+    Array.from({ length: 5 }, (_, i) => ({
+      id: `history-p1-${i}`,
+      type: "text",
+      from: i % 2 === 0 ? ("bot" as const) : ("user" as const),
+      data: { text: i % 2 === 0 ? `Earlier bot message ${i + 1}` : `Earlier user message ${i + 1}` },
+      timestamp: Date.now() - (600 - i * 60) * 1000,
+    })),
+    Array.from({ length: 5 }, (_, i) => ({
+      id: `history-p2-${i}`,
+      type: "text",
+      from: i % 2 === 0 ? ("bot" as const) : ("user" as const),
+      data: { text: i % 2 === 0 ? `Much earlier bot message ${i + 1}` : `Much earlier user message ${i + 1}` },
+      timestamp: Date.now() - (1200 - i * 60) * 1000,
+    })),
+  ];
 
   constructor(options: { replyDelay?: number; connectDelay?: number } = {}) {
     this.replyDelay = options.replyDelay ?? 500;
@@ -52,12 +73,19 @@ export class DummyConnector implements IConnector {
     this.typingHandler?.(true);
     setTimeout(() => {
       this.typingHandler?.(false);
+      const replyId = `dummy-reply-${Date.now()}`;
       this.messageHandler?.({
-        id: `dummy-reply-${Date.now()}`,
+        id: replyId,
         type: "text",
         data: { text: `Echo: ${text}` },
         timestamp: Date.now(),
       });
+      // Simulate "read" status for the sent message after a short delay
+      if (this.statusHandler) {
+        setTimeout(() => {
+          this.statusHandler?.(message.id, "read" as MessageStatus);
+        }, 1500);
+      }
     }, this.replyDelay);
   }
 
@@ -73,8 +101,46 @@ export class DummyConnector implements IConnector {
     this.typingHandler = callback;
   }
 
+  onMessageStatus(callback: MessageStatusHandler): void {
+    this.statusHandler = callback;
+  }
+
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
     console.log(`[DummyConnector] Feedback received — messageId: ${messageId}, feedback: ${feedback}`);
+  }
+
+  async sendFile(file: File, metadata?: Record<string, unknown>): Promise<void> {
+    console.log(`[DummyConnector] File received — name: ${file.name}, size: ${file.size}`, metadata);
+    // Echo back a file message so the UI reflects the upload
+    setTimeout(() => {
+      this.messageHandler?.({
+        id: `dummy-file-reply-${Date.now()}`,
+        type: "file",
+        data: {
+          name: file.name,
+          size: file.size,
+          mimeType: file.type,
+          url: URL.createObjectURL(file),
+          caption: (metadata?.caption as string | undefined) ?? undefined,
+        },
+        timestamp: Date.now(),
+      });
+    }, this.replyDelay);
+  }
+
+  async loadHistory(cursor?: string): Promise<HistoryResult> {
+    await new Promise<void>((resolve) => setTimeout(resolve, 400));
+    const pageIndex = cursor ? parseInt(cursor, 10) : 0;
+    const page = DummyConnector._historyPages[pageIndex];
+    if (!page) {
+      return { messages: [], hasMore: false };
+    }
+    const nextPage = pageIndex + 1;
+    return {
+      messages: [...page].reverse(), // oldest-first within page
+      hasMore: nextPage < DummyConnector._historyPages.length,
+      cursor: nextPage < DummyConnector._historyPages.length ? String(nextPage) : undefined,
+    };
   }
 
   /**

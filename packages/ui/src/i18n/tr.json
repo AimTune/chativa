@@ -25,7 +25,12 @@
         "connecting": "Bağlanıyor…",
         "emptyTitle": "Size nasıl yardımcı olabilirim?",
         "emptySubtitle": "Başlamak için bir mesaj gönderin.",
-        "newMessage": "Yeni mesaj"
+        "newMessage": "Yeni mesaj",
+        "loadMore": "Önceki mesajları yükle",
+        "errorTitle": "Bağlantı kesildi",
+        "errorSubtitle": "Yeniden bağlanılamadı. Lütfen tekrar deneyin.",
+        "retry": "Tekrar dene",
+        "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})"
     },
     "emojiPicker": {
         "searchPlaceholder": "Emoji ara…",
@@ -34,5 +39,11 @@
     "chatButton": {
         "open": "Sohbeti aç",
         "close": "Sohbeti kapat"
+    },
+    "commands": {
+        "clear": {
+            "description": "Tüm mesajları temizle",
+            "usage": ""
+        }
     }
 }

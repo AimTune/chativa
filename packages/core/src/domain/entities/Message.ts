@@ -5,6 +5,9 @@
 
 export type MessageSender = "user" | "bot";
 
+/** Delivery/read status for a message. */
+export type MessageStatus = "sending" | "sent" | "read";
+
 /** A tappable chip/button sent alongside a bot message. */
 export interface MessageAction {
   label: string;
@@ -27,6 +30,14 @@ export interface OutgoingMessage {
   type: string;
   data: Record<string, unknown>;
   timestamp?: number;
+}
+
+/** Result returned by IConnector.loadHistory(). */
+export interface HistoryResult {
+  messages: IncomingMessage[];
+  hasMore: boolean;
+  /** Opaque cursor passed back to load the next (older) page. */
+  cursor?: string;
 }
 
 export function createOutgoingMessage(

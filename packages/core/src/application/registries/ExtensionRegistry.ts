@@ -1,5 +1,6 @@
 import type { IExtension, ExtensionContext, MessageTransformer } from "../../domain/ports/IExtension";
 import type { IncomingMessage, OutgoingMessage } from "../../domain/entities/Message";
+import { SlashCommandRegistry } from "./SlashCommandRegistry";
 
 /** Internal pipeline storage. */
 interface Pipeline {
@@ -32,6 +33,9 @@ function createContext(): ExtensionContext {
     },
     onWidgetClose(handler) {
       pipeline.onClose.push(handler);
+    },
+    registerCommand(command) {
+      SlashCommandRegistry.register(command);
     },
   };
 }

@@ -1,13 +1,16 @@
 import { createStore } from "zustand/vanilla";
-import type { IncomingMessage } from "../../domain/entities/Message";
+import type { IncomingMessage, MessageStatus } from "../../domain/entities/Message";
 
 export interface StoredMessage extends IncomingMessage {
   component?: typeof HTMLElement;
+  /** Delivery/read status (user messages only). */
+  status?: MessageStatus;
 }
 
 export interface MessageStoreState {
   messages: StoredMessage[];
   addMessage: (msg: StoredMessage) => void;
+  prependMessages: (msgs: StoredMessage[]) => void;
   removeById: (id: string) => void;
   updateById: (id: string, patch: Partial<StoredMessage>) => void;
   clear: () => void;
@@ -24,6 +27,13 @@ const store = createStore<MessageStoreState>((setState) => ({
       if (renderedIds.has(msg.id)) return state; // deduplicate
       renderedIds.add(msg.id);
       return { messages: [...state.messages, msg] };
+    }),
+
+  prependMessages: (msgs) =>
+    setState((state) => {
+      const fresh = msgs.filter((m) => !renderedIds.has(m.id));
+      fresh.forEach((m) => renderedIds.add(m.id));
+      return { messages: [...fresh, ...state.messages] };
     }),
 
   removeById: (id) =>

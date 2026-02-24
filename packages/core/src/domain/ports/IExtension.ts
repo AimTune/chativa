@@ -8,6 +8,7 @@
  */
 
 import type { IncomingMessage, OutgoingMessage } from "../entities/Message";
+import type { ISlashCommand } from "./ISlashCommand";
 
 export type MessageTransformer<T extends IncomingMessage | OutgoingMessage> =
   (message: T) => T | null;
@@ -21,6 +22,8 @@ export interface ExtensionContext {
   onWidgetOpen(handler: () => void): void;
   /** Hook called when the chat widget closes. */
   onWidgetClose(handler: () => void): void;
+  /** Register a slash command that users can invoke from the chat input. */
+  registerCommand(command: ISlashCommand): void;
 }
 
 export interface IExtension {

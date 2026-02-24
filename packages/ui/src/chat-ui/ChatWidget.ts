@@ -1,9 +1,11 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { t } from "i18next";
 import {
   ChatEngine,
   ConnectorRegistry,
   MessageTypeRegistry,
+  SlashCommandRegistry,
   messageStore,
   createOutgoingMessage,
 } from "@chativa/core";
@@ -117,6 +119,18 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   connectedCallback() {
     super.connectedCallback();
+
+    // Register built-in slash commands with lazy i18n descriptions
+    if (!SlashCommandRegistry.has("clear")) {
+      SlashCommandRegistry.register({
+        name: "clear",
+        description: () => t("commands.clear.description"),
+        execute() {
+          messageStore.getState().clear();
+        },
+      });
+    }
+
     const adapter = ConnectorRegistry.get(this.connector);
     this._engine = new ChatEngine(adapter);
     this._engine.init().catch((err: unknown) => {
@@ -127,6 +141,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("chat-action", this._onChatAction as EventListener);
     this.addEventListener("chat-retry", this._onChatRetry as EventListener);
     this.addEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.addEventListener("send-file", this._onSendFile as EventListener);
+    this.addEventListener("chat-load-history", this._onLoadHistory as EventListener);
   }
 
   disconnectedCallback() {
@@ -136,6 +152,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
     this.removeEventListener("chat-retry", this._onChatRetry as EventListener);
     this.removeEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.removeEventListener("send-file", this._onSendFile as EventListener);
+    this.removeEventListener("chat-load-history", this._onLoadHistory as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -251,6 +269,19 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine.init().catch((err: unknown) =>
       console.error("[ChatWidget] Reconnect failed:", err)
     );
+  };
+
+  private _onSendFile = (e: CustomEvent<{ files: File[]; text: string }>) => {
+    const { files, text } = e.detail;
+    for (const file of files) {
+      this._engine.sendFile(file, text ? { caption: text } : undefined)
+        .catch((err: unknown) => console.error("[ChatWidget] sendFile failed:", err));
+    }
+  };
+
+  private _onLoadHistory = () => {
+    this._engine.loadHistory()
+      .catch((err: unknown) => console.error("[ChatWidget] loadHistory failed:", err));
   };
 
   // ── Focus management ─────────────────────────────────────────────────

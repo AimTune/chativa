@@ -5,7 +5,7 @@ import { html as staticHtml } from "lit/static-html.js";
 import { t } from "i18next";
 import i18next from "../i18n/i18n";
 
-import { messageStore, chatStore } from "@chativa/core";
+import { messageStore, chatStore, type StoredMessage } from "@chativa/core";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);
@@ -20,6 +20,7 @@ class ChatMessageList extends LitElement {
       flex-direction: column;
       flex: 1;
       min-height: 0;
+      position: relative;
     }
 
     .list {
@@ -28,7 +29,7 @@ class ChatMessageList extends LitElement {
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 2px;
       scroll-behavior: smooth;
     }
 
@@ -45,6 +46,36 @@ class ChatMessageList extends LitElement {
     }
     .list::-webkit-scrollbar-thumb:hover {
       background: #cbd5e1;
+    }
+
+    /* Load more history button */
+    .load-more-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      padding: 8px 12px;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      flex-shrink: 0;
+    }
+
+    .load-more-btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .load-more-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .empty {
@@ -176,16 +207,6 @@ class ChatMessageList extends LitElement {
       to   { opacity: 1; transform: translateX(-50%) translateY(0); }
     }
 
-    /* Make host relative so pill can be positioned inside */
-    :host {
-      position: relative;
-    }
-
-    /* Reduce gap between grouped messages */
-    .list {
-      gap: 2px;
-    }
-
     /* Reconnecting banner */
     .reconnecting-banner {
       display: flex;
@@ -198,6 +219,7 @@ class ChatMessageList extends LitElement {
       margin-bottom: 8px;
       font-size: 0.8125rem;
       color: #854d0e;
+      flex-shrink: 0;
     }
 
     .mini-spinner {
@@ -260,6 +282,10 @@ class ChatMessageList extends LitElement {
   private _hasNewMessages = false;
   private _prevMessageCount = 0;
   private _prevIsTyping = false;
+  /** Set to true while a history load is in-flight; cleared in updated(). */
+  private _prevIsLoadingHistory = false;
+  /** scrollHeight captured just before history load starts. */
+  private _scrollHeightBeforeHistory = 0;
 
   private get _list(): Element | null {
     return this.shadowRoot?.querySelector(".list") ?? null;
@@ -302,14 +328,43 @@ class ChatMessageList extends LitElement {
 
   updated() {
     const currentCount = messageStore.getState().messages.length;
-    const hasMore = currentCount > this._prevMessageCount;
-    this._prevMessageCount = currentCount;
+    const { isTyping, isLoadingHistory } = chatStore.getState();
 
-    const { isTyping } = chatStore.getState();
     const typingChanged = isTyping !== this._prevIsTyping;
     this._prevIsTyping = isTyping;
 
-    if (hasMore) {
+    // Detect when history loading just finished (true → false transition)
+    const historyJustLoaded = this._prevIsLoadingHistory && !isLoadingHistory;
+    this._prevIsLoadingHistory = isLoadingHistory;
+
+    if (historyJustLoaded && this._scrollHeightBeforeHistory > 0) {
+      // Restore scroll so the user stays at the same visual position after prepend
+      requestAnimationFrame(() => {
+        const list = this._list;
+        if (list) {
+          const delta = list.scrollHeight - this._scrollHeightBeforeHistory;
+          list.scrollTop += delta;
+        }
+        this._scrollHeightBeforeHistory = 0;
+      });
+      this._prevMessageCount = currentCount;
+      return;
+    }
+
+    const countIncreased = currentCount > this._prevMessageCount;
+    this._prevMessageCount = currentCount;
+
+    // While history is being prepended at the top, skip auto-scroll logic entirely
+    if (isLoadingHistory) return;
+
+    // After /clear — reset scroll flags
+    if (currentCount === 0) {
+      this._hasNewMessages = false;
+      this._isAtBottom = true;
+      return;
+    }
+
+    if (countIncreased) {
       if (this._isAtBottom) {
         this._pinToBottom();
       } else {
@@ -317,12 +372,10 @@ class ChatMessageList extends LitElement {
         this.requestUpdate();
       }
     } else if (typingChanged && this._isAtBottom) {
-      // Only pin when typing indicator appears/disappears, not on every re-render
       this._pinToBottom();
     }
   }
 
-  /** Scroll to the very bottom — only if the user is still at bottom when rAF fires. */
   private _pinToBottom() {
     requestAnimationFrame(() => {
       if (!this._isAtBottom) return;
@@ -346,9 +399,33 @@ class ChatMessageList extends LitElement {
     );
   }
 
+  private _loadHistory() {
+    // Capture scrollHeight now; updated() will apply the delta after data loads
+    this._scrollHeightBeforeHistory = this._list?.scrollHeight ?? 0;
+    this.dispatchEvent(
+      new CustomEvent("chat-load-history", { bubbles: true, composed: true })
+    );
+  }
+
+  private _renderMessage(msg: StoredMessage, i: number, messages: StoredMessage[]) {
+    const tag = msg.component
+      ? resolveTag(msg.component)
+      : "default-text-message";
+    const next = messages[i + 1];
+    const isLastInGroup = !next || next.from !== msg.from;
+    return staticHtml`<${unsafeStatic(tag)}
+      .messageData=${msg.data}
+      .sender=${msg.from ?? "bot"}
+      .messageId=${msg.id}
+      .timestamp=${isLastInGroup ? (msg.timestamp ?? 0) : 0}
+      .hideAvatar=${!isLastInGroup}
+      .status=${msg.status ?? "sent"}
+    ></${unsafeStatic(tag)}>`;
+  }
+
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping, reconnectAttempt } = chatStore.getState();
+    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory } = chatStore.getState();
 
     // Error state: all reconnect attempts exhausted
     if (connectorStatus === "error") {
@@ -394,6 +471,19 @@ class ChatMessageList extends LitElement {
             ${t("messageList.reconnecting", { attempt: reconnectAttempt })}
           </div>
         ` : null}
+
+        ${hasMoreHistory ? html`
+          <button
+            class="load-more-btn"
+            ?disabled=${isLoadingHistory}
+            @click=${this._loadHistory}
+          >
+            ${isLoadingHistory
+              ? html`<div class="mini-spinner"></div>`
+              : html`↑ ${t("messageList.loadMore", { defaultValue: "Load previous messages" })}`}
+          </button>
+        ` : null}
+
         ${messages.length === 0
           ? html`
               <div class="empty">
@@ -408,20 +498,8 @@ class ChatMessageList extends LitElement {
                 <p class="empty-subtitle">${t("messageList.emptySubtitle")}</p>
               </div>
             `
-          : messages.map((msg, i) => {
-              const tag = msg.component
-                ? resolveTag(msg.component)
-                : "default-text-message";
-              const next = messages[i + 1];
-              const isLastInGroup = !next || next.from !== msg.from;
-              return staticHtml`<${unsafeStatic(tag)}
-                .messageData=${msg.data}
-                .sender=${msg.from ?? "bot"}
-                .messageId=${msg.id}
-                .timestamp=${isLastInGroup ? (msg.timestamp ?? 0) : 0}
-                .hideAvatar=${!isLastInGroup}
-              ></${unsafeStatic(tag)}>`;
-            })}
+          : messages.map((msg, i) => this._renderMessage(msg, i, messages))}
+
         ${isTyping ? html`
           <div class="typing-bubble">
             <span></span><span></span><span></span>

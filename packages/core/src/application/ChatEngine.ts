@@ -44,10 +44,18 @@ export class ChatEngine {
       chatStore.getState().setTyping(isTyping);
     });
 
+    this.connector.onMessageStatus?.((messageId, status) => {
+      messageStore.getState().updateById(messageId, { status });
+    });
+
     chatStore.getState().setConnectorStatus("connecting");
     try {
       await this.connector.connect();
       chatStore.getState().setConnectorStatus("connected");
+      // Load initial history if supported
+      if (this.connector.loadHistory) {
+        await this.loadHistory();
+      }
     } catch (err) {
       chatStore.getState().setConnectorStatus("error");
       throw err;
@@ -87,10 +95,44 @@ export class ChatEngine {
 
     if (this.connector.addSentToHistory !== false) {
       const Component = MessageTypeRegistry.resolve(transformed.type);
-      messageStore.getState().addMessage({ ...transformed, from: "user", component: Component });
+      messageStore.getState().addMessage({
+        ...transformed,
+        from: "user",
+        component: Component,
+        status: "sending",
+      });
     }
 
     await this.connector.sendMessage(transformed);
+
+    if (this.connector.addSentToHistory !== false) {
+      messageStore.getState().updateById(transformed.id, { status: "sent" });
+    }
+  }
+
+  async sendFile(file: File, metadata?: Record<string, unknown>): Promise<void> {
+    await this.connector.sendFile?.(file, metadata);
+  }
+
+  async loadHistory(): Promise<void> {
+    if (!this.connector.loadHistory) return;
+    const { isLoadingHistory, historyCursor } = chatStore.getState();
+    if (isLoadingHistory) return;
+
+    chatStore.getState().setIsLoadingHistory(true);
+    try {
+      const result = await this.connector.loadHistory(historyCursor);
+      const msgs = result.messages.map((m) => ({
+        ...m,
+        from: (m.from ?? "bot") as "bot" | "user",
+        component: MessageTypeRegistry.resolve(m.type),
+      }));
+      messageStore.getState().prependMessages(msgs);
+      chatStore.getState().setHasMoreHistory(result.hasMore);
+      chatStore.getState().setHistoryCursor(result.cursor);
+    } finally {
+      chatStore.getState().setIsLoadingHistory(false);
+    }
   }
 
   async destroy(): Promise<void> {

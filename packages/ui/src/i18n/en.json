@@ -25,7 +25,12 @@
         "connecting": "Connecting…",
         "emptyTitle": "How can I help you?",
         "emptySubtitle": "Send a message to get started.",
-        "newMessage": "New message"
+        "newMessage": "New message",
+        "loadMore": "Load previous messages",
+        "errorTitle": "Connection lost",
+        "errorSubtitle": "We could not reconnect. Please try again.",
+        "retry": "Try again",
+        "reconnecting": "Reconnecting… (attempt {{attempt}})"
     },
     "emojiPicker": {
         "searchPlaceholder": "Search emoji…",
@@ -34,5 +39,11 @@
     "chatButton": {
         "open": "Open chat",
         "close": "Close chat"
+    },
+    "commands": {
+        "clear": {
+            "description": "Clear all messages from the chat",
+            "usage": ""
+        }
     }
 }

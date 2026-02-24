@@ -7,6 +7,18 @@ export type ButtonPosition = "bottom-right" | "bottom-left" | "top-right" | "top
 export type ButtonSize = "small" | "medium" | "large";
 export type SpaceLevel = "1" | "2" | "3" | "4" | "5";
 
+/** Avatar configuration for bot and user sides. */
+export interface AvatarConfig {
+  /** URL for the bot avatar image. Omit to use the default robot SVG. */
+  bot?: string;
+  /** URL for the user avatar image. Omit to use the default person SVG. */
+  user?: string;
+  /** Show bot avatar. Default: true. */
+  showBot?: boolean;
+  /** Show user avatar. Default: true. */
+  showUser?: boolean;
+}
+
 export interface ThemeColors {
   primary: string;
   secondary: string;
@@ -30,6 +42,10 @@ export interface ThemeConfig {
   positionMargin?: SpaceLevel;
   size: ButtonSize;
   layout: LayoutConfig;
+  /** Avatar configuration for bot and user sides. */
+  avatar?: AvatarConfig;
+  /** Show delivery/read status ticks on user messages. Default: false. */
+  showMessageStatus?: boolean;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {

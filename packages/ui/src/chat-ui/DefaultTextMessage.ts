@@ -2,7 +2,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
-import { MessageTypeRegistry, type MessageSender } from "@chativa/core";
+import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
 
 
 @customElement("default-text-message")
@@ -38,14 +38,30 @@ export class DefaultTextMessage extends LitElement {
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      overflow: hidden;
     }
 
     .avatar.hidden { visibility: hidden; }
+
+    .avatar.user-avatar {
+      background: #e0f2fe;
+    }
 
     .avatar svg {
       width: 16px;
       height: 16px;
       color: #7c3aed;
+    }
+
+    .avatar.user-avatar svg {
+      color: #0369a1;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
     }
 
     /* Markdown styles for bot bubbles */
@@ -102,10 +118,32 @@ export class DefaultTextMessage extends LitElement {
       border-radius: 16px 4px 16px 16px;
     }
 
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .message.user .meta {
+      justify-content: flex-end;
+    }
+
     .time {
       font-size: 0.6875rem;
       color: #94a3b8;
-      padding: 0 4px;
+      padding: 0 2px;
+    }
+
+    /* Status tick icons */
+    .status-icon {
+      display: flex;
+      align-items: center;
+      line-height: 1;
+    }
+
+    .status-icon svg {
+      width: 14px;
+      height: 14px;
     }
 
     .feedback {
@@ -158,6 +196,7 @@ export class DefaultTextMessage extends LitElement {
   @property({ type: Number }) timestamp = 0;
   /** When true the avatar is invisible (still occupies space for alignment). */
   @property({ type: Boolean }) hideAvatar = false;
+  @property({ type: String }) status: MessageStatus = "sent";
 
   @state() private _feedback: "like" | "dislike" | null = null;
 
@@ -184,34 +223,83 @@ export class DefaultTextMessage extends LitElement {
     });
   }
 
+  private _renderBotAvatar(avatarUrl?: string) {
+    return html`
+      <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
+        ${avatarUrl
+          ? html`<img src=${avatarUrl} alt="bot avatar" />`
+          : html`
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="8" width="14" height="12" rx="2.5" />
+                <circle cx="9.5" cy="13" r="1.5" fill="white" />
+                <circle cx="14.5" cy="13" r="1.5" fill="white" />
+                <path
+                  d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
+                  stroke="white"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+              </svg>
+            `}
+      </div>
+    `;
+  }
+
+  private _renderUserAvatar(avatarUrl?: string) {
+    return html`
+      <div class="avatar user-avatar ${this.hideAvatar ? "hidden" : ""}">
+        ${avatarUrl
+          ? html`<img src=${avatarUrl} alt="user avatar" />`
+          : html`
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+              </svg>
+            `}
+      </div>
+    `;
+  }
+
+  private _renderStatusIcon() {
+    const color = this.status === "sending" ? "#94a3b8" : "var(--chativa-primary-color, #4f46e5)";
+    if (this.status === "read") {
+      // Double tick
+      return html`
+        <span class="status-icon" title="Read">
+          <svg viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 6l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6l4 4L18 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+      `;
+    }
+    // Single tick (sending = gray, sent = primary)
+    return html`
+      <span class="status-icon" title=${this.status === "sending" ? "Sending…" : "Sent"}>
+        <svg viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1 5l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+    `;
+  }
+
   render() {
     const isUser = this.sender === "user";
     const raw = String(this.messageData?.text ?? "");
-    // Render markdown for bot messages; plain text for user messages
     const bubbleContent = isUser
       ? raw
       : unsafeHTML(marked.parse(raw, { async: false }) as string);
 
+    const theme = chatStore.getState().theme;
+    const avatarCfg = theme.avatar;
+    const showBotAvatar = avatarCfg?.showBot !== false;
+    const showUserAvatar = avatarCfg?.showUser !== false;
+    const showStatus = theme.showMessageStatus === true && isUser;
+
     return html`
       <div class="message ${isUser ? "user" : "bot"}">
-        ${!isUser
-          ? html`
-              <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
-                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="5" y="8" width="14" height="12" rx="2.5" />
-                  <circle cx="9.5" cy="13" r="1.5" fill="white" />
-                  <circle cx="14.5" cy="13" r="1.5" fill="white" />
-                  <path
-                    d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
-                    stroke="white"
-                    stroke-width="1.2"
-                    stroke-linecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            `
-          : nothing}
+        ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
+        ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
           <div class="bubble">${bubbleContent}</div>
           ${!isUser ? html`
@@ -228,7 +316,12 @@ export class DefaultTextMessage extends LitElement {
               >👎</button>
             </div>
           ` : nothing}
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time || showStatus ? html`
+            <div class="meta">
+              ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+              ${showStatus ? this._renderStatusIcon() : nothing}
+            </div>
+          ` : nothing}
         </div>
       </div>
     `;

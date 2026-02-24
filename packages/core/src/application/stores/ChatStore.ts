@@ -22,6 +22,12 @@ export interface ChatStoreState {
   /** Current auto-reconnect attempt (0 = not reconnecting). */
   reconnectAttempt: number;
   theme: ThemeConfig;
+  /** Whether the connector has older messages to load. */
+  hasMoreHistory: boolean;
+  /** True while a history page is being fetched. */
+  isLoadingHistory: boolean;
+  /** Opaque cursor for the next history page. */
+  historyCursor?: string;
 
   toggle: () => void;
   open: () => void;
@@ -38,6 +44,9 @@ export interface ChatStoreState {
   incrementUnread: () => void;
   resetUnread: () => void;
   setReconnectAttempt: (n: number) => void;
+  setHasMoreHistory: (v: boolean) => void;
+  setIsLoadingHistory: (v: boolean) => void;
+  setHistoryCursor: (cursor: string | undefined) => void;
   subscribe: (cb: () => void) => () => void;
 }
 
@@ -55,6 +64,9 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   unreadCount: 0,
   reconnectAttempt: 0,
   theme: DEFAULT_THEME,
+  hasMoreHistory: false,
+  isLoadingHistory: false,
+  historyCursor: undefined,
 
   toggle: () =>
     setState((s) => ({
@@ -88,6 +100,9 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   incrementUnread: () => setState((s) => ({ unreadCount: s.unreadCount + 1 })),
   resetUnread: () => setState(() => ({ unreadCount: 0 })),
   setReconnectAttempt: (n: number) => setState(() => ({ reconnectAttempt: n })),
+  setHasMoreHistory: (v: boolean) => setState(() => ({ hasMoreHistory: v })),
+  setIsLoadingHistory: (v: boolean) => setState(() => ({ isLoadingHistory: v })),
+  setHistoryCursor: (cursor: string | undefined) => setState(() => ({ historyCursor: cursor })),
 
   subscribe: (cb: () => void): (() => void) =>
     store.subscribe(() => cb()),

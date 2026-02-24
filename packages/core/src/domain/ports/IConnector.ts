@@ -7,13 +7,14 @@
  * No external dependencies allowed in this file.
  */
 
-import type { IncomingMessage, OutgoingMessage } from "../entities/Message";
+import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
 
 export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
 export type DisconnectHandler = (reason?: string) => void;
 export type TypingHandler = (isTyping: boolean) => void;
 export type FeedbackType = "like" | "dislike";
+export type MessageStatusHandler = (messageId: string, status: MessageStatus) => void;
 
 export interface IConnector {
   /** Unique identifier used to select this connector at runtime. */
@@ -49,4 +50,13 @@ export interface IConnector {
 
   /** Optional: send a like/dislike reaction on a bot message to the backend. */
   sendFeedback?(messageId: string, feedback: FeedbackType): Promise<void>;
+
+  /** Optional: upload a file to the backend. */
+  sendFile?(file: File, metadata?: Record<string, unknown>): Promise<void>;
+
+  /** Optional: load older messages. Returns a page of history and whether more exist. */
+  loadHistory?(cursor?: string): Promise<HistoryResult>;
+
+  /** Optional: register a callback for message delivery/read status updates. */
+  onMessageStatus?(callback: MessageStatusHandler): void;
 }

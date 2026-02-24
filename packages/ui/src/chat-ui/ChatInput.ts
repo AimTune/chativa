@@ -1,8 +1,8 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { t } from "i18next";
 import i18next from "../i18n/i18n";
-import { chatStore } from "@chativa/core";
+import { chatStore, SlashCommandRegistry, resolveText, type ISlashCommand } from "@chativa/core";
 import "./EmojiPicker";
 
 @customElement("chat-input")
@@ -21,9 +21,15 @@ class ChatInput extends LitElement {
       padding: 10px 12px 12px;
       background: #ffffff;
       border-top: 1px solid #f1f5f9;
+      position: relative;
     }
 
-    .emoji-btn {
+    .input-area.drag-over {
+      background: #ede9fe;
+      border-top-color: var(--chativa-primary-color, #4f46e5);
+    }
+
+    .icon-btn {
       width: 34px;
       height: 34px;
       border-radius: 50%;
@@ -39,17 +45,17 @@ class ChatInput extends LitElement {
       transition: color 0.15s, background 0.15s;
     }
 
-    .emoji-btn:hover {
+    .icon-btn:hover {
       color: #64748b;
       background: #f1f5f9;
     }
 
-    .emoji-btn.active {
+    .icon-btn.active {
       color: var(--chativa-primary-color, #4f46e5);
       background: #ede9fe;
     }
 
-    .emoji-btn svg {
+    .icon-btn svg {
       width: 20px;
       height: 20px;
     }
@@ -129,6 +135,65 @@ class ChatInput extends LitElement {
       height: 18px;
     }
 
+    /* Hidden file input */
+    .file-input {
+      display: none;
+    }
+
+    /* File previews */
+    .file-previews {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 8px 12px 0;
+      background: #ffffff;
+    }
+
+    .file-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px 4px 8px;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      color: #374151;
+      max-width: 200px;
+    }
+
+    .file-chip-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .file-chip-size {
+      color: #94a3b8;
+      flex-shrink: 0;
+    }
+
+    .file-chip-remove {
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      color: #94a3b8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      transition: background 0.1s, color 0.1s;
+    }
+
+    .file-chip-remove:hover {
+      background: #e2e8f0;
+      color: #374151;
+    }
+
     /* Emoji picker popup */
     .picker-popup {
       position: absolute;
@@ -136,22 +201,111 @@ class ChatInput extends LitElement {
       left: 8px;
       z-index: 100;
     }
+
+    /* Slash command popup */
+    .slash-popup {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 12px;
+      right: 12px;
+      z-index: 101;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      overflow: hidden;
+    }
+
+    .slash-item {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      padding: 9px 14px;
+      cursor: pointer;
+      transition: background 0.1s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .slash-item:hover,
+    .slash-item.focused {
+      background: #f1f5f9;
+    }
+
+    .slash-item-name {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--chativa-primary-color, #4f46e5);
+    }
+
+    .slash-item-desc {
+      font-size: 0.8125rem;
+      color: #64748b;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   `;
 
   @property({ type: String }) value = "";
   @state() private _pickerOpen = false;
+  @state() private _files: File[] = [];
+  @state() private _dragOver = false;
+  @state() private _slashMatches: ISlashCommand[] = [];
+  @state() private _slashFocusIdx = 0;
+
   private _onLangChange = () => { this.requestUpdate(); };
   private _unsubscribeChatStore!: () => void;
+
+  // ── Text input ────────────────────────────────────────────
 
   private _onInput(e: Event) {
     const el = e.target as HTMLTextAreaElement;
     this.value = el.value;
-    // Auto-resize: shrink to auto then expand to content height
     el.style.height = "auto";
     el.style.height = `${el.scrollHeight}px`;
+    this._updateSlashMatches();
+  }
+
+  private _updateSlashMatches() {
+    if (this.value.startsWith("/")) {
+      const query = this.value.slice(1).toLowerCase();
+      this._slashMatches = SlashCommandRegistry.list().filter(
+        (cmd) => cmd.name.toLowerCase().startsWith(query)
+      );
+      this._slashFocusIdx = 0;
+    } else {
+      this._slashMatches = [];
+    }
   }
 
   private _onKeyDown(e: KeyboardEvent) {
+    // Navigate slash popup with arrow keys
+    if (this._slashMatches.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        this._slashFocusIdx = (this._slashFocusIdx + 1) % this._slashMatches.length;
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        this._slashFocusIdx =
+          (this._slashFocusIdx - 1 + this._slashMatches.length) % this._slashMatches.length;
+        return;
+      }
+      if (e.key === "Tab" || (e.key === "Enter" && this._slashMatches.length > 0)) {
+        e.preventDefault();
+        this._selectSlashCommand(this._slashMatches[this._slashFocusIdx]);
+        return;
+      }
+      if (e.key === "Escape") {
+        this._slashMatches = [];
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       this._send();
@@ -161,23 +315,72 @@ class ChatInput extends LitElement {
     }
   }
 
+  private _selectSlashCommand(cmd: ISlashCommand) {
+    this.value = `/${cmd.name} `;
+    this._slashMatches = [];
+    this.updateComplete.then(() => {
+      const ta = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
+      if (ta) {
+        ta.focus();
+        ta.style.height = "auto";
+        ta.style.height = `${ta.scrollHeight}px`;
+      }
+    });
+  }
+
   private _send() {
     const text = this.value.trim();
-    if (!text) return;
-    this.dispatchEvent(
-      new CustomEvent<string>("send-message", {
-        detail: text,
-        bubbles: true,
-        composed: true,
-      })
-    );
+    const hasFiles = this._files.length > 0;
+
+    // Execute slash command if exact match
+    if (text.startsWith("/")) {
+      const parts = text.slice(1).split(" ");
+      const name = parts[0];
+      const args = parts.slice(1).join(" ");
+      if (SlashCommandRegistry.execute(name, args)) {
+        this.value = "";
+        this._slashMatches = [];
+        this._resetTextarea();
+        return;
+      }
+    }
+
+    if (hasFiles) {
+      this.dispatchEvent(
+        new CustomEvent<{ files: File[]; text: string }>("send-file", {
+          detail: { files: [...this._files], text },
+          bubbles: true,
+          composed: true,
+        })
+      );
+      this._files = [];
+    }
+
+    if (text && !hasFiles) {
+      this.dispatchEvent(
+        new CustomEvent<string>("send-message", {
+          detail: text,
+          bubbles: true,
+          composed: true,
+        })
+      );
+    } else if (text && hasFiles) {
+      // text sent as part of send-file event — nothing extra needed
+    }
+
     this.value = "";
-    // Reset textarea height after clearing
+    this._slashMatches = [];
+    this._resetTextarea();
+  }
+
+  private _resetTextarea() {
     this.updateComplete.then(() => {
       const ta = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
       if (ta) ta.style.height = "auto";
     });
   }
+
+  // ── Emoji picker ──────────────────────────────────────────
 
   private _togglePicker() {
     this._pickerOpen = !this._pickerOpen;
@@ -189,9 +392,7 @@ class ChatInput extends LitElement {
     if (ta) {
       const start = ta.selectionStart ?? this.value.length;
       const end = ta.selectionEnd ?? this.value.length;
-      this.value =
-        this.value.slice(0, start) + emoji + this.value.slice(end);
-      // Restore focus + cursor after LitElement re-renders
+      this.value = this.value.slice(0, start) + emoji + this.value.slice(end);
       this.updateComplete.then(() => {
         const el = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
         if (el) {
@@ -206,16 +407,60 @@ class ChatInput extends LitElement {
     this._pickerOpen = false;
   }
 
-  private _onHostClick(e: MouseEvent) {
-    // Close picker when clicking outside of it
-    if (!this._pickerOpen) return;
-    const path = e.composedPath();
-    const picker = this.shadowRoot?.querySelector("emoji-picker");
-    const emojiBtn = this.shadowRoot?.querySelector(".emoji-btn");
-    if (picker && !path.includes(picker) && !path.includes(emojiBtn as EventTarget)) {
-      this._pickerOpen = false;
-    }
+  // ── File upload ───────────────────────────────────────────
+
+  private _openFilePicker() {
+    this.shadowRoot?.querySelector<HTMLInputElement>(".file-input")?.click();
   }
+
+  private _onFileChange(e: Event) {
+    const input = e.target as HTMLInputElement;
+    if (input.files) this._addFiles(Array.from(input.files));
+    input.value = "";
+  }
+
+  private _addFiles(files: File[]) {
+    this._files = [...this._files, ...files];
+  }
+
+  private _removeFile(index: number) {
+    this._files = this._files.filter((_, i) => i !== index);
+  }
+
+  private _formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private _onDragOver(e: DragEvent) {
+    e.preventDefault();
+    this._dragOver = true;
+  }
+
+  private _onDragLeave() {
+    this._dragOver = false;
+  }
+
+  private _onDrop(e: DragEvent) {
+    e.preventDefault();
+    this._dragOver = false;
+    const files = e.dataTransfer?.files;
+    if (files && files.length > 0) this._addFiles(Array.from(files));
+  }
+
+  // ── Document click (close popups) ─────────────────────────
+
+  private _onDocumentClick = (e: MouseEvent) => {
+    if (!this._pickerOpen && this._slashMatches.length === 0) return;
+    const path = e.composedPath();
+    if (!path.includes(this)) {
+      this._pickerOpen = false;
+      this._slashMatches = [];
+    }
+  };
+
+  // ── Lifecycle ─────────────────────────────────────────────
 
   connectedCallback() {
     super.connectedCallback();
@@ -231,33 +476,69 @@ class ChatInput extends LitElement {
     super.disconnectedCallback();
   }
 
-  private _onDocumentClick = (e: MouseEvent) => {
-    if (!this._pickerOpen) return;
-    const path = e.composedPath();
-    if (!path.includes(this)) {
-      this._pickerOpen = false;
-    }
-  };
+  // ── Render ────────────────────────────────────────────────
 
   render() {
     const hasText = this.value.trim().length > 0;
+    const hasFiles = this._files.length > 0;
     const connected = chatStore.getState().connectorStatus === "connected";
+
     return html`
-      <div class="input-area ${connected ? "" : "disconnected"}" @click=${this._onHostClick}>
+      ${this._files.length > 0 ? html`
+        <div class="file-previews">
+          ${this._files.map((f, i) => html`
+            <div class="file-chip">
+              <span class="file-chip-name" title=${f.name}>${f.name}</span>
+              <span class="file-chip-size">${this._formatSize(f.size)}</span>
+              <button
+                class="file-chip-remove"
+                type="button"
+                aria-label="Remove file"
+                @click=${() => this._removeFile(i)}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10">
+                  <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          `)}
+        </div>
+      ` : nothing}
+
+      <div
+        class="input-area ${connected ? "" : "disconnected"} ${this._dragOver ? "drag-over" : ""}"
+        @dragover=${this._onDragOver}
+        @dragleave=${this._onDragLeave}
+        @drop=${this._onDrop}
+      >
+        <!-- File attachment button -->
+        <input
+          class="file-input"
+          type="file"
+          multiple
+          @change=${this._onFileChange}
+        />
         <button
-          class="emoji-btn ${this._pickerOpen ? "active" : ""}"
+          class="icon-btn ${hasFiles ? "active" : ""}"
+          type="button"
+          aria-label="Attach file"
+          ?disabled=${!connected}
+          @click=${(e: MouseEvent) => { e.stopPropagation(); this._openFilePicker(); }}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <!-- Emoji button -->
+        <button
+          class="icon-btn ${this._pickerOpen ? "active" : ""}"
           type="button"
           aria-label="${t("input.emoji")}"
           ?disabled=${!connected}
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
             <circle cx="12" cy="12" r="10" />
             <path d="M8 13s1.5 2 4 2 4-2 4-2" stroke-linecap="round" />
             <circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none" />
@@ -280,27 +561,38 @@ class ChatInput extends LitElement {
         <button
           class="send-btn"
           type="button"
-          ?disabled=${!hasText || !connected}
+          ?disabled=${(!hasText && !hasFiles) || !connected}
           @click=${this._send}
           aria-label="${t("input.send")}"
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
           </svg>
         </button>
       </div>
 
-      ${this._pickerOpen
-        ? html`
-            <div class="picker-popup" @click=${(e: MouseEvent) => e.stopPropagation()}>
-              <emoji-picker @emoji-select=${this._onEmojiSelect}></emoji-picker>
-            </div>
-          `
-        : ""}
+      <!-- Slash command popup -->
+      ${this._slashMatches.length > 0 ? html`
+        <div class="slash-popup">
+          ${this._slashMatches.map((cmd, i) => html`
+            <button
+              class="slash-item ${i === this._slashFocusIdx ? "focused" : ""}"
+              type="button"
+              @click=${() => this._selectSlashCommand(cmd)}
+            >
+              <span class="slash-item-name">/${cmd.name}</span>
+              <span class="slash-item-desc">${resolveText(cmd.description)}</span>
+            </button>
+          `)}
+        </div>
+      ` : nothing}
+
+      <!-- Emoji picker popup -->
+      ${this._pickerOpen ? html`
+        <div class="picker-popup" @click=${(e: MouseEvent) => e.stopPropagation()}>
+          <emoji-picker @emoji-select=${this._onEmojiSelect}></emoji-picker>
+        </div>
+      ` : nothing}
     `;
   }
 }
