@@ -3,9 +3,9 @@ import type {
   MessageHandler,
   DisconnectHandler,
   TypingHandler,
-  FeedbackType,
   IncomingMessage,
 } from "@chativa/core";
+import type { FeedbackType } from "../../core/src/domain/ports/IConnector";
 import type { OutgoingMessage } from "@chativa/core";
 
 /**
