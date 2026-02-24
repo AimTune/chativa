@@ -4,7 +4,7 @@
  * Registered lazily so this module can be imported before i18next.init()
  * runs (e.g. in the sandbox where @chativa/genui loads before @chativa/ui).
  */
-import i18next from "i18next";
+import { i18next } from "@chativa/core";
 
 const EN: Record<string, string> = {
   "genui.form.processing":     "Processing…",
@@ -19,6 +19,11 @@ const EN: Record<string, string> = {
   "genui.appointment.codeHint":       "Please save this code for your reference.",
   "genui.appointment.copy":           "Copy",
   "genui.appointment.copied":         "Copied!",
+
+  "genui.rating.ariaLabel": "Star rating",
+  "genui.rating.starLabel": "{{count}} star",
+  "genui.rating.submit":    "Submit",
+  "genui.rating.thankYou":  "Thank you for your feedback!",
 };
 
 const TR: Record<string, string> = {
@@ -34,6 +39,11 @@ const TR: Record<string, string> = {
   "genui.appointment.codeHint":       "Bu kodu referans olarak saklayın.",
   "genui.appointment.copy":           "Kopyala",
   "genui.appointment.copied":         "Kopyalandı!",
+
+  "genui.rating.ariaLabel": "Yıldız puanı",
+  "genui.rating.starLabel": "{{count}} yıldız",
+  "genui.rating.submit":    "Gönder",
+  "genui.rating.thankYou":  "Geri bildiriminiz için teşekkür ederiz!",
 };
 
 function _register(): void {

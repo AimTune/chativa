@@ -10,7 +10,8 @@
   "dependencies": {
     "@chativa/core": "workspace:*",
     "@chativa/genui": "workspace:*",
-    "@chativa/ui": "workspace:*"
+    "@chativa/ui": "workspace:*",
+    "i18next": "^25.8.13"
   },
   "devDependencies": {
     "lit": "^3.3.0",

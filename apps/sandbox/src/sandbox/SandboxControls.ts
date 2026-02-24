@@ -749,16 +749,14 @@ export class SandboxControls extends LitElement {
           <div>
             <div class="section-label">Generative UI</div>
             <div class="msg-grid">
-              <button
-                class="msg-btn"
-                type="button"
-                @click=${() => this._triggerGenUI("weather")}
-              >🌤️ Weather</button>
-              <button
-                class="msg-btn"
-                type="button"
-                @click=${() => this._triggerGenUI("form")}
-              >📋 Appt. Form</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("weather")}>🌤️ Weather</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("alert")}>🔔 Alerts</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("quick-replies")}>⚡ Quick Replies</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("list")}>📝 List</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("table")}>📊 Table</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("rating")}>⭐ Rating</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("progress")}>📈 Progress</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("form")}>📋 Appt. Form</button>
               <button
                 class="msg-btn"
                 type="button"

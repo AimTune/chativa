@@ -10,7 +10,7 @@ ConnectorRegistry.register(connector);
 
 // Register custom GenUI components
 GenUIRegistry.register("weather", WeatherWidget);
-GenUIRegistry.register("appointment-form", AIAppointmentForm);
+GenUIRegistry.register("genui-appointment-form", AIAppointmentForm as unknown as typeof HTMLElement);
 
 // Expose inject helper for sandbox demo buttons
 (window as unknown as Record<string, unknown>).chativaInject = connector.injectMessage.bind(connector);

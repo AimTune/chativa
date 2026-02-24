@@ -7,6 +7,9 @@ import "./i18n/index";
 export { GenUIRegistry } from "./registry/GenUIRegistry";
 export type { GenUIEntry, GenUISchema } from "./registry/GenUIRegistry";
 
+// ── Shared types ──────────────────────────────────────────────────────────────
+export type { GenUIComponentAPI } from "./types";
+
 // ── Components (side-effects: registers custom elements) ──────────────────────
 export { GenUIMessage } from "./components/GenUIMessage";
 export { GenUITextBlock } from "./components/GenUITextBlock";
@@ -14,6 +17,16 @@ export { GenUICard } from "./components/GenUICard";
 export type { GenUICardAction } from "./components/GenUICard";
 export { GenUIForm } from "./components/GenUIForm";
 export type { GenUIFormField } from "./components/GenUIForm";
+export { GenUIAlert } from "./components/GenUIAlert";
+export type { GenUIAlertVariant } from "./components/GenUIAlert";
+export { GenUIQuickReplies } from "./components/GenUIQuickReplies";
+export type { GenUIQuickReplyItem } from "./components/GenUIQuickReplies";
+export { GenUIList } from "./components/GenUIList";
+export type { GenUIListItem } from "./components/GenUIList";
+export { GenUITable } from "./components/GenUITable";
+export { GenUIRating } from "./components/GenUIRating";
+export { GenUIProgress } from "./components/GenUIProgress";
+export type { GenUIProgressVariant } from "./components/GenUIProgress";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 export { streamFromFetch } from "./utils/streamFromFetch";
@@ -34,7 +47,19 @@ import { GenUIRegistry } from "./registry/GenUIRegistry";
 import { GenUITextBlock } from "./components/GenUITextBlock";
 import { GenUICard } from "./components/GenUICard";
 import { GenUIForm } from "./components/GenUIForm";
+import { GenUIAlert } from "./components/GenUIAlert";
+import { GenUIQuickReplies } from "./components/GenUIQuickReplies";
+import { GenUIList } from "./components/GenUIList";
+import { GenUITable } from "./components/GenUITable";
+import { GenUIRating } from "./components/GenUIRating";
+import { GenUIProgress } from "./components/GenUIProgress";
 
-GenUIRegistry.register("genui-text", GenUITextBlock as unknown as typeof HTMLElement);
-GenUIRegistry.register("genui-card", GenUICard as unknown as typeof HTMLElement);
-GenUIRegistry.register("genui-form", GenUIForm as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-text",          GenUITextBlock as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-card",          GenUICard as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-form",          GenUIForm as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-alert",         GenUIAlert as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-quick-replies", GenUIQuickReplies as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-list",          GenUIList as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-table",         GenUITable as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-rating",        GenUIRating as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-progress",      GenUIProgress as unknown as typeof HTMLElement);

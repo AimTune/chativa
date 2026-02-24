@@ -1,7 +1,6 @@
 import { css, LitElement, unsafeCSS } from "lit";
 import { state } from "lit/decorators.js";
-import { chatStore, type ChatStoreState, type ThemeConfig } from "@chativa/core";
-import i18next from "../i18n/i18n";
+import { chatStore, type ChatStoreState, type ThemeConfig, I18nMixin, i18next } from "@chativa/core";
 import commonStyles from "../styles/commonStyles?inline" with { type: "css" };
 import styless from "../styles.css?inline" with { type: "css" };
 
@@ -18,7 +17,8 @@ export declare class ChatbotMixinInterface {
 export const ChatbotMixin = <T extends Constructor<LitElement>>(
   superClass: T
 ) => {
-  class ChatbotMixinClass extends superClass {
+  // I18nMixin handles the languageChanged subscription and requestUpdate().
+  class ChatbotMixinClass extends I18nMixin(superClass) {
     @state()
     private _lang = i18next.language;
 
@@ -30,21 +30,18 @@ export const ChatbotMixin = <T extends Constructor<LitElement>>(
 
     private _unsubscribeChatStore!: () => void;
 
-    private _onLanguageChanged = () => {
-      this._lang = i18next.language;
-    };
-
-    connectedCallback() {
+    override connectedCallback() {
       super.connectedCallback();
+      this._lang = i18next.language;
       this._unsubscribeChatStore = chatStore.subscribe(() =>
         this.requestUpdate()
       );
-      i18next.on("languageChanged", this._onLanguageChanged);
+      // Keep _lang in sync when language changes (I18nMixin already calls requestUpdate).
+      i18next.on("languageChanged", () => { this._lang = i18next.language; });
     }
 
-    disconnectedCallback() {
+    override disconnectedCallback() {
       this._unsubscribeChatStore?.();
-      i18next.off("languageChanged", this._onLanguageChanged);
       super.disconnectedCallback();
     }
 

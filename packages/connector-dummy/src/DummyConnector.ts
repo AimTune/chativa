@@ -223,10 +223,8 @@ export class DummyConnector implements IConnector {
       {
         chunk: {
           type: "ui",
-          component: "appointment-form",
+          component: "genui-appointment-form",
           props: {
-            title: "Book an Appointment",
-            buttonText: "Book Now",
             fields: [
               { name: "name", label: "Full Name", type: "text", placeholder: "Jane Doe" },
               { name: "date", label: "Preferred Date", type: "date" },
@@ -236,8 +234,314 @@ export class DummyConnector implements IConnector {
           id: 2,
         },
         wait: 400,
-        // Stream stays open (done: false) — form_success fires via receiveComponentEvent
         done: false,
+      },
+      // form_success pre-defined in the stream — form uses _pendingSuccess on submit (no round-trip)
+      {
+        chunk: {
+          type: "event",
+          name: "form_success",
+          payload: { code: "APT-7X4K2" },
+          id: 3,
+          for: 2,
+        },
+        wait: 100,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamAlertDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here are some status notifications:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-alert",
+          props: { variant: "success", title: "Payment Received", message: "Your payment of $49.00 was processed successfully." },
+          id: 2,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-alert",
+          props: { variant: "warning", title: "Session Expiring", message: "Your session will expire in 5 minutes. Please save your work." },
+          id: 3,
+        },
+        wait: 500,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-alert",
+          props: { variant: "error", title: "Connection Failed", message: "Unable to reach the server. Please check your connection and try again." },
+          id: 4,
+        },
+        wait: 500,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-alert",
+          props: { variant: "info", title: "Maintenance Window", message: "Scheduled maintenance on Saturday from 02:00–04:00 UTC." },
+          id: 5,
+        },
+        wait: 500,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamQuickRepliesDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "How would you like to proceed?", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-quick-replies",
+          props: {
+            label: "Choose an option:",
+            items: [
+              { label: "Track my order", value: "track_order" },
+              { label: "Return a product", value: "return_product" },
+              { label: "Talk to an agent", value: "talk_agent" },
+              { label: "Check FAQ", value: "faq" },
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamListDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here's a summary of your recent activity:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-list",
+          props: {
+            title: "Recent Orders",
+            ordered: true,
+            items: [
+              { text: "Order #4821 — MacBook Pro", secondary: "Delivered · Jan 15" },
+              { text: "Order #4756 — AirPods Max", secondary: "In transit · ETA Jan 28" },
+              { text: "Order #4690 — iPhone Case", secondary: "Processing · Jan 22" },
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-list",
+          props: {
+            title: "Recommended Next Steps",
+            ordered: false,
+            items: [
+              { text: "Confirm your shipping address", icon: "📦" },
+              { text: "Add a payment method", icon: "💳" },
+              { text: "Enable order notifications", icon: "🔔" },
+            ],
+          },
+          id: 3,
+        },
+        wait: 500,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamTableDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here's a comparison of available plans:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-table",
+          props: {
+            title: "Plan Comparison",
+            columns: ["Plan", "Price", "API Calls", "Support"],
+            rows: [
+              ["Free",       "$0/mo",   "1,000/mo",    "Community"],
+              ["Starter",    "$19/mo",  "50,000/mo",   "Email"],
+              ["Pro",        "$49/mo",  "500,000/mo",  "Priority"],
+              ["Enterprise", "Custom",  "Unlimited",   "Dedicated"],
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-table",
+          props: {
+            title: "Your Account Summary",
+            rows: [
+              ["Plan",          "Pro"],
+              ["Billing cycle", "Monthly"],
+              ["Next invoice",  "Feb 1, 2026"],
+              ["API usage",     "312,450 / 500,000"],
+            ],
+          },
+          id: 3,
+        },
+        wait: 500,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamRatingDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "How was your experience with our support team?", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-rating",
+          props: { title: "Rate your experience", maxStars: 5 },
+          id: 2,
+        },
+        wait: 400,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamProgressDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here's the current status of your onboarding:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-progress",
+          props: { label: "Profile Setup", value: 100, caption: "Complete", variant: "success" },
+          id: 2,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-progress",
+          props: { label: "API Integration", value: 65, caption: "In progress — 2 steps remaining" },
+          id: 3,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-progress",
+          props: { label: "Team Invitations", value: 30, caption: "3 of 10 members joined", variant: "warning" },
+          id: 4,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-progress",
+          props: { label: "Billing Setup", value: 0, caption: "Not started", variant: "error" },
+          id: 5,
+        },
+        wait: 400,
+        done: true,
       },
     ];
 
@@ -250,17 +554,20 @@ export class DummyConnector implements IConnector {
 
   /**
    * Directly trigger a GenUI demo stream — used by the sandbox demo buttons.
-   * @param command  "weather" | "form" | "genui"
    */
   triggerGenUI(command: string): void {
     if (!this.genUIChunkHandler) return;
     const streamId = `genui-trigger-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-    if (command === "weather") {
-      this._streamWeatherDemo(streamId);
-    } else if (command === "form") {
-      this._streamAppointmentFormDemo(streamId);
-    } else {
-      this._streamGenUIDemo(streamId);
+    switch (command) {
+      case "weather":       this._streamWeatherDemo(streamId); break;
+      case "form":          this._streamAppointmentFormDemo(streamId); break;
+      case "alert":         this._streamAlertDemo(streamId); break;
+      case "quick-replies": this._streamQuickRepliesDemo(streamId); break;
+      case "list":          this._streamListDemo(streamId); break;
+      case "table":         this._streamTableDemo(streamId); break;
+      case "rating":        this._streamRatingDemo(streamId); break;
+      case "progress":      this._streamProgressDemo(streamId); break;
+      default:              this._streamGenUIDemo(streamId); break;
     }
   }
 
@@ -273,7 +580,7 @@ export class DummyConnector implements IConnector {
           {
             type: "event",
             name: "form_success",
-            payload: { code: "APT-7X4K2", message: "Appointment successfully booked." },
+            payload: { code: "APT-7X4K2" },
             id: 10,
             for: 2,
           },

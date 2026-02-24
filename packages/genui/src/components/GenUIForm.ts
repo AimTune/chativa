@@ -1,6 +1,6 @@
-import { LitElement, html, css, nothing } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import i18next, { t } from "i18next";
+import { ChativaElement } from "@chativa/core";
 
 export interface GenUIFormField {
   name: string;
@@ -31,7 +31,7 @@ export interface GenUIFormField {
  * Listens for `"form_error"` event to show error message.
  */
 @customElement("genui-form")
-export class GenUIForm extends LitElement {
+export class GenUIForm extends ChativaElement {
   static override styles = css`
     :host {
       display: block;
@@ -160,29 +160,21 @@ export class GenUIForm extends LitElement {
   sendEvent?: (type: string, payload: unknown) => void;
   listenEvent?: (type: string, cb: (payload: unknown) => void) => void;
 
-  private _onLangChange = () => { this.requestUpdate(); };
-
   override connectedCallback() {
-    super.connectedCallback();
-    i18next.on("languageChanged", this._onLangChange);
+    super.connectedCallback(); // I18nMixin handles languageChanged subscription
     this.listenEvent?.("form_success", (payload) => {
       this._processing = false;
       this._submitted = true;
       const p = payload as Record<string, unknown>;
       this._successMessage = (p["message"] as string | undefined)
-        ?? t("genui.form.successDefault", { defaultValue: "Done!" });
+        ?? this.t("genui.form.successDefault", { defaultValue: "Done!" });
     });
     this.listenEvent?.("form_error", (payload) => {
       this._processing = false;
       const p = payload as Record<string, unknown>;
       this._errorMessage = (p["message"] as string | undefined)
-        ?? t("genui.form.errorDefault", { defaultValue: "Something went wrong." });
+        ?? this.t("genui.form.errorDefault", { defaultValue: "Something went wrong." });
     });
-  }
-
-  override disconnectedCallback() {
-    i18next.off("languageChanged", this._onLangChange);
-    super.disconnectedCallback();
   }
 
   private _onSubmit(e: Event) {
@@ -199,13 +191,13 @@ export class GenUIForm extends LitElement {
   }
 
   override render() {
-    const submitLabel = this.buttonText || t("genui.form.submit", { defaultValue: "Submit" });
+    const submitLabel = this.buttonText || this.t("genui.form.submit", { defaultValue: "Submit" });
 
     if (this._submitted) {
       return html`
         <div class="success-card">
           <div class="success-icon">✅</div>
-          <h3 class="success-title">${t("genui.form.successTitle", { defaultValue: "Success" })}</h3>
+          <h3 class="success-title">${this.t("genui.form.successTitle", { defaultValue: "Success" })}</h3>
           <p class="success-message">${this._successMessage}</p>
         </div>
       `;
@@ -235,7 +227,7 @@ export class GenUIForm extends LitElement {
             ?disabled=${this._processing}
           >
             ${this._processing
-              ? t("genui.form.processing", { defaultValue: "Processing…" })
+              ? this.t("genui.form.processing", { defaultValue: "Processing…" })
               : submitLabel}
           </button>
           ${this._errorMessage

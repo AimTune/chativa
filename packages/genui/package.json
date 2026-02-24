@@ -41,12 +41,8 @@
   },
   "dependencies": {
     "@chativa/core": "workspace:*",
-    "i18next": "^23.16.8",
     "lit": "^3.3.0",
     "marked": "^13.0.0"
-  },
-  "peerDependencies": {
-    "@chativa/ui": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "^28.1.0",

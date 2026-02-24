@@ -1,5 +1,6 @@
-import { LitElement, html, css, nothing } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { ChativaElement } from "@chativa/core";
 
 export interface GenUICardAction {
   label: string;
@@ -22,7 +23,7 @@ export interface GenUICardAction {
  * compatible with the existing Chativa action pipeline.
  */
 @customElement("genui-card")
-export class GenUICard extends LitElement {
+export class GenUICard extends ChativaElement {
   static override styles = css`
     :host {
       display: block;

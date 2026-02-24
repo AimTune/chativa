@@ -1,7 +1,7 @@
-import { LitElement, html, css, nothing } from "lit";
+import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { GenUIStreamState, AIChunk, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
-import { MessageTypeRegistry } from "@chativa/core";
+import { ChativaElement, MessageTypeRegistry, i18next, t } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -14,7 +14,7 @@ interface EventListener {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 @customElement("genui-message")
-export class GenUIMessage extends LitElement {
+export class GenUIMessage extends ChativaElement {
   static override styles = css`
     :host {
       display: block;
@@ -174,12 +174,19 @@ export class GenUIMessage extends LitElement {
       el = new entry.component() as HTMLElement;
       this._instances.set(chunk.id, el);
 
-      // Inject scoped event API
+      // Inject scoped event + i18n API so custom components
+      // don't need to depend on i18next directly.
       const elAny = el as unknown as Record<string, unknown>;
       elAny["sendEvent"] = (type: string, payload: unknown) =>
         this._sendEvent(type, payload, chunk.id);
       elAny["listenEvent"] = (type: string, cb: (p: unknown) => void) =>
         this._listenEvent(type, cb, chunk.id);
+      elAny["tFn"] = (key: string, fallback?: string) =>
+        t(key, { defaultValue: fallback ?? key });
+      elAny["onLangChange"] = (cb: () => void) => {
+        i18next.on("languageChanged", cb);
+        return () => i18next.off("languageChanged", cb);
+      };
     }
 
     // Always sync latest props

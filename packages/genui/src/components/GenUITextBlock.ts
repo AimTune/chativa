@@ -1,12 +1,13 @@
-import { LitElement, html, css } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { ChativaElement } from "@chativa/core";
 
 /**
  * `<genui-text-block>` — built-in plain-text/markdown chunk renderer.
  * Used automatically by GenUIMessage for `{ type: "text" }` chunks.
  */
 @customElement("genui-text-block")
-export class GenUITextBlock extends LitElement {
+export class GenUITextBlock extends ChativaElement {
   static override styles = css`
     :host {
       display: block;
