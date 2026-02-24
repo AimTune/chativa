@@ -24,6 +24,13 @@ jobs:
           registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
 
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update package versions
+        run: pnpm -r exec npm version ${{ steps.version.outputs.VERSION }} --no-git-tag-version
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
