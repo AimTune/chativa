@@ -1,5 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@chativa/core": [
+        "../core/src/index.ts"
+      ]
+    }
+  },
   "include": [
     "src"
   ]

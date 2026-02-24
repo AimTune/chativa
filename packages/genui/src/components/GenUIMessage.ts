@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { GenUIStreamState, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
+import type { GenUIStreamState, AIChunk, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
 import { MessageTypeRegistry } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
 
@@ -213,11 +213,11 @@ export class GenUIMessage extends LitElement {
     const streamingComplete = state?.streamingComplete ?? false;
 
     // Separate event chunks and dispatch them as side-effects during render
-    const eventChunks = chunks.filter((c): c is AIChunkEvent => c.type === "event");
+    const eventChunks = chunks.filter((c: AIChunk): c is AIChunkEvent => c.type === "event");
     this._dispatchEventChunks(eventChunks);
 
     const visibleChunks = chunks.filter(
-      (c): c is AIChunkText | AIChunkUI => c.type !== "event"
+      (c: AIChunk): c is AIChunkText | AIChunkUI => c.type !== "event"
     );
 
     // Don't show typing dots when the bot is waiting for user interaction
@@ -228,10 +228,10 @@ export class GenUIMessage extends LitElement {
     return html`
       <div class="genui-wrapper">
         ${visibleChunks.map((chunk: AIChunkText | AIChunkUI) => {
-          if (chunk.type === "text") return this._renderTextChunk(chunk);
-          if (chunk.type === "ui")   return this._renderUIChunk(chunk);
-          return nothing;
-        })}
+      if (chunk.type === "text") return this._renderTextChunk(chunk);
+      if (chunk.type === "ui") return this._renderUIChunk(chunk);
+      return nothing;
+    })}
         ${showTypingDots ? html`
           <div class="typing-dots">
             <span></span><span></span><span></span>
