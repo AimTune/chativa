@@ -1,5 +1,6 @@
 // Domain — pure types and interfaces
 export type { IncomingMessage, OutgoingMessage, MessageSender, MessageAction, MessageStatus, HistoryResult } from "./entities/Message";
+export type { AIChunk, AIChunkText, AIChunkUI, AIChunkEvent, GenUIStreamState, GenUIChunkHandler } from "./entities/GenUI";
 export { createOutgoingMessage } from "./entities/Message";
 export type {
   IConnector,
@@ -10,6 +11,7 @@ export type {
   FeedbackType,
   MessageStatusHandler,
 } from "./ports/IConnector";
+// Note: GenUIChunkHandler is exported from ./entities/GenUI above
 export type { IExtension, ExtensionContext, MessageTransformer } from "./ports/IExtension";
 export type { ISlashCommand, CommandContext } from "./ports/ISlashCommand";
 export { resolveText } from "./ports/ISlashCommand";

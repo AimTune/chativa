@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@chativa/core": "workspace:*",
+    "@chativa/genui": "workspace:*",
     "@chativa/ui": "workspace:*"
   },
   "devDependencies": {

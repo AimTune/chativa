@@ -143,6 +143,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("chativa-feedback", this._onFeedback as EventListener);
     this.addEventListener("send-file", this._onSendFile as EventListener);
     this.addEventListener("chat-load-history", this._onLoadHistory as EventListener);
+    this.addEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
   }
 
   disconnectedCallback() {
@@ -154,6 +155,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("chativa-feedback", this._onFeedback as EventListener);
     this.removeEventListener("send-file", this._onSendFile as EventListener);
     this.removeEventListener("chat-load-history", this._onLoadHistory as EventListener);
+    this.removeEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -282,6 +284,10 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   private _onLoadHistory = () => {
     this._engine.loadHistory()
       .catch((err: unknown) => console.error("[ChatWidget] loadHistory failed:", err));
+  };
+
+  private _onGenUISendEvent = (e: CustomEvent<{ msgId: string; eventType: string; payload: unknown }>) => {
+    this._engine.receiveComponentEvent(e.detail.msgId, e.detail.eventType, e.detail.payload);
   };
 
   // ── Focus management ─────────────────────────────────────────────────

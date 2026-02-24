@@ -281,6 +281,7 @@ class ChatMessageList extends LitElement {
   private _isAtBottom = true;
   private _hasNewMessages = false;
   private _prevMessageCount = 0;
+  private _prevVersion = 0;
   private _prevIsTyping = false;
   /** Set to true while a history load is in-flight; cleared in updated(). */
   private _prevIsLoadingHistory = false;
@@ -327,7 +328,8 @@ class ChatMessageList extends LitElement {
   }
 
   updated() {
-    const currentCount = messageStore.getState().messages.length;
+    const { messages, version } = messageStore.getState();
+    const currentCount = messages.length;
     const { isTyping, isLoadingHistory } = chatStore.getState();
 
     const typingChanged = isTyping !== this._prevIsTyping;
@@ -348,11 +350,15 @@ class ChatMessageList extends LitElement {
         this._scrollHeightBeforeHistory = 0;
       });
       this._prevMessageCount = currentCount;
+      this._prevVersion = version;
       return;
     }
 
     const countIncreased = currentCount > this._prevMessageCount;
+    // True when an existing message was mutated (e.g. GenUI chunk appended)
+    const storeUpdated = version > this._prevVersion;
     this._prevMessageCount = currentCount;
+    this._prevVersion = version;
 
     // While history is being prepended at the top, skip auto-scroll logic entirely
     if (isLoadingHistory) return;
@@ -365,12 +371,20 @@ class ChatMessageList extends LitElement {
     }
 
     if (countIncreased) {
+      // New message arrived
       if (this._isAtBottom) {
         this._pinToBottom();
       } else {
         this._hasNewMessages = true;
         this.requestUpdate();
       }
+    } else if (storeUpdated && this._isAtBottom) {
+      // Existing message updated (GenUI chunk, status change, etc.) — keep pinned
+      this._pinToBottom();
+    } else if (storeUpdated && !this._isAtBottom) {
+      // GenUI update while user is scrolled up — show pill
+      this._hasNewMessages = true;
+      this.requestUpdate();
     } else if (typingChanged && this._isAtBottom) {
       this._pinToBottom();
     }

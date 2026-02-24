@@ -23,6 +23,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@chativa/genui':
+        specifier: workspace:*
+        version: link:../../packages/genui
       '@chativa/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -145,11 +148,48 @@ importers:
         specifier: ^4.0.18
         version: 4.0.18(jsdom@28.1.0)
 
+  packages/genui:
+    dependencies:
+      '@chativa/core':
+        specifier: workspace:*
+        version: link:../core
+      '@chativa/ui':
+        specifier: workspace:*
+        version: link:../ui
+      i18next:
+        specifier: ^23.16.8
+        version: 23.16.8
+      lit:
+        specifier: ^3.3.0
+        version: 3.3.2
+      marked:
+        specifier: ^13.0.0
+        version: 13.0.3
+    devDependencies:
+      jsdom:
+        specifier: ^28.1.0
+        version: 28.1.0
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+      vite:
+        specifier: ^7.0.3
+        version: 7.3.1
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(jsdom@28.1.0)
+
   packages/ui:
     dependencies:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@chativa/genui':
+        specifier: workspace:*
+        version: link:../genui
       '@lit-labs/virtualizer':
         specifier: ^2.1.1
         version: 2.1.1
@@ -934,6 +974,9 @@ packages:
 
   i18next-browser-languagedetector@8.2.1:
     resolution: {integrity: sha512-bZg8+4bdmaOiApD7N7BPT9W8MLZG+nPTOFlLiJiT8uzKXFjhxw4v2ierCXOwB5sFDMtuA5G4kgYZ0AznZxQ/cw==}
+
+  i18next@23.16.8:
+    resolution: {integrity: sha512-06r/TitrM88Mg5FdUXAKL96dJMzgqLE5dv3ryBAra4KCwD9mJ4ndOTS95ZuymIGoE+2hzfdaMak2X11/es7ZWg==}
 
   i18next@25.8.13:
     resolution: {integrity: sha512-E0vzjBY1yM+nsFrtgkjLhST2NBkirkvOVoQa0MSldhsuZ3jUge7ZNpuwG0Cfc74zwo5ZwRzg3uOgT+McBn32iA==}
@@ -2120,6 +2163,10 @@ snapshots:
       - supports-color
 
   i18next-browser-languagedetector@8.2.1:
+    dependencies:
+      '@babel/runtime': 7.28.6
+
+  i18next@23.16.8:
     dependencies:
       '@babel/runtime': 7.28.6
 

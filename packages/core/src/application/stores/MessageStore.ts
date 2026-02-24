@@ -9,6 +9,8 @@ export interface StoredMessage extends IncomingMessage {
 
 export interface MessageStoreState {
   messages: StoredMessage[];
+  /** Incremented on every mutation — lets subscribers detect updates vs. new messages. */
+  version: number;
   addMessage: (msg: StoredMessage) => void;
   prependMessages: (msgs: StoredMessage[]) => void;
   removeById: (id: string) => void;
@@ -21,24 +23,26 @@ const renderedIds = new Set<string>();
 
 const store = createStore<MessageStoreState>((setState) => ({
   messages: [],
+  version: 0,
 
   addMessage: (msg) =>
     setState((state) => {
       if (renderedIds.has(msg.id)) return state; // deduplicate
       renderedIds.add(msg.id);
-      return { messages: [...state.messages, msg] };
+      return { messages: [...state.messages, msg], version: state.version + 1 };
     }),
 
   prependMessages: (msgs) =>
     setState((state) => {
       const fresh = msgs.filter((m) => !renderedIds.has(m.id));
       fresh.forEach((m) => renderedIds.add(m.id));
-      return { messages: [...fresh, ...state.messages] };
+      return { messages: [...fresh, ...state.messages], version: state.version + 1 };
     }),
 
   removeById: (id) =>
     setState((state) => ({
       messages: state.messages.filter((m) => m.id !== id),
+      version: state.version + 1,
     })),
 
   updateById: (id, patch) =>
@@ -46,11 +50,12 @@ const store = createStore<MessageStoreState>((setState) => ({
       messages: state.messages.map((m) =>
         m.id === id ? { ...m, ...patch } : m
       ),
+      version: state.version + 1,
     })),
 
   clear: () => {
     renderedIds.clear();
-    setState(() => ({ messages: [] }));
+    setState((state) => ({ messages: [], version: state.version + 1 }));
   },
 }));
 

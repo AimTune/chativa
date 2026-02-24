@@ -408,6 +408,15 @@ export class SandboxControls extends LitElement {
     inject(msg);
   }
 
+  private _triggerGenUI(command: string) {
+    const trigger = (window as unknown as Record<string, unknown>).chativaGenUI as
+      | ((command: string) => void)
+      | undefined;
+    if (!trigger) return;
+    if (!chatStore.getState().isOpened) chatStore.getState().toggle();
+    trigger(command);
+  }
+
   private _demoMessages: Array<{ label: string; msg: Record<string, unknown> }> = [
     {
       label: "💬 Text",
@@ -731,6 +740,31 @@ export class SandboxControls extends LitElement {
                   >${label}</button>
                 `
       )}
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Generative UI -->
+          <div>
+            <div class="section-label">Generative UI</div>
+            <div class="msg-grid">
+              <button
+                class="msg-btn"
+                type="button"
+                @click=${() => this._triggerGenUI("weather")}
+              >🌤️ Weather</button>
+              <button
+                class="msg-btn"
+                type="button"
+                @click=${() => this._triggerGenUI("form")}
+              >📋 Appt. Form</button>
+              <button
+                class="msg-btn"
+                type="button"
+                @click=${() => this._triggerGenUI("genui")}
+                style="grid-column: span 2"
+              >✨ GenUI Demo (card + form)</button>
             </div>
           </div>
 

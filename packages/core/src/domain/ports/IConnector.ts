@@ -8,6 +8,7 @@
  */
 
 import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
+import type { GenUIChunkHandler } from "../entities/GenUI";
 
 export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
@@ -59,4 +60,15 @@ export interface IConnector {
 
   /** Optional: register a callback for message delivery/read status updates. */
   onMessageStatus?(callback: MessageStatusHandler): void;
+
+  /** Optional: register a callback for Generative UI streaming chunks. */
+  onGenUIChunk?(callback: GenUIChunkHandler): void;
+
+  /**
+   * Optional: called by ChatEngine when a GenUI component fires `sendEvent`.
+   * @param streamId  Original connector stream id (from `onGenUIChunk`).
+   * @param eventType The event type string (e.g. "form_submit").
+   * @param payload   Arbitrary payload from the UI component.
+   */
+  receiveComponentEvent?(streamId: string, eventType: string, payload: unknown): void;
 }

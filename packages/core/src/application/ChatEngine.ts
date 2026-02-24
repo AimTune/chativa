@@ -1,5 +1,6 @@
 import type { IConnector, FeedbackType } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
+import type { AIChunk, GenUIStreamState } from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
@@ -9,6 +10,10 @@ export class ChatEngine {
   private connector: IConnector;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _destroyed = false;
+  /** Maps GenUI streamId → messageStore message id. */
+  private _genUIStreams = new Map<string, string>();
+  /** Reverse map: messageStore message id → streamId. Used to route component events. */
+  private _msgToStream = new Map<string, string>();
 
   constructor(connector: IConnector) {
     this.connector = connector;
@@ -46,6 +51,10 @@ export class ChatEngine {
 
     this.connector.onMessageStatus?.((messageId, status) => {
       messageStore.getState().updateById(messageId, { status });
+    });
+
+    this.connector.onGenUIChunk?.((streamId, chunk, done) => {
+      this._handleGenUIChunk(streamId, chunk, done);
     });
 
     chatStore.getState().setConnectorStatus("connecting");
@@ -133,6 +142,62 @@ export class ChatEngine {
     } finally {
       chatStore.getState().setIsLoadingHistory(false);
     }
+  }
+
+  private _handleGenUIChunk(streamId: string, chunk: AIChunk, done: boolean): void {
+    const Component = MessageTypeRegistry.resolve("genui");
+    let msgId = this._genUIStreams.get(streamId);
+
+    if (!msgId) {
+      // First chunk for this stream — create the message in the store
+      msgId = `genui-${streamId}-${Date.now()}`;
+      this._genUIStreams.set(streamId, msgId);
+      this._msgToStream.set(msgId, streamId);
+      const data: GenUIStreamState = { chunks: [chunk], streamingComplete: done };
+      messageStore.getState().addMessage({
+        id: msgId,
+        type: "genui",
+        from: "bot",
+        data: data as unknown as Record<string, unknown>,
+        timestamp: Date.now(),
+        component: Component,
+      });
+      if (!chatStore.getState().isOpened) {
+        chatStore.getState().incrementUnread();
+      }
+    } else {
+      // Subsequent chunk — append to existing message
+      const current = messageStore.getState().messages.find((m) => m.id === msgId);
+      const prevState = (current?.data ?? { chunks: [], streamingComplete: false }) as unknown as GenUIStreamState;
+      const updated: GenUIStreamState = {
+        chunks: chunk.type === "event" ? prevState.chunks : [...prevState.chunks, chunk],
+        streamingComplete: done,
+      };
+      // Always deliver event chunks even if we skip storing them — the
+      // GenUIMessage component reads them via a separate event-chunk array.
+      // Store event chunks too so the component can replay them on re-render.
+      if (chunk.type === "event") {
+        updated.chunks = [...prevState.chunks, chunk];
+      }
+      messageStore.getState().updateById(msgId, {
+        data: updated as unknown as Record<string, unknown>,
+      });
+    }
+
+    if (done) {
+      this._genUIStreams.delete(streamId);
+      this._msgToStream.delete(msgId);
+    }
+  }
+
+  /**
+   * Called by ChatWidget when a GenUI component fires `sendEvent`.
+   * Translates the message id back to the connector's stream id and forwards.
+   */
+  receiveComponentEvent(msgId: string, eventType: string, payload: unknown): void {
+    const streamId = this._msgToStream.get(msgId);
+    if (!streamId) return; // stream already complete or unknown
+    this.connector.receiveComponentEvent?.(streamId, eventType, payload);
   }
 
   async destroy(): Promise<void> {

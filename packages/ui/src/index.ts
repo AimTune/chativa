@@ -8,6 +8,8 @@ export { registerCommand } from "./commands/index";
 export type { LocalizedCommandConfig, CommandTranslations } from "./commands/index";
 
 // Side-effect registrations (registers custom elements)
+// @chativa/genui: registers genui-message custom element + MessageTypeRegistry.register("genui", ...)
+import "@chativa/genui";
 import "./chat-ui/ChatWidget";
 import "./chat-ui/ChatBotButton";
 import "./chat-ui/ChatHeader";

@@ -1,7 +1,7 @@
 {
-  "name": "@chativa/ui",
+  "name": "@chativa/genui",
   "version": "0.0.1",
-  "description": "Chativa UI — LitElement web components for the chat widget (chat-iva, chat-bot-button).",
+  "description": "Chativa Generative UI — stream LitElement components inline inside chat messages.",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
@@ -21,10 +21,10 @@
   "keywords": [
     "chativa",
     "chat",
-    "web-component",
-    "lit-element",
-    "chat-widget",
-    "ui"
+    "generative-ui",
+    "ai",
+    "streaming",
+    "lit-element"
   ],
   "homepage": "https://github.com/AimTune/chativa#readme",
   "bugs": {
@@ -41,15 +41,12 @@
   },
   "dependencies": {
     "@chativa/core": "workspace:*",
-    "@chativa/genui": "workspace:*",
-    "@lit-labs/virtualizer": "^2.1.1",
-    "i18next": "^25.3.2",
-    "i18next-browser-languagedetector": "^8.2.0",
+    "i18next": "^23.16.8",
     "lit": "^3.3.0",
     "marked": "^13.0.0"
   },
   "peerDependencies": {
-    "@chativa/core": ">=0.0.1"
+    "@chativa/ui": "workspace:*"
   },
   "devDependencies": {
     "jsdom": "^28.1.0",
