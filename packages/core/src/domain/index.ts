@@ -27,3 +27,4 @@ export type {
   AvatarConfig,
 } from "./value-objects/Theme";
 export { DEFAULT_THEME, mergeTheme, themeToCSS } from "./value-objects/Theme";
+export { ThemeBuilder } from "./value-objects/ThemeBuilder";
