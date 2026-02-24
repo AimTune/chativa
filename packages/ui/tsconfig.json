@@ -4,6 +4,9 @@
     "paths": {
       "@chativa/core": [
         "../core/src/index.ts"
+      ],
+      "@chativa/genui": [
+        "../genui/src/index.ts"
       ]
     }
   },
