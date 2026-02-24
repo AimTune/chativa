@@ -1,5 +1,38 @@
 {
     "greeting": "Hello",
     "welcome": "Welcome, {{name}}!",
-    "title": "Chativa Chatbot"
+    "header": {
+        "title": "Chativa Chatbot",
+        "status": {
+            "connecting": "Connecting…",
+            "connected": "Online",
+            "error": "Connection error",
+            "disconnected": "Disconnected",
+            "offline": "Offline"
+        },
+        "fullscreen": {
+            "enter": "Enter fullscreen",
+            "exit": "Exit fullscreen"
+        },
+        "close": "Close"
+    },
+    "input": {
+        "placeholder": "Type a message…",
+        "send": "Send message",
+        "emoji": "Emoji"
+    },
+    "messageList": {
+        "connecting": "Connecting…",
+        "emptyTitle": "How can I help you?",
+        "emptySubtitle": "Send a message to get started.",
+        "newMessage": "New message"
+    },
+    "emojiPicker": {
+        "searchPlaceholder": "Search emoji…",
+        "noResults": "No results"
+    },
+    "chatButton": {
+        "open": "Open chat",
+        "close": "Close chat"
+    }
 }

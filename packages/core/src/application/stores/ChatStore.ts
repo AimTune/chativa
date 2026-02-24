@@ -17,6 +17,10 @@ export interface ChatStoreState {
   connectorStatus: ConnectorStatus;
   /** True while the remote peer (bot) is composing a reply. */
   isTyping: boolean;
+  /** Number of unread messages received while the chat was closed. */
+  unreadCount: number;
+  /** Current auto-reconnect attempt (0 = not reconnecting). */
+  reconnectAttempt: number;
   theme: ThemeConfig;
 
   toggle: () => void;
@@ -31,6 +35,9 @@ export interface ChatStoreState {
   setConnector: (name: string) => void;
   setConnectorStatus: (status: ConnectorStatus) => void;
   setTyping: (v: boolean) => void;
+  incrementUnread: () => void;
+  resetUnread: () => void;
+  setReconnectAttempt: (n: number) => void;
   subscribe: (cb: () => void) => () => void;
 }
 
@@ -45,15 +52,18 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   activeConnector: "dummy",
   connectorStatus: "idle",
   isTyping: false,
+  unreadCount: 0,
+  reconnectAttempt: 0,
   theme: DEFAULT_THEME,
 
   toggle: () =>
     setState((s) => ({
       isOpened: !s.isOpened,
       isRendered: true,
+      unreadCount: 0,
     })),
 
-  open: () => setState(() => ({ isOpened: true, isRendered: true })),
+  open: () => setState(() => ({ isOpened: true, isRendered: true, unreadCount: 0 })),
   close: () => setState(() => ({ isOpened: false })),
 
   toggleFullscreen: () =>
@@ -74,6 +84,10 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     setState(() => ({ connectorStatus: status })),
 
   setTyping: (v: boolean) => setState(() => ({ isTyping: v })),
+
+  incrementUnread: () => setState((s) => ({ unreadCount: s.unreadCount + 1 })),
+  resetUnread: () => setState(() => ({ unreadCount: 0 })),
+  setReconnectAttempt: (n: number) => setState(() => ({ reconnectAttempt: n })),
 
   subscribe: (cb: () => void): (() => void) =>
     store.subscribe(() => cb()),

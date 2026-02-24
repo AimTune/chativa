@@ -1,5 +1,38 @@
 {
     "greeting": "Merhaba",
     "welcome": "Hoş geldin, {{name}}!",
-    "title": "Chativa Sohbet Botu"
+    "header": {
+        "title": "Chativa Sohbet Botu",
+        "status": {
+            "connecting": "Bağlanıyor…",
+            "connected": "Çevrimiçi",
+            "error": "Bağlantı hatası",
+            "disconnected": "Bağlantı kesildi",
+            "offline": "Çevrimdışı"
+        },
+        "fullscreen": {
+            "enter": "Tam ekrana geç",
+            "exit": "Tam ekrandan çık"
+        },
+        "close": "Kapat"
+    },
+    "input": {
+        "placeholder": "Bir mesaj yazın…",
+        "send": "Mesaj gönder",
+        "emoji": "Emoji"
+    },
+    "messageList": {
+        "connecting": "Bağlanıyor…",
+        "emptyTitle": "Size nasıl yardımcı olabilirim?",
+        "emptySubtitle": "Başlamak için bir mesaj gönderin.",
+        "newMessage": "Yeni mesaj"
+    },
+    "emojiPicker": {
+        "searchPlaceholder": "Emoji ara…",
+        "noResults": "Sonuç yok"
+    },
+    "chatButton": {
+        "open": "Sohbeti aç",
+        "close": "Sohbeti kapat"
+    }
 }

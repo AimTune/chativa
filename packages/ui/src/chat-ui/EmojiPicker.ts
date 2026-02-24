@@ -1,5 +1,7 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { t } from "i18next";
+import i18next from "../i18n/i18n";
 
 interface EmojiCategory {
   label: string;
@@ -251,6 +253,17 @@ export class EmojiPicker extends LitElement {
 
   @state() private _activeCategory = 0;
   @state() private _search = "";
+  private _onLangChange = () => { this.requestUpdate(); };
+
+  override connectedCallback() {
+    super.connectedCallback();
+    i18next.on("languageChanged", this._onLangChange);
+  }
+
+  override disconnectedCallback() {
+    i18next.off("languageChanged", this._onLangChange);
+    super.disconnectedCallback();
+  }
 
   private _onSearch(e: Event) {
     this._search = (e.target as HTMLInputElement).value;
@@ -296,7 +309,7 @@ export class EmojiPicker extends LitElement {
           <input
             class="search-input"
             type="text"
-            placeholder="Search emoji…"
+            placeholder="${t("emojiPicker.searchPlaceholder")}"
             .value=${this._search}
             @input=${this._onSearch}
             autocomplete="off"
@@ -305,7 +318,7 @@ export class EmojiPicker extends LitElement {
 
         <div class="grid">
           ${emojis.length === 0
-            ? html`<span class="no-results">No results</span>`
+            ? html`<span class="no-results">${t("emojiPicker.noResults")}</span>`
             : emojis.map(
                 (emoji) => html`
                   <button

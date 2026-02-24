@@ -1,5 +1,8 @@
 import { LitElement, html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { t } from "i18next";
+import i18next from "../i18n/i18n";
+import { chatStore } from "@chativa/core";
 import "./EmojiPicker";
 
 @customElement("chat-input")
@@ -54,17 +57,22 @@ class ChatInput extends LitElement {
     .text-input {
       flex: 1;
       min-width: 0;
-      height: 36px;
-      padding: 0 14px;
+      min-height: 36px;
+      max-height: 120px;
+      padding: 8px 14px;
       border: 1.5px solid #e2e8f0;
-      border-radius: 20px;
+      border-radius: 18px;
       font-size: 0.875rem;
-      line-height: 1;
+      line-height: 1.4;
       color: #0f172a;
       background: #f8fafc;
       outline: none;
       font-family: inherit;
       transition: border-color 0.15s, background 0.15s;
+      resize: none;
+      overflow-y: auto;
+      box-sizing: border-box;
+      display: block;
     }
 
     .text-input::placeholder {
@@ -74,6 +82,16 @@ class ChatInput extends LitElement {
     .text-input:focus {
       border-color: var(--chativa-primary-color, #4f46e5);
       background: #ffffff;
+    }
+
+    .text-input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .input-area.disconnected {
+      opacity: 0.6;
+      pointer-events: none;
     }
 
     .send-btn {
@@ -122,9 +140,15 @@ class ChatInput extends LitElement {
 
   @property({ type: String }) value = "";
   @state() private _pickerOpen = false;
+  private _onLangChange = () => { this.requestUpdate(); };
+  private _unsubscribeChatStore!: () => void;
 
   private _onInput(e: Event) {
-    this.value = (e.target as HTMLInputElement).value;
+    const el = e.target as HTMLTextAreaElement;
+    this.value = el.value;
+    // Auto-resize: shrink to auto then expand to content height
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
   }
 
   private _onKeyDown(e: KeyboardEvent) {
@@ -148,6 +172,11 @@ class ChatInput extends LitElement {
       })
     );
     this.value = "";
+    // Reset textarea height after clearing
+    this.updateComplete.then(() => {
+      const ta = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
+      if (ta) ta.style.height = "auto";
+    });
   }
 
   private _togglePicker() {
@@ -156,15 +185,15 @@ class ChatInput extends LitElement {
 
   private _onEmojiSelect(e: CustomEvent<string>) {
     const emoji = e.detail;
-    const input = this.shadowRoot?.querySelector<HTMLInputElement>(".text-input");
-    if (input) {
-      const start = input.selectionStart ?? this.value.length;
-      const end = input.selectionEnd ?? this.value.length;
+    const ta = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
+    if (ta) {
+      const start = ta.selectionStart ?? this.value.length;
+      const end = ta.selectionEnd ?? this.value.length;
       this.value =
         this.value.slice(0, start) + emoji + this.value.slice(end);
       // Restore focus + cursor after LitElement re-renders
       this.updateComplete.then(() => {
-        const el = this.shadowRoot?.querySelector<HTMLInputElement>(".text-input");
+        const el = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".text-input");
         if (el) {
           el.focus();
           const pos = start + emoji.length;
@@ -191,10 +220,14 @@ class ChatInput extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("click", this._onDocumentClick);
+    i18next.on("languageChanged", this._onLangChange);
+    this._unsubscribeChatStore = chatStore.subscribe(() => this.requestUpdate());
   }
 
   disconnectedCallback() {
     document.removeEventListener("click", this._onDocumentClick);
+    i18next.off("languageChanged", this._onLangChange);
+    this._unsubscribeChatStore?.();
     super.disconnectedCallback();
   }
 
@@ -208,12 +241,14 @@ class ChatInput extends LitElement {
 
   render() {
     const hasText = this.value.trim().length > 0;
+    const connected = chatStore.getState().connectorStatus === "connected";
     return html`
-      <div class="input-area" @click=${this._onHostClick}>
+      <div class="input-area ${connected ? "" : "disconnected"}" @click=${this._onHostClick}>
         <button
           class="emoji-btn ${this._pickerOpen ? "active" : ""}"
           type="button"
-          aria-label="Emoji"
+          aria-label="${t("input.emoji")}"
+          ?disabled=${!connected}
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
         >
           <svg
@@ -230,23 +265,24 @@ class ChatInput extends LitElement {
           </svg>
         </button>
 
-        <input
+        <textarea
           class="text-input"
-          type="text"
+          rows="1"
           .value=${this.value}
           @input=${this._onInput}
           @keydown=${this._onKeyDown}
-          placeholder="Type a message…"
+          placeholder="${t("input.placeholder")}"
           autocomplete="off"
           spellcheck="true"
-        />
+          ?disabled=${!connected}
+        ></textarea>
 
         <button
           class="send-btn"
           type="button"
-          ?disabled=${!hasText}
+          ?disabled=${!hasText || !connected}
           @click=${this._send}
-          aria-label="Send message"
+          aria-label="${t("input.send")}"
         >
           <svg
             viewBox="0 0 24 24"

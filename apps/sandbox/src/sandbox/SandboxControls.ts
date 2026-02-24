@@ -9,6 +9,7 @@ import {
   type SpaceLevel,
   type DeepPartial,
 } from "@chativa/core";
+import { i18n } from "@chativa/ui";
 
 const COLOR_PRESETS: { label: string; value: string }[] = [
   { label: "Indigo",   value: "#4f46e5" },
@@ -340,8 +341,10 @@ export class SandboxControls extends LitElement {
   @state() private _chatOpen = chatStore.getState().isOpened;
   @state() private _isFullscreen = chatStore.getState().isFullscreen;
   @state() private _colorHex = chatStore.getState().theme.colors.primary;
+  @state() private _lang = i18n.language;
 
   private _unsub!: () => void;
+  private _onLangChange = (lng: string) => { this._lang = lng; };
 
   connectedCallback() {
     super.connectedCallback();
@@ -352,10 +355,12 @@ export class SandboxControls extends LitElement {
       this._isFullscreen = s.isFullscreen;
       this._colorHex = s.theme.colors.primary;
     });
+    i18n.on("languageChanged", this._onLangChange);
   }
 
   disconnectedCallback() {
     this._unsub?.();
+    i18n.off("languageChanged", this._onLangChange);
     super.disconnectedCallback();
   }
 
@@ -526,6 +531,26 @@ export class SandboxControls extends LitElement {
                   >
                     ${m}
                   </button>
+                `
+              )}
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Language -->
+          <div>
+            <div class="section-label">Language</div>
+            <div class="toggle-group">
+              ${([
+                { label: "English", value: "en" },
+                { label: "Türkçe", value: "tr" },
+              ] as { label: string; value: string }[]).map(
+                (l) => html`
+                  <button
+                    class="tg-btn ${this._lang.startsWith(l.value) ? "active" : ""}"
+                    @click=${() => i18n.changeLanguage(l.value)}
+                  >${l.label}</button>
                 `
               )}
             </div>

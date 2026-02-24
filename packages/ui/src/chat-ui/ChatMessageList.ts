@@ -2,6 +2,8 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { unsafeStatic } from "lit/static-html.js";
 import { html as staticHtml } from "lit/static-html.js";
+import { t } from "i18next";
+import i18next from "../i18n/i18n";
 
 import { messageStore, chatStore } from "@chativa/core";
 
@@ -178,7 +180,79 @@ class ChatMessageList extends LitElement {
     :host {
       position: relative;
     }
+
+    /* Reduce gap between grouped messages */
+    .list {
+      gap: 2px;
+    }
+
+    /* Reconnecting banner */
+    .reconnecting-banner {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #fefce8;
+      border: 1px solid #fde047;
+      border-radius: 10px;
+      margin-bottom: 8px;
+      font-size: 0.8125rem;
+      color: #854d0e;
+    }
+
+    .mini-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #fde047;
+      border-top-color: #854d0e;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* Error state */
+    .error-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      gap: 14px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .error-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: #fee2e2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .error-icon svg { width: 26px; height: 26px; color: #ef4444; }
+
+    .error-title { font-size: 0.9375rem; font-weight: 600; color: #0f172a; margin: 0; }
+    .error-subtitle { font-size: 0.8125rem; color: #64748b; margin: 0; }
+
+    .retry-btn {
+      padding: 8px 20px;
+      background: var(--chativa-primary-color, #4f46e5);
+      color: #fff;
+      border: none;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .retry-btn:hover { opacity: 0.88; }
   `;
+
+  private _onLangChange = () => { this.requestUpdate(); };
 
   private _unsubscribeMessages!: () => void;
   private _unsubscribeChatStore!: () => void;
@@ -199,11 +273,13 @@ class ChatMessageList extends LitElement {
     this._unsubscribeChatStore = chatStore.subscribe(() =>
       this.requestUpdate()
     );
+    i18next.on("languageChanged", this._onLangChange);
   }
 
   disconnectedCallback() {
     this._unsubscribeMessages?.();
     this._unsubscribeChatStore?.();
+    i18next.off("languageChanged", this._onLangChange);
     this._list?.removeEventListener("scroll", this._onScroll);
     super.disconnectedCallback();
   }
@@ -264,23 +340,60 @@ class ChatMessageList extends LitElement {
     this.requestUpdate();
   }
 
+  private _retry() {
+    this.dispatchEvent(
+      new CustomEvent("chat-retry", { bubbles: true, composed: true })
+    );
+  }
+
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping } = chatStore.getState();
+    const { connectorStatus, isTyping, reconnectAttempt } = chatStore.getState();
 
+    // Error state: all reconnect attempts exhausted
+    if (connectorStatus === "error") {
+      return html`
+        <div class="list">
+          <div class="error-state">
+            <div class="error-icon">
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+              </svg>
+            </div>
+            <p class="error-title">${t("messageList.errorTitle")}</p>
+            <p class="error-subtitle">${t("messageList.errorSubtitle")}</p>
+            <button class="retry-btn" @click=${this._retry}>${t("messageList.retry")}</button>
+          </div>
+        </div>
+      `;
+    }
+
+    // Initial connecting (no messages yet)
     if (connectorStatus === "connecting" && messages.length === 0) {
       return html`
         <div class="list">
           <div class="connecting">
             <div class="spinner"></div>
-            <p class="connecting-text">Connecting…</p>
+            <p class="connecting-text">${t("messageList.connecting")}</p>
           </div>
         </div>
       `;
     }
 
     return html`
-      <div class="list">
+      <div
+        class="list"
+        role="log"
+        aria-live="polite"
+        aria-label="Chat messages"
+        aria-relevant="additions"
+      >
+        ${connectorStatus === "connecting" && messages.length > 0 ? html`
+          <div class="reconnecting-banner">
+            <div class="mini-spinner"></div>
+            ${t("messageList.reconnecting", { attempt: reconnectAttempt })}
+          </div>
+        ` : null}
         ${messages.length === 0
           ? html`
               <div class="empty">
@@ -291,18 +404,21 @@ class ChatMessageList extends LitElement {
                     />
                   </svg>
                 </div>
-                <p class="empty-title">How can I help you?</p>
-                <p class="empty-subtitle">Send a message to get started.</p>
+                <p class="empty-title">${t("messageList.emptyTitle")}</p>
+                <p class="empty-subtitle">${t("messageList.emptySubtitle")}</p>
               </div>
             `
-          : messages.map((msg) => {
+          : messages.map((msg, i) => {
               const tag = msg.component
                 ? resolveTag(msg.component)
                 : "default-text-message";
+              const next = messages[i + 1];
+              const isLastInGroup = !next || next.from !== msg.from;
               return staticHtml`<${unsafeStatic(tag)}
                 .messageData=${msg.data}
                 .sender=${msg.from ?? "bot"}
-                .timestamp=${msg.timestamp ?? 0}
+                .timestamp=${isLastInGroup ? (msg.timestamp ?? 0) : 0}
+                .hideAvatar=${!isLastInGroup}
               ></${unsafeStatic(tag)}>`;
             })}
         ${isTyping ? html`
@@ -313,7 +429,7 @@ class ChatMessageList extends LitElement {
       </div>
       ${this._hasNewMessages ? html`
         <button class="new-msg-pill" @click=${this._scrollToBottom}>
-          ↓ New message
+          ↓ ${t("messageList.newMessage")}
         </button>
       ` : null}
     `;

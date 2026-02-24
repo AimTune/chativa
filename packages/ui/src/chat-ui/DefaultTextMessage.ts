@@ -1,5 +1,7 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { marked } from "marked";
 import { MessageTypeRegistry, type MessageSender } from "@chativa/core";
 
 
@@ -38,11 +40,37 @@ export class DefaultTextMessage extends LitElement {
       flex-shrink: 0;
     }
 
+    .avatar.hidden { visibility: hidden; }
+
     .avatar svg {
       width: 16px;
       height: 16px;
       color: #7c3aed;
     }
+
+    /* Markdown styles for bot bubbles */
+    .message.bot .bubble p { margin: 0 0 6px; }
+    .message.bot .bubble p:last-child { margin: 0; }
+    .message.bot .bubble code {
+      background: rgba(0,0,0,0.08);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.82em;
+      font-family: monospace;
+    }
+    .message.bot .bubble pre {
+      background: rgba(0,0,0,0.06);
+      border-radius: 6px;
+      padding: 8px 12px;
+      overflow-x: auto;
+      margin: 6px 0;
+    }
+    .message.bot .bubble pre code { background: none; padding: 0; }
+    .message.bot .bubble a { color: #4f46e5; text-decoration: underline; }
+    .message.bot .bubble ul,
+    .message.bot .bubble ol { margin: 4px 0; padding-left: 18px; }
+    .message.bot .bubble strong { font-weight: 600; }
+    .message.bot .bubble em { font-style: italic; }
 
     .content {
       display: flex;
@@ -84,6 +112,8 @@ export class DefaultTextMessage extends LitElement {
   @property({ type: Object }) messageData: Record<string, unknown> = {};
   @property({ type: String }) sender: MessageSender = "bot";
   @property({ type: Number }) timestamp = 0;
+  /** When true the avatar is invisible (still occupies space for alignment). */
+  @property({ type: Boolean }) hideAvatar = false;
 
   private get _time(): string {
     if (!this.timestamp) return "";
@@ -95,11 +125,17 @@ export class DefaultTextMessage extends LitElement {
 
   render() {
     const isUser = this.sender === "user";
+    const raw = String(this.messageData?.text ?? "");
+    // Render markdown for bot messages; plain text for user messages
+    const bubbleContent = isUser
+      ? raw
+      : unsafeHTML(marked.parse(raw, { async: false }) as string);
+
     return html`
       <div class="message ${isUser ? "user" : "bot"}">
         ${!isUser
           ? html`
-              <div class="avatar">
+              <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
                 <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                   <rect x="5" y="8" width="14" height="12" rx="2.5" />
                   <circle cx="9.5" cy="13" r="1.5" fill="white" />
@@ -116,16 +152,13 @@ export class DefaultTextMessage extends LitElement {
             `
           : nothing}
         <div class="content">
-          <div class="bubble">${this.messageData?.text as string}</div>
+          <div class="bubble">${bubbleContent}</div>
           ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
         </div>
       </div>
     `;
   }
 }
-
-// Needed for the `nothing` template literal
-import { nothing } from "lit";
 
 MessageTypeRegistry.register(
   "text",

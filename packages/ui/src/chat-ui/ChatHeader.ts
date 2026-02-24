@@ -137,11 +137,11 @@ class ChatHeader extends ChatbotMixin(LitElement) {
 
   private get _statusLabel(): string {
     switch (this.themeState.connectorStatus) {
-      case "connecting": return "Connecting…";
-      case "connected": return "Online";
-      case "error": return "Connection error";
-      case "disconnected": return "Disconnected";
-      default: return "Offline";
+      case "connecting": return t("header.status.connecting");
+      case "connected": return t("header.status.connected");
+      case "error": return t("header.status.error");
+      case "disconnected": return t("header.status.disconnected");
+      default: return t("header.status.offline");
     }
   }
 
@@ -195,7 +195,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         </div>
 
         <div class="info">
-          <span class="title">${t("title")}</span>
+          <span class="title">${t("header.title")}</span>
           <div class="status">
             <span class="status-dot ${connectorStatus}"></span>
             <span class="status-text">${this._statusLabel}</span>
@@ -207,8 +207,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
             <button
               class="icon-btn"
               @click=${() => this.themeState.toggleFullscreen()}
-              aria-label="${isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}"
-              title="${isFullscreen ? "Exit fullscreen" : "Fullscreen"}"
+              aria-label="${isFullscreen ? t("header.fullscreen.exit") : t("header.fullscreen.enter")}"
+              title="${isFullscreen ? t("header.fullscreen.exit") : t("header.fullscreen.enter")}"
             >
               ${isFullscreen
                 ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
@@ -223,8 +223,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
           <button
             class="icon-btn"
             @click=${() => this.themeState.close()}
-            aria-label="Close chat"
-            title="Close"
+            aria-label="${t("header.close")}"
+            title="${t("header.close")}"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
               <path d="M18 6L6 18M6 6l12 12" />

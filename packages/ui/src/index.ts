@@ -3,6 +3,7 @@
 export { ChatbotMixin } from "./mixins/ChatbotMixin";
 export { ChatWidget } from "./chat-ui/ChatWidget";
 export { default as ChatBotButton } from "./chat-ui/ChatBotButton";
+export { default as i18n } from "./i18n/i18n";
 
 // Side-effect registrations (registers custom elements)
 import "./chat-ui/ChatWidget";

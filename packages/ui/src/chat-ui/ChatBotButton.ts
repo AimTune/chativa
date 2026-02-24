@@ -1,5 +1,6 @@
-import { LitElement, html, css } from "lit";
+import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
+import { t } from "i18next";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 const SIZE_PX: Record<string, number> = { small: 44, medium: 56, large: 68 };
@@ -108,6 +109,33 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       justify-content: center;
     }
 
+    /* Unread badge */
+    .badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 4px;
+      background: #ef4444;
+      color: #fff;
+      border-radius: 999px;
+      font-size: 0.6875rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 2px #fff;
+      pointer-events: none;
+      line-height: 1;
+      animation: badge-pop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes badge-pop {
+      from { transform: scale(0); }
+      to   { transform: scale(1); }
+    }
+
     /* On mobile chat goes fullscreen — hide the toggle button so it
        doesn't float above the open chat panel. */
     @media (max-width: 480px) {
@@ -134,7 +162,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
   }
 
   render() {
-    const isOpen = this.themeState.isOpened;
+    const { isOpened: isOpen, unreadCount } = this.themeState;
     const classes = [
       "launcher",
       isOpen ? "is-open" : "",
@@ -149,7 +177,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
         part="launcher"
         style="${this.#positionStyle()}"
         @click=${() => this.themeState.toggle()}
-        aria-label="${isOpen ? "Close chat" : "Open chat"}"
+        aria-label="${isOpen ? t("chatButton.close") : t("chatButton.open")}"
         aria-expanded="${isOpen}"
       >
         <slot @slotchange=${this._onSlotChange}>
@@ -178,6 +206,11 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
             </svg>
           </span>
         </slot>
+        ${unreadCount > 0 && !isOpen
+          ? html`<span class="badge" aria-label="${unreadCount} unread messages">
+              ${unreadCount > 9 ? "9+" : unreadCount}
+            </span>`
+          : nothing}
       </button>
     `;
   }

@@ -10,6 +10,7 @@ import {
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 import "./DefaultTextMessage";
+import "./QuickReplyMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
@@ -117,12 +118,16 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     });
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
     this.addEventListener("chat-drag-start", this._onDragStart as EventListener);
+    this.addEventListener("chat-action", this._onChatAction as EventListener);
+    this.addEventListener("chat-retry", this._onChatRetry as EventListener);
   }
 
   disconnectedCallback() {
     this._unsubscribeMessages?.();
     this._engine?.destroy().catch(() => {});
     this.removeEventListener("chat-drag-start", this._onDragStart as EventListener);
+    this.removeEventListener("chat-action", this._onChatAction as EventListener);
+    this.removeEventListener("chat-retry", this._onChatRetry as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -218,6 +223,35 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine
       .send(createOutgoingMessage(text))
       .catch((err: unknown) => console.error("[ChatWidget] Send failed:", err));
+  }
+
+  private _onChatAction = (e: Event) => {
+    const text = (e as CustomEvent<string>).detail?.trim();
+    if (!text) return;
+    this._engine
+      .send(createOutgoingMessage(text))
+      .catch((err: unknown) => console.error("[ChatWidget] Action send failed:", err));
+  };
+
+  private _onChatRetry = () => {
+    this._engine.init().catch((err: unknown) =>
+      console.error("[ChatWidget] Reconnect failed:", err)
+    );
+  };
+
+  // ── Focus management ─────────────────────────────────────────────────
+
+  protected override updated(changed: Map<PropertyKey, unknown>) {
+    super.updated?.(changed);
+    // Focus the textarea when the chat panel opens
+    if (this.themeState.isOpened) {
+      this.updateComplete.then(() => {
+        const input = this.shadowRoot
+          ?.querySelector("chat-input")
+          ?.shadowRoot?.querySelector<HTMLElement>(".text-input");
+        input?.focus();
+      });
+    }
   }
 
   // ── Positioning ──────────────────────────────────────────────────────
