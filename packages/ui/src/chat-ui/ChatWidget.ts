@@ -1,15 +1,14 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import { t } from "i18next";
 import {
   ChatEngine,
   ConnectorRegistry,
   MessageTypeRegistry,
-  SlashCommandRegistry,
   messageStore,
   createOutgoingMessage,
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
+import { registerCommand } from "../commands/index";
 
 import "./DefaultTextMessage";
 import "./QuickReplyMessage";
@@ -120,16 +119,17 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   connectedCallback() {
     super.connectedCallback();
 
-    // Register built-in slash commands with lazy i18n descriptions
-    if (!SlashCommandRegistry.has("clear")) {
-      SlashCommandRegistry.register({
-        name: "clear",
-        description: () => t("commands.clear.description"),
-        execute() {
-          messageStore.getState().clear();
-        },
-      });
-    }
+    // Register built-in slash commands with inline translations
+    registerCommand({
+      name: "clear",
+      translations: {
+        en: { description: "Clear all messages from the chat" },
+        tr: { description: "Tüm mesajları temizle" },
+      },
+      execute() {
+        messageStore.getState().clear();
+      },
+    });
 
     const adapter = ConnectorRegistry.get(this.connector);
     this._engine = new ChatEngine(adapter);

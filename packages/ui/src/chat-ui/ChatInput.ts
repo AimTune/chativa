@@ -238,6 +238,13 @@ class ChatInput extends LitElement {
       font-size: 0.875rem;
       font-weight: 600;
       color: var(--chativa-primary-color, #4f46e5);
+      white-space: nowrap;
+    }
+
+    .slash-item-usage {
+      font-size: 0.8125rem;
+      color: #94a3b8;
+      white-space: nowrap;
     }
 
     .slash-item-desc {
@@ -581,6 +588,7 @@ class ChatInput extends LitElement {
               @click=${() => this._selectSlashCommand(cmd)}
             >
               <span class="slash-item-name">/${cmd.name}</span>
+              ${resolveText(cmd.usage) ? html`<span class="slash-item-usage">${resolveText(cmd.usage)}</span>` : nothing}
               <span class="slash-item-desc">${resolveText(cmd.description)}</span>
             </button>
           `)}

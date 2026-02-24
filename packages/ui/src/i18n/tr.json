@@ -39,11 +39,5 @@
     "chatButton": {
         "open": "Sohbeti aç",
         "close": "Sohbeti kapat"
-    },
-    "commands": {
-        "clear": {
-            "description": "Tüm mesajları temizle",
-            "usage": ""
-        }
     }
 }

@@ -39,11 +39,5 @@
     "chatButton": {
         "open": "Open chat",
         "close": "Close chat"
-    },
-    "commands": {
-        "clear": {
-            "description": "Clear all messages from the chat",
-            "usage": ""
-        }
     }
 }
