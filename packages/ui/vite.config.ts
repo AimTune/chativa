@@ -14,7 +14,6 @@ export default defineConfig({
         "lit",
         /^lit\//,
         "@chativa/core",
-        "@chativa/connector-dummy",
       ],
     },
     sourcemap: true,

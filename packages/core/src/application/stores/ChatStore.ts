@@ -15,6 +15,8 @@ export interface ChatStoreState {
   allowFullscreen: boolean;
   activeConnector: string;
   connectorStatus: ConnectorStatus;
+  /** True while the remote peer (bot) is composing a reply. */
+  isTyping: boolean;
   theme: ThemeConfig;
 
   toggle: () => void;
@@ -28,6 +30,7 @@ export interface ChatStoreState {
   getTheme: () => ThemeConfig;
   setConnector: (name: string) => void;
   setConnectorStatus: (status: ConnectorStatus) => void;
+  setTyping: (v: boolean) => void;
   subscribe: (cb: () => void) => () => void;
 }
 
@@ -41,6 +44,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   allowFullscreen: true,
   activeConnector: "dummy",
   connectorStatus: "idle",
+  isTyping: false,
   theme: DEFAULT_THEME,
 
   toggle: () =>
@@ -68,6 +72,8 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
 
   setConnectorStatus: (status: ConnectorStatus) =>
     setState(() => ({ connectorStatus: status })),
+
+  setTyping: (v: boolean) => setState(() => ({ isTyping: v })),
 
   subscribe: (cb: () => void): (() => void) =>
     store.subscribe(() => cb()),

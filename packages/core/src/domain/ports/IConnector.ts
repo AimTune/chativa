@@ -12,6 +12,7 @@ import type { IncomingMessage, OutgoingMessage } from "../entities/Message";
 export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
 export type DisconnectHandler = (reason?: string) => void;
+export type TypingHandler = (isTyping: boolean) => void;
 
 export interface IConnector {
   /** Unique identifier used to select this connector at runtime. */
@@ -41,4 +42,7 @@ export interface IConnector {
 
   /** Optional: called when connection is lost. */
   onDisconnect?(callback: DisconnectHandler): void;
+
+  /** Optional: called when the remote peer starts or stops typing. */
+  onTyping?(callback: TypingHandler): void;
 }

@@ -157,9 +157,6 @@ importers:
         specifier: ^8.2.0
         version: 8.2.1
     devDependencies:
-      '@chativa/connector-dummy':
-        specifier: workspace:*
-        version: link:../connector-dummy
       '@chativa/core':
         specifier: workspace:*
         version: link:../core

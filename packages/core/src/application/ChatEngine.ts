@@ -14,6 +14,8 @@ export class ChatEngine {
 
   async init(): Promise<void> {
     this.connector.onMessage((msg) => {
+      chatStore.getState().setTyping(false);
+
       const transformed = ExtensionRegistry.runAfterReceive(msg);
       if (transformed === null) return; // extension blocked it
 
@@ -23,6 +25,10 @@ export class ChatEngine {
 
     this.connector.onDisconnect?.(() => {
       chatStore.getState().setConnectorStatus("disconnected");
+    });
+
+    this.connector.onTyping?.((isTyping) => {
+      chatStore.getState().setTyping(isTyping);
     });
 
     chatStore.getState().setConnectorStatus("connecting");

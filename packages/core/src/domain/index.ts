@@ -6,6 +6,7 @@ export type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
+  TypingHandler,
 } from "./ports/IConnector";
 export type { IExtension, ExtensionContext, MessageTransformer } from "./ports/IExtension";
 export type { IMessageRenderer } from "./ports/IMessageRenderer";

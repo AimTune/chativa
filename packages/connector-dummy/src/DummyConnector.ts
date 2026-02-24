@@ -2,6 +2,7 @@ import type {
   IConnector,
   MessageHandler,
   DisconnectHandler,
+  TypingHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -17,6 +18,7 @@ export class DummyConnector implements IConnector {
 
   private messageHandler: MessageHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
+  private typingHandler: TypingHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
 
@@ -45,7 +47,9 @@ export class DummyConnector implements IConnector {
       return;
     }
 
+    this.typingHandler?.(true);
     setTimeout(() => {
+      this.typingHandler?.(false);
       this.messageHandler?.({
         id: `dummy-reply-${Date.now()}`,
         type: "text",
@@ -61,5 +65,9 @@ export class DummyConnector implements IConnector {
 
   onDisconnect(callback: DisconnectHandler): void {
     this.disconnectHandler = callback;
+  }
+
+  onTyping(callback: TypingHandler): void {
+    this.typingHandler = callback;
   }
 }

@@ -107,6 +107,14 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       align-items: center;
       justify-content: center;
     }
+
+    /* On mobile chat goes fullscreen — hide the toggle button so it
+       doesn't float above the open chat panel. */
+    @media (max-width: 480px) {
+      .launcher.is-open {
+        display: none;
+      }
+    }
   `;
 
   /** True when consumer has placed content in the default slot */

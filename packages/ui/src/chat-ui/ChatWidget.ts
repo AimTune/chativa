@@ -7,17 +7,12 @@ import {
   messageStore,
   createOutgoingMessage,
 } from "@chativa/core";
-import { DummyConnector } from "@chativa/connector-dummy";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 import "./DefaultTextMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
-
-if (!ConnectorRegistry.has("dummy")) {
-  ConnectorRegistry.register(new DummyConnector());
-}
 MessageTypeRegistry.setFallback(
   customElements.get("default-text-message") as unknown as typeof HTMLElement
 );

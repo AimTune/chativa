@@ -31,12 +31,10 @@
   },
   "peerDependencies": {
     "@chativa/core": ">=0.0.1",
-    "@chativa/connector-dummy": ">=0.0.1",
     "lit": ">=3.0.0"
   },
   "devDependencies": {
     "@chativa/core": "workspace:*",
-    "@chativa/connector-dummy": "workspace:*",
     "jsdom":         "^28.1.0",
     "lit":           "^3.3.0",
     "typescript":   "~5.8.3",
