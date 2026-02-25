@@ -24,6 +24,8 @@ const EN: Record<string, string> = {
   "genui.rating.starLabel": "{{count}} star",
   "genui.rating.submit":    "Submit",
   "genui.rating.thankYou":  "Thank you for your feedback!",
+
+  "genui.datePicker.label": "Select date",
 };
 
 const TR: Record<string, string> = {
@@ -44,6 +46,8 @@ const TR: Record<string, string> = {
   "genui.rating.starLabel": "{{count}} yıldız",
   "genui.rating.submit":    "Gönder",
   "genui.rating.thankYou":  "Geri bildiriminiz için teşekkür ederiz!",
+
+  "genui.datePicker.label": "Tarih seçin",
 };
 
 function _register(): void {

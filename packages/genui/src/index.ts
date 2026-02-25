@@ -27,6 +27,14 @@ export { GenUITable } from "./components/GenUITable";
 export { GenUIRating } from "./components/GenUIRating";
 export { GenUIProgress } from "./components/GenUIProgress";
 export type { GenUIProgressVariant } from "./components/GenUIProgress";
+export { GenUIDatePicker } from "./components/GenUIDatePicker";
+export { GenUIChart } from "./components/GenUIChart";
+export type { GenUIDataset } from "./components/GenUIChart";
+export { GenUISteps } from "./components/GenUISteps";
+export type { GenUIStep } from "./components/GenUISteps";
+export { GenUIImageGallery } from "./components/GenUIImageGallery";
+export type { GenUIImage } from "./components/GenUIImageGallery";
+export { GenUITypewriter } from "./components/GenUITypewriter";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 export { streamFromFetch } from "./utils/streamFromFetch";
@@ -53,6 +61,11 @@ import { GenUIList } from "./components/GenUIList";
 import { GenUITable } from "./components/GenUITable";
 import { GenUIRating } from "./components/GenUIRating";
 import { GenUIProgress } from "./components/GenUIProgress";
+import { GenUIDatePicker } from "./components/GenUIDatePicker";
+import { GenUIChart } from "./components/GenUIChart";
+import { GenUISteps } from "./components/GenUISteps";
+import { GenUIImageGallery } from "./components/GenUIImageGallery";
+import { GenUITypewriter } from "./components/GenUITypewriter";
 
 GenUIRegistry.register("genui-text",          GenUITextBlock as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-card",          GenUICard as unknown as typeof HTMLElement);
@@ -63,3 +76,8 @@ GenUIRegistry.register("genui-list",          GenUIList as unknown as typeof HTM
 GenUIRegistry.register("genui-table",         GenUITable as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-rating",        GenUIRating as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-progress",      GenUIProgress as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-date-picker",   GenUIDatePicker as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-chart",         GenUIChart as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-steps",         GenUISteps as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-image-gallery", GenUIImageGallery as unknown as typeof HTMLElement);
+GenUIRegistry.register("genui-typewriter",    GenUITypewriter as unknown as typeof HTMLElement);
