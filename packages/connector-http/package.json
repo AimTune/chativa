@@ -1,0 +1,52 @@
+{
+  "name": "@chativa/connector-http",
+  "version": "0.0.1",
+  "description": "Chativa HTTP connector — REST polling adapter for chat backends.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "connector",
+    "http",
+    "rest",
+    "polling"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1"
+  },
+  "devDependencies": {
+    "@chativa/core": "workspace:*",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18"
+  }
+}

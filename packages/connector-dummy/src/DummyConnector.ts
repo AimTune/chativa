@@ -552,6 +552,215 @@ export class DummyConnector implements IConnector {
     });
   }
 
+  private _streamDatePickerDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const maxDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Please select a date for your appointment:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-date-picker",
+          props: { label: "Preferred appointment date", min: today, max: maxDate },
+          id: 2,
+        },
+        wait: 400,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamChartDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here are your sales analytics:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-chart",
+          props: {
+            type: "bar",
+            title: "Monthly Revenue (K$)",
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+              { label: "2025", data: [42, 38, 55, 61, 48, 72] },
+              { label: "2026", data: [50, 45, 60, 75, 58, 88] },
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-chart",
+          props: {
+            type: "line",
+            title: "Daily Active Users",
+            labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+            datasets: [
+              { label: "This week", data: [1200, 1450, 1380, 1600, 1520, 980, 840] },
+            ],
+          },
+          id: 3,
+        },
+        wait: 500,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-chart",
+          props: {
+            type: "pie",
+            title: "Revenue by Region",
+            datasets: [
+              { label: "Europe", data: [38] },
+              { label: "Americas", data: [31] },
+              { label: "Asia", data: [22] },
+              { label: "Other", data: [9] },
+            ],
+          },
+          id: 4,
+        },
+        wait: 500,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamStepsDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here's the current status of your order:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-steps",
+          props: {
+            steps: [
+              { label: "Order placed", status: "done" },
+              { label: "Payment confirmed", status: "done" },
+              { label: "Preparing shipment", status: "active", description: "Your items are being packed and labeled." },
+              { label: "Out for delivery", status: "pending" },
+              { label: "Delivered", status: "pending" },
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamImageGalleryDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: { type: "text", content: "Here are some product photos:", id: 1 },
+        wait: 300,
+        done: false,
+      },
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-image-gallery",
+          props: {
+            columns: 3,
+            images: [
+              { src: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?w=300&q=80", alt: "Camera", caption: "Polaroid" },
+              { src: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&q=80", alt: "Headphones", caption: "Audio" },
+              { src: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&q=80", alt: "Watch", caption: "Premium Watch" },
+              { src: "https://images.unsplash.com/photo-1585386959984-a4155224a1ad?w=300&q=80", alt: "Perfume" },
+              { src: "https://images.unsplash.com/photo-1491553895911-0055eca6402d?w=300&q=80", alt: "Sneakers", caption: "Sport" },
+              { src: "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=300&q=80", alt: "Laptop", caption: "Tech" },
+            ],
+          },
+          id: 2,
+        },
+        wait: 400,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
+  private _streamTypewriterDemo(streamId: string): void {
+    const handler = this.genUIChunkHandler;
+    if (!handler) return;
+
+    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
+      {
+        chunk: {
+          type: "ui",
+          component: "genui-typewriter",
+          props: {
+            content: "Welcome to Chativa! I'm your AI assistant, ready to help you with orders, support requests, and anything else you need. Type a message to get started.",
+            speed: 25,
+            cursor: true,
+          },
+          id: 1,
+        },
+        wait: 200,
+        done: true,
+      },
+    ];
+
+    let accumulated = 0;
+    chunks.forEach(({ chunk, wait, done }) => {
+      accumulated += wait;
+      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    });
+  }
+
   /**
    * Directly trigger a GenUI demo stream — used by the sandbox demo buttons.
    */
@@ -567,6 +776,11 @@ export class DummyConnector implements IConnector {
       case "table":         this._streamTableDemo(streamId); break;
       case "rating":        this._streamRatingDemo(streamId); break;
       case "progress":      this._streamProgressDemo(streamId); break;
+      case "date-picker":   this._streamDatePickerDemo(streamId); break;
+      case "chart":         this._streamChartDemo(streamId); break;
+      case "steps":         this._streamStepsDemo(streamId); break;
+      case "image-gallery": this._streamImageGalleryDemo(streamId); break;
+      case "typewriter":    this._streamTypewriterDemo(streamId); break;
       default:              this._streamGenUIDemo(streamId); break;
     }
   }
