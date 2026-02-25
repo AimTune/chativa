@@ -46,6 +46,8 @@ export interface ThemeConfig {
   avatar?: AvatarConfig;
   /** Show delivery/read status ticks on user messages. Default: false. */
   showMessageStatus?: boolean;
+  /** Enable the search toggle button in the chat header. Default: true. */
+  enableSearch?: boolean;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {

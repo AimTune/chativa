@@ -226,7 +226,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
   }
 
   render() {
-    const { connectorStatus, isFullscreen, allowFullscreen } = this.themeState;
+    const { connectorStatus, isFullscreen, allowFullscreen, theme } = this.themeState;
+    const enableSearch = theme.enableSearch !== false;
     return html`
       <div
         class="header"
@@ -253,7 +254,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
           </div>
         `}
 
-        ${this._searchOpen ? html`
+        ${enableSearch && this._searchOpen ? html`
           <div class="search-bar">
             <input
               class="search-input"
@@ -267,16 +268,18 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         ` : nothing}
 
         <div class="actions">
-          <button
-            class="icon-btn ${this._searchOpen ? "active" : ""}"
-            @click=${this._toggleSearch}
-            aria-label=${t("header.search.toggle")}
-            title=${t("header.search.toggle")}
-          >
-            ${this._searchOpen
-              ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" /></svg>`
-              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>`}
-          </button>
+          ${enableSearch ? html`
+            <button
+              class="icon-btn ${this._searchOpen ? "active" : ""}"
+              @click=${this._toggleSearch}
+              aria-label=${t("header.search.toggle")}
+              title=${t("header.search.toggle")}
+            >
+              ${this._searchOpen
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" /></svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>`}
+            </button>
+          ` : nothing}
 
           ${allowFullscreen ? html`
             <button

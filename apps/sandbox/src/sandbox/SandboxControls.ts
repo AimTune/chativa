@@ -707,6 +707,23 @@ export class SandboxControls extends LitElement {
 
           <div class="divider"></div>
 
+          <!-- Features -->
+          <div>
+            <div class="section-label">Features</div>
+            <div class="toggle-group">
+              <button
+                class="tg-btn ${this._theme.enableSearch !== false ? "active" : ""}"
+                @click=${() => this._set({ enableSearch: true })}
+              >Search On</button>
+              <button
+                class="tg-btn ${this._theme.enableSearch === false ? "active" : ""}"
+                @click=${() => this._set({ enableSearch: false })}
+              >Search Off</button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
           <!-- Language -->
           <div>
             <div class="section-label">Language</div>
@@ -757,12 +774,16 @@ export class SandboxControls extends LitElement {
               <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("rating")}>⭐ Rating</button>
               <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("progress")}>📈 Progress</button>
               <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("form")}>📋 Appt. Form</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("date-picker")}>📅 Date Picker</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("chart")}>📊 Chart</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("steps")}>🪜 Steps</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("image-gallery")}>🖼️ Gallery</button>
+              <button class="msg-btn" type="button" @click=${() => this._triggerGenUI("typewriter")}>✍️ Typewriter</button>
               <button
                 class="msg-btn"
                 type="button"
                 @click=${() => this._triggerGenUI("genui")}
-                style="grid-column: span 2"
-              >✨ GenUI Demo (card + form)</button>
+              >✨ GenUI Demo</button>
             </div>
           </div>
 
