@@ -430,6 +430,11 @@ class ChatInput extends LitElement {
     this._files = [...this._files, ...files];
   }
 
+  /** Public API: add files from an external source (e.g. widget-level drag-drop). */
+  addFiles(files: File[]) {
+    this._addFiles(files);
+  }
+
   private _removeFile(index: number) {
     this._files = this._files.filter((_, i) => i !== index);
   }
@@ -451,6 +456,7 @@ class ChatInput extends LitElement {
 
   private _onDrop(e: DragEvent) {
     e.preventDefault();
+    e.stopPropagation(); // prevent widget-level handler from double-processing
     this._dragOver = false;
     const files = e.dataTransfer?.files;
     if (files && files.length > 0) this._addFiles(Array.from(files));

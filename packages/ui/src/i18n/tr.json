@@ -24,7 +24,9 @@
     "input": {
         "placeholder": "Bir mesaj yazın…",
         "send": "Mesaj gönder",
-        "emoji": "Emoji"
+        "emoji": "Emoji",
+        "dropHere": "Dosyaları buraya bırakın",
+        "dropHereSubtitle": "Eklemek için bırakın"
     },
     "messageList": {
         "connecting": "Bağlanıyor…",

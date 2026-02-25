@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { t } from "i18next";
 import {
   ChatEngine,
@@ -84,6 +84,41 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
         animation: fadeIn 0.18s ease;
       }
     }
+
+    /* ── File drop overlay ─────────────────────────────────── */
+    .drop-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(79, 70, 229, 0.07);
+      border: 2.5px dashed rgba(79, 70, 229, 0.45);
+      border-radius: inherit;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      pointer-events: none;
+      backdrop-filter: blur(1px);
+      animation: fadeIn 0.12s ease;
+    }
+
+    .drop-overlay-icon {
+      color: var(--chativa-primary-color, #4f46e5);
+      opacity: 0.85;
+    }
+
+    .drop-overlay-label {
+      font-size: 0.9375rem;
+      font-weight: 700;
+      color: var(--chativa-primary-color, #4f46e5);
+      letter-spacing: -0.01em;
+    }
+
+    .drop-overlay-sub {
+      font-size: 0.8125rem;
+      color: rgba(79, 70, 229, 0.65);
+    }
   `;
 
   @property({ type: String }) connector = "dummy";
@@ -99,6 +134,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.themeState.setFullscreen(true);
     this.themeState.setAllowFullscreen(false);
   }
+
+  // ── File-drop overlay ────────────────────────────────────────────────
+
+  @state() private _showDropOverlay = false;
+  /** Depth counter to handle dragenter/dragleave firing over child elements. */
+  private _dropDepth = 0;
 
   // ── Drag state — NOT @state to avoid per-frame re-renders ────────────
 
@@ -292,6 +333,39 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine.receiveComponentEvent(e.detail.msgId, e.detail.eventType, e.detail.payload);
   };
 
+  // ── Widget-level file drop ────────────────────────────────────────────
+
+  private _onFileDragEnter = (e: DragEvent) => {
+    if (!e.dataTransfer?.types.includes("Files")) return;
+    e.preventDefault();
+    this._dropDepth++;
+    this._showDropOverlay = true;
+  };
+
+  private _onFileDragOver = (e: DragEvent) => {
+    if (!e.dataTransfer?.types.includes("Files")) return;
+    e.preventDefault();
+  };
+
+  private _onFileDragLeave = () => {
+    this._dropDepth--;
+    if (this._dropDepth <= 0) {
+      this._dropDepth = 0;
+      this._showDropOverlay = false;
+    }
+  };
+
+  private _onFileDrop = (e: DragEvent) => {
+    e.preventDefault();
+    this._dropDepth = 0;
+    this._showDropOverlay = false;
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (files.length === 0) return;
+    // Forward files to ChatInput queue so the user can optionally add a caption
+    const chatInput = this.shadowRoot?.querySelector("chat-input") as (Element & { addFiles(f: File[]): void }) | null;
+    chatInput?.addFiles(files);
+  };
+
   // ── Focus management ─────────────────────────────────────────────────
 
   protected override updated(changed: Map<PropertyKey, unknown>) {
@@ -340,10 +414,30 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       .join(" ");
 
     return html`
-      <div class="${cls}" role="dialog" aria-modal="true" aria-label="${t("widget.title")}" style="${this._positionStyle}">
+      <div
+        class="${cls}"
+        role="dialog"
+        aria-modal="true"
+        aria-label="${t("widget.title")}"
+        style="${this._positionStyle}"
+        @dragenter=${this._onFileDragEnter}
+        @dragover=${this._onFileDragOver}
+        @dragleave=${this._onFileDragLeave}
+        @drop=${this._onFileDrop}
+      >
         <chat-header></chat-header>
         <chat-message-list></chat-message-list>
         <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>
+
+        ${this._showDropOverlay ? html`
+          <div class="drop-overlay" aria-hidden="true">
+            <svg class="drop-overlay-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span class="drop-overlay-label">${t("input.dropHere")}</span>
+            <span class="drop-overlay-sub">${t("input.dropHereSubtitle")}</span>
+          </div>
+        ` : nothing}
       </div>
     `;
   }

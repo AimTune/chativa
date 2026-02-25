@@ -24,7 +24,9 @@
     "input": {
         "placeholder": "Type a message…",
         "send": "Send message",
-        "emoji": "Emoji"
+        "emoji": "Emoji",
+        "dropHere": "Drop files here",
+        "dropHereSubtitle": "Release to attach"
     },
     "messageList": {
         "connecting": "Connecting…",
