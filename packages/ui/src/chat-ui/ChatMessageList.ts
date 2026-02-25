@@ -48,6 +48,17 @@ class ChatMessageList extends LitElement {
       background: #cbd5e1;
     }
 
+    /* Search result bar */
+    .search-result-bar {
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      color: #64748b;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
     /* Load more history button */
     .load-more-btn {
       display: flex;
@@ -439,7 +450,17 @@ class ChatMessageList extends LitElement {
 
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory } = chatStore.getState();
+    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery } = chatStore.getState();
+
+    const displayMessages = searchQuery
+      ? messages.filter((msg) => {
+          const text = (msg.data?.text as string | undefined) ?? "";
+          const q = searchQuery.toLowerCase();
+          if (text.toLowerCase().includes(q)) return true;
+          try { return JSON.stringify(msg.data).toLowerCase().includes(q); }
+          catch { return false; }
+        })
+      : messages;
 
     // Error state: all reconnect attempts exhausted
     if (connectorStatus === "error") {
@@ -493,12 +514,20 @@ class ChatMessageList extends LitElement {
             @click=${this._loadHistory}
           >
             ${isLoadingHistory
-              ? html`<div class="mini-spinner"></div>`
+              ? html`<div class="mini-spinner" role="status" aria-label="${t("messageList.loadingHistory")}"></div>`
               : html`↑ ${t("messageList.loadMore", { defaultValue: "Load previous messages" })}`}
           </button>
         ` : null}
 
-        ${messages.length === 0
+        ${searchQuery ? html`
+          <div class="search-result-bar">
+            ${displayMessages.length === 0
+              ? t("messageList.searchEmpty")
+              : t("messageList.searchResult", { count: displayMessages.length })}
+          </div>
+        ` : null}
+
+        ${displayMessages.length === 0 && !searchQuery
           ? html`
               <div class="empty">
                 <div class="empty-icon">
@@ -512,7 +541,7 @@ class ChatMessageList extends LitElement {
                 <p class="empty-subtitle">${t("messageList.emptySubtitle")}</p>
               </div>
             `
-          : messages.map((msg, i) => this._renderMessage(msg, i, messages))}
+          : displayMessages.map((msg, i) => this._renderMessage(msg, i, displayMessages))}
 
         ${isTyping ? html`
           <div class="typing-bubble">

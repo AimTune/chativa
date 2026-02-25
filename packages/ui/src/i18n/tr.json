@@ -14,7 +14,12 @@
             "enter": "Tam ekrana geç",
             "exit": "Tam ekrandan çık"
         },
-        "close": "Kapat"
+        "close": "Kapat",
+        "search": {
+            "toggle": "Ara",
+            "placeholder": "Mesaj ara…",
+            "clear": "Aramayı temizle"
+        }
     },
     "input": {
         "placeholder": "Bir mesaj yazın…",
@@ -30,7 +35,10 @@
         "errorTitle": "Bağlantı kesildi",
         "errorSubtitle": "Yeniden bağlanılamadı. Lütfen tekrar deneyin.",
         "retry": "Tekrar dene",
-        "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})"
+        "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})",
+        "searchEmpty": "Aramanızla eşleşen mesaj yok.",
+        "searchResult": "{{count}} sonuç bulundu",
+        "loadingHistory": "Önceki mesajlar yükleniyor…"
     },
     "emojiPicker": {
         "searchPlaceholder": "Emoji ara…",
@@ -39,5 +47,8 @@
     "chatButton": {
         "open": "Sohbeti aç",
         "close": "Sohbeti kapat"
+    },
+    "widget": {
+        "title": "Sohbet"
     }
 }

@@ -29,6 +29,8 @@ export interface ChatStoreState {
   isLoadingHistory: boolean;
   /** Opaque cursor for the next history page. */
   historyCursor?: string;
+  /** Current search query; empty string means no active search. */
+  searchQuery: string;
 
   toggle: () => void;
   open: () => void;
@@ -48,6 +50,8 @@ export interface ChatStoreState {
   setHasMoreHistory: (v: boolean) => void;
   setIsLoadingHistory: (v: boolean) => void;
   setHistoryCursor: (cursor: string | undefined) => void;
+  setSearchQuery: (q: string) => void;
+  clearSearch: () => void;
   subscribe: (cb: () => void) => () => void;
 }
 
@@ -68,6 +72,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   hasMoreHistory: false,
   isLoadingHistory: false,
   historyCursor: undefined,
+  searchQuery: "",
 
   toggle: () => {
     setState((s) => ({
@@ -113,6 +118,16 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   setHasMoreHistory: (v: boolean) => setState(() => ({ hasMoreHistory: v })),
   setIsLoadingHistory: (v: boolean) => setState(() => ({ isLoadingHistory: v })),
   setHistoryCursor: (cursor: string | undefined) => setState(() => ({ historyCursor: cursor })),
+
+  setSearchQuery: (q: string) => {
+    setState(() => ({ searchQuery: q }));
+    EventBus.emit("search_query_changed", { query: q });
+  },
+
+  clearSearch: () => {
+    setState(() => ({ searchQuery: "" }));
+    EventBus.emit("search_query_changed", { query: "" });
+  },
 
   subscribe: (cb: () => void): (() => void) =>
     store.subscribe(() => cb()),

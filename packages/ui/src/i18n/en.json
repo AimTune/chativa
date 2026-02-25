@@ -14,7 +14,12 @@
             "enter": "Enter fullscreen",
             "exit": "Exit fullscreen"
         },
-        "close": "Close"
+        "close": "Close",
+        "search": {
+            "toggle": "Search",
+            "placeholder": "Search messages…",
+            "clear": "Clear search"
+        }
     },
     "input": {
         "placeholder": "Type a message…",
@@ -30,7 +35,10 @@
         "errorTitle": "Connection lost",
         "errorSubtitle": "We could not reconnect. Please try again.",
         "retry": "Try again",
-        "reconnecting": "Reconnecting… (attempt {{attempt}})"
+        "reconnecting": "Reconnecting… (attempt {{attempt}})",
+        "searchEmpty": "No messages match your search.",
+        "searchResult": "{{count}} result(s) found",
+        "loadingHistory": "Loading previous messages…"
     },
     "emojiPicker": {
         "searchPlaceholder": "Search emoji…",
@@ -39,5 +47,8 @@
     "chatButton": {
         "open": "Open chat",
         "close": "Close chat"
+    },
+    "widget": {
+        "title": "Chat"
     }
 }

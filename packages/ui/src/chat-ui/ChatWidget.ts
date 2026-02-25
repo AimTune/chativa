@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { t } from "i18next";
 import {
   ChatEngine,
   ConnectorRegistry,
@@ -103,6 +104,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   /** Last stable drag position (used in _positionStyle). Triggers a render only at drag start/end. */
   private _dragPos: { left: number; top: number } | null = null;
+  private _wasOpened = false;
 
   private _dragAnchor: {
     mouseX: number;
@@ -294,8 +296,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   protected override updated(changed: Map<PropertyKey, unknown>) {
     super.updated?.(changed);
-    // Focus the textarea when the chat panel opens
-    if (this.themeState.isOpened) {
+    // Focus the textarea only when the widget transitions from closed → open
+    const isOpened = this.themeState.isOpened;
+    if (isOpened && !this._wasOpened) {
       this.updateComplete.then(() => {
         const input = this.shadowRoot
           ?.querySelector("chat-input")
@@ -303,6 +306,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
         input?.focus();
       });
     }
+    this._wasOpened = isOpened;
   }
 
   // ── Positioning ──────────────────────────────────────────────────────
@@ -336,7 +340,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       .join(" ");
 
     return html`
-      <div class="${cls}" style="${this._positionStyle}">
+      <div class="${cls}" role="dialog" aria-modal="true" aria-label="${t("widget.title")}" style="${this._positionStyle}">
         <chat-header></chat-header>
         <chat-message-list></chat-message-list>
         <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>

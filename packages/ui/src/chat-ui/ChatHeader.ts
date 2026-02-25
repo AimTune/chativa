@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { t } from "i18next";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
@@ -133,7 +133,44 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       width: 15px;
       height: 15px;
     }
+
+    .icon-btn.active {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 0;
+      padding: 6px 10px;
+      border: 1.5px solid rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.15);
+      color: white;
+      font-size: 0.875rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    .search-input::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    .search-input:focus {
+      border-color: rgba(255, 255, 255, 0.8);
+      background: rgba(255, 255, 255, 0.22);
+    }
   `;
+
+  @state() private _searchOpen = false;
 
   private get _statusLabel(): string {
     switch (this.themeState.connectorStatus) {
@@ -146,7 +183,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
   }
 
   private _onHeaderMouseDown(e: MouseEvent) {
-    if ((e.target as Element).closest(".actions")) return;
+    if ((e.target as Element).closest(".actions, .search-bar")) return;
     e.preventDefault();
     this.dispatchEvent(
       new CustomEvent("chat-drag-start", {
@@ -158,7 +195,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
   }
 
   private _onHeaderTouchStart(e: TouchEvent) {
-    if ((e.target as Element).closest(".actions")) return;
+    if ((e.target as Element).closest(".actions, .search-bar")) return;
     const touch = e.touches[0];
     this.dispatchEvent(
       new CustomEvent("chat-drag-start", {
@@ -169,6 +206,25 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     );
   }
 
+  private _toggleSearch() {
+    this._searchOpen = !this._searchOpen;
+    if (!this._searchOpen) {
+      this.themeState.clearSearch();
+    } else {
+      this.updateComplete.then(() => {
+        this.shadowRoot?.querySelector<HTMLInputElement>(".search-input")?.focus();
+      });
+    }
+  }
+
+  private _onSearchInput(e: Event) {
+    this.themeState.setSearchQuery((e.target as HTMLInputElement).value);
+  }
+
+  private _onSearchKeydown(e: KeyboardEvent) {
+    if (e.key === "Escape") this._toggleSearch();
+  }
+
   render() {
     const { connectorStatus, isFullscreen, allowFullscreen } = this.themeState;
     return html`
@@ -177,32 +233,51 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         @mousedown=${this._onHeaderMouseDown}
         @touchstart=${this._onHeaderTouchStart}
       >
-        <div class="avatar">
-          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <rect x="5" y="8" width="14" height="12" rx="2.5" />
-            <circle cx="9.5" cy="13" r="1.5" fill="white" />
-            <circle cx="14.5" cy="13" r="1.5" fill="white" />
-            <path
-              d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
-              stroke="white"
-              stroke-width="1.2"
-              stroke-linecap="round"
-              fill="none"
-            />
-            <path d="M12 5v3" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-            <circle cx="12" cy="4" r="1.5" fill="white" />
-          </svg>
-        </div>
-
-        <div class="info">
-          <span class="title">${t("header.title")}</span>
-          <div class="status">
-            <span class="status-dot ${connectorStatus}"></span>
-            <span class="status-text">${this._statusLabel}</span>
+        ${this._searchOpen ? nothing : html`
+          <div class="avatar">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="8" width="14" height="12" rx="2.5" />
+              <circle cx="9.5" cy="13" r="1.5" fill="white" />
+              <circle cx="14.5" cy="13" r="1.5" fill="white" />
+              <path d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8" stroke="white" stroke-width="1.2" stroke-linecap="round" fill="none" />
+              <path d="M12 5v3" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+              <circle cx="12" cy="4" r="1.5" fill="white" />
+            </svg>
           </div>
-        </div>
+          <div class="info">
+            <span class="title">${t("header.title")}</span>
+            <div class="status">
+              <span class="status-dot ${connectorStatus}"></span>
+              <span class="status-text">${this._statusLabel}</span>
+            </div>
+          </div>
+        `}
+
+        ${this._searchOpen ? html`
+          <div class="search-bar">
+            <input
+              class="search-input"
+              type="search"
+              placeholder=${t("header.search.placeholder")}
+              @input=${this._onSearchInput}
+              @keydown=${this._onSearchKeydown}
+              autocomplete="off"
+            />
+          </div>
+        ` : nothing}
 
         <div class="actions">
+          <button
+            class="icon-btn ${this._searchOpen ? "active" : ""}"
+            @click=${this._toggleSearch}
+            aria-label=${t("header.search.toggle")}
+            title=${t("header.search.toggle")}
+          >
+            ${this._searchOpen
+              ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M18 6L6 18M6 6l12 12" /></svg>`
+              : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" /></svg>`}
+          </button>
+
           ${allowFullscreen ? html`
             <button
               class="icon-btn"
@@ -211,12 +286,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
               title="${isFullscreen ? t("header.fullscreen.exit") : t("header.fullscreen.enter")}"
             >
               ${isFullscreen
-                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
-                  </svg>`
-                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />
-                  </svg>`}
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" /></svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" /></svg>`}
             </button>
           ` : nothing}
 
