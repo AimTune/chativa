@@ -256,6 +256,50 @@ ThemeBuilder.create()
 
 ---
 
+### F19 — Chat Window Modes
+
+`ThemeConfig.windowMode?: "popup" | "side-panel" | "fullscreen" | "inline"`
+
+| Mode | Behavior |
+|---|---|
+| `popup` (default) | Floating card near the launcher button. Draggable, positioned by `theme.position`. |
+| `side-panel` | Full-height drawer docked to the viewport edge (`right: 0` or `left: 0` based on `position`). Slide-in animation. |
+| `fullscreen` | Covers the entire viewport. Equivalent to the existing `isFullscreen` toggle but controlled via theme. |
+| `inline` | `position: static` — embeds the widget inside its parent container. No floating, no drag. |
+
+**Implementation:**
+- `WindowMode` type exported from `@chativa/core`
+- `ChatWidget._positionStyle` returns appropriate CSS per mode
+- Drag disabled for all modes except `popup`
+- Mobile media query (`≤480px`) skips `inline-mode`
+- `side-panel`: `slideInFromRight` / `slideInFromLeft` animations based on `position` alignment
+- Sandbox "Window Mode" toggle: **Popup · Side · Full · Inline** — lives in `AppearanceSection`
+
+---
+
+### F20 — Sandbox Collapsible Sections
+
+The sandbox panel is refactored into focused, accordion-style section components.
+
+**File structure:**
+```
+apps/sandbox/src/sandbox/
+├── SandboxControls.ts             (~115 lines) — panel shell only
+├── sandboxShared.ts               — shared Lit CSS + injectMessage() + triggerGenUI()
+└── sections/
+    ├── AppearanceSection.ts       — Position · Color · Button Size · Edge Margin · Window Mode
+    ├── FeaturesSection.ts         — Search toggle · Language switcher
+    ├── MessagesSection.ts         — Message type demo buttons (starts collapsed)
+    ├── GenUISection.ts            — GenUI demo buttons (starts collapsed)
+    └── ActionsSection.ts          — Chat status · Open/Close · Fullscreen · Reset
+```
+
+- Each section is an independent `@customElement` with its own `_open` accordion state
+- Chevron animates on open/close
+- `sandboxShared.ts` provides shared `sectionStyles` (CSSResult) + helper functions
+
+---
+
 ## Roadmap — Future Features
 
 ### Near-term
@@ -273,7 +317,6 @@ ThemeBuilder.create()
 | **R8b** | **Message Pinning** | Pin important messages to the top of the chat window. `connector.pinMessage?(id)` optional. Pinned messages shown in a collapsible strip. |
 | **R8c** | **Inline Link Preview** | Auto-fetch Open Graph metadata for pasted URLs. Renders title + image + description card below the message. |
 | **R8d** | **Read Position Indicator** | "Jump to last read" button when user scrolls up. `MessageStore` tracks last-seen message ID per session. |
-| **R8e** | **Chat Window Modes** | `theme.windowMode: "popup" \| "side-panel" \| "fullscreen" \| "inline"`. Side-panel docks widget to the page edge; inline embeds it in a container. |
 | **R8f** | **Message Copy Button** | One-click copy on hover for any text message. Copies plain text (strips Markdown). Toast confirmation. |
 | **R8g** | **Command Palette (`Ctrl+K`)** | Fuzzy-search across slash commands, recent messages, and quick actions. Keyboard-navigable overlay. |
 
