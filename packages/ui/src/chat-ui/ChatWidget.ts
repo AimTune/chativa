@@ -45,6 +45,16 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       to   { opacity: 1; }
     }
 
+    @keyframes slideInFromRight {
+      from { opacity: 0; transform: translateX(24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes slideInFromLeft {
+      from { opacity: 0; transform: translateX(-24px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
     .widget {
       position: fixed;
       display: flex;
@@ -67,6 +77,33 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       animation: fadeIn 0.2s ease;
     }
 
+    /* ── Side-panel mode ───────────────────────────────────── */
+    .widget.side-panel {
+      border-radius: 0 !important;
+      height: 100dvh !important;
+      top: 0 !important;
+      bottom: 0 !important;
+      box-shadow: -4px 0 32px rgba(0, 0, 0, 0.12), -1px 0 8px rgba(0, 0, 0, 0.06);
+      animation: slideInFromRight 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .widget.side-panel.from-left {
+      box-shadow: 4px 0 32px rgba(0, 0, 0, 0.12), 1px 0 8px rgba(0, 0, 0, 0.06);
+      animation: slideInFromLeft 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* ── Inline mode ───────────────────────────────────────── */
+    .widget.inline-mode {
+      position: static !important;
+      inset: unset !important;
+      box-shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+      border-radius: 12px;
+      animation: fadeIn 0.15s ease;
+      width: 100% !important;
+      height: 100% !important;
+      min-height: 400px;
+    }
+
     /* Applied directly via JS — no transition during drag */
     .widget.dragging {
       transition: none !important;
@@ -76,7 +113,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     }
 
     @media (max-width: 480px) {
-      .widget {
+      .widget:not(.inline-mode) {
         inset: 0 !important;
         width: 100% !important;
         height: 100% !important;
@@ -207,8 +244,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   // ── Drag handling — direct DOM, zero re-renders during drag ──────────
 
+  private get _windowMode() {
+    return this.theme.windowMode ?? "popup";
+  }
+
   private _onDragStart = (e: CustomEvent<{ clientX: number; clientY: number }>) => {
-    if (this.themeState.isFullscreen) return;
+    if (this.themeState.isFullscreen || this._windowMode !== "popup") return;
 
     const widget = this._widget;
     if (!widget) return;
@@ -451,13 +492,21 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   // ── Positioning ──────────────────────────────────────────────────────
 
   private get _positionStyle(): string {
-    const { isFullscreen } = this.themeState;
-    if (isFullscreen) return "";
+    const mode = this._windowMode;
+    const isFullscreen = this.themeState.isFullscreen || mode === "fullscreen";
+
+    if (isFullscreen || mode === "inline") return "";
 
     const { positionMargin, layout, size, position } = this.theme;
     const w  = layout?.width  ?? "360px";
     const ht = layout?.height ?? "520px";
 
+    if (mode === "side-panel") {
+      const side = position.endsWith("left") ? "left: 0" : "right: 0";
+      return `${side}; top: 0; width: ${w}; height: 100dvh;`;
+    }
+
+    // popup (default)
     if (this._dragPos) {
       return `left: ${this._dragPos.left}px; top: ${this._dragPos.top}px; width: ${w}; height: ${ht};`;
     }
@@ -474,9 +523,17 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   render() {
     if (!this.themeState.isOpened) return nothing;
 
-    const cls = ["widget", this.themeState.isFullscreen ? "fullscreen" : ""]
-      .filter(Boolean)
-      .join(" ");
+    const mode = this._windowMode;
+    const isFullscreen = this.themeState.isFullscreen || mode === "fullscreen";
+    const isFromLeft = this.theme.position.endsWith("left");
+
+    const cls = [
+      "widget",
+      isFullscreen ? "fullscreen" : "",
+      mode === "side-panel" ? "side-panel" : "",
+      mode === "side-panel" && isFromLeft ? "from-left" : "",
+      mode === "inline" ? "inline-mode" : "",
+    ].filter(Boolean).join(" ");
 
     return html`
       <div

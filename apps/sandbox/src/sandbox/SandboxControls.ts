@@ -8,6 +8,7 @@ import {
   type ButtonSize,
   type SpaceLevel,
   type DeepPartial,
+  type WindowMode,
 } from "@chativa/core";
 import { i18n } from "@chativa/ui";
 
@@ -702,6 +703,30 @@ export class SandboxControls extends LitElement {
                   </button>
                 `
       )}
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <!-- Window Mode -->
+          <div>
+            <div class="section-label">Window Mode</div>
+            <div class="toggle-group">
+              ${(
+                [
+                  { label: "Popup", value: "popup" },
+                  { label: "Side", value: "side-panel" },
+                  { label: "Full", value: "fullscreen" },
+                  { label: "Inline", value: "inline" },
+                ] as { label: string; value: WindowMode }[]
+              ).map(
+                (m) => html`
+                  <button
+                    class="tg-btn ${(this._theme.windowMode ?? "popup") === m.value ? "active" : ""}"
+                    @click=${() => this._set({ windowMode: m.value })}
+                  >${m.label}</button>
+                `
+              )}
             </div>
           </div>
 

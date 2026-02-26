@@ -7,6 +7,15 @@ export type ButtonPosition = "bottom-right" | "bottom-left" | "top-right" | "top
 export type ButtonSize = "small" | "medium" | "large";
 export type SpaceLevel = "1" | "2" | "3" | "4" | "5";
 
+/**
+ * Controls how the chat window is presented.
+ * - `popup`      — floating card near the launcher button (default)
+ * - `side-panel` — full-height drawer docked to the viewport edge
+ * - `fullscreen` — covers the entire viewport
+ * - `inline`     — positioned statically inside its parent container
+ */
+export type WindowMode = "popup" | "side-panel" | "fullscreen" | "inline";
+
 /** Avatar configuration for bot and user sides. */
 export interface AvatarConfig {
   /** URL for the bot avatar image. Omit to use the default robot SVG. */
@@ -48,6 +57,11 @@ export interface ThemeConfig {
   showMessageStatus?: boolean;
   /** Enable the search toggle button in the chat header. Default: true. */
   enableSearch?: boolean;
+  /**
+   * How the chat window is presented. Default: `"popup"`.
+   * See `WindowMode` for details.
+   */
+  windowMode?: WindowMode;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
