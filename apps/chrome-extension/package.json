@@ -1,0 +1,23 @@
+{
+  "name": "@chativa/chrome-extension",
+  "version": "1.0.0",
+  "description": "Chrome extension for previewing and editing Chativa themes on any website.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build && vite build --config vite.content.config.ts && vite build --config vite.inject.config.ts",
+    "build:watch": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*",
+    "lit": "^3.3.0"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.37",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3"
+  }
+}

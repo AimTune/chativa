@@ -16,7 +16,7 @@
 | **TypeScript Strict** | Full type exports from all packages |
 | **Vitest Test Suite** | 224 passing tests (core + connector-dummy + genui). Coverage targets ≥ 80% |
 | **Vite Build** | ESM + CJS dual output, `vite-plugin-dts` for type generation |
-| **CI/CD** | GitHub Actions: auto-version from git tag, NPM publish |
+| **CI/CD** | GitHub Actions: auto-version from git tag, NPM publish, Chrome Web Store publish |
 
 ---
 
@@ -219,6 +219,16 @@ Component events route back to connector via `ChatEngine.receiveComponentEvent()
 
 ---
 
+### F15b — Theme Color & Spacing System
+
+- `theme.colors.secondary` now drives `--chativa-primary-dark` → header and launcher button gradient second stop reflects secondary color
+- `theme.colors.background` now applied to widget panel (`.widget`) and input area (`.input-area`) via `var(--chativa-background)`
+- `theme.layout.horizontalSpace` controls horizontal distance from viewport edge (independent of `positionMargin`)
+- `theme.layout.verticalSpace` controls vertical gap between launcher button and widget panel (independent of `positionMargin`)
+- Both space values fall back to `positionMargin` when not explicitly set
+
+---
+
 ### F16 — ThemeBuilder
 
 ```ts
@@ -333,6 +343,40 @@ apps/sandbox/src/sandbox/
 
 ---
 
+### F22 — Visual Theme Editor
+
+Interactive browser-based theme builder at `/theme-editor.html` in the sandbox app.
+
+**Features:**
+- Split layout: controls panel (left) + live widget preview (right)
+- 12 draggable color presets (Indigo, Violet, Pink, Red, Orange, Amber, Green, Teal, Sky, Slate, Black, White)
+- 5 color pickers: Primary, Secondary, Background, Text, Border
+- Button configuration: position grid, size toggle (Small / Medium / Large), edge margin (1–5)
+- Layout configuration: width, height, maxWidth, maxHeight, horizontal space (1–5), vertical space (1–5)
+- Window mode toggle: Popup / Side-panel / Fullscreen / Inline
+- Feature toggles: Message Status, Search, Multi-Conversation
+- Export: copy `ThemeConfig` JSON or `ThemeBuilder` code snippet to clipboard
+- Reset to defaults button
+- `apps/sandbox/src/theme-editor/ThemeEditorApp.ts`
+
+---
+
+### F23 — Chrome Extension (Theme Preview)
+
+Browser extension (`apps/chrome-extension/`) — Manifest V3, publishes to Chrome Web Store via CI.
+
+**Capabilities:**
+- Inject the Chativa widget into any live website for real-world theme previewing
+- Popup UI to configure connector and open/close the widget
+- `content.ts` — injects an iframe (`inject-frame.html`) containing a full `<chat-iva>` widget
+- `inject-frame.ts` — self-contained widget host; reads config from `chrome.storage.sync`
+- `popup.ts` — extension popup for toggling the widget and adjusting settings
+- Permissions: `activeTab`, `scripting`, `storage`, `host_permissions: <all_urls>`
+- Build: `vite build` (popup + inject-frame) + `vite build --config vite.content.config.ts` (content script)
+- Publish pipeline: `.github/workflows/publish-extension.yml` — triggered on `v*` tags; zips `dist/`, uploads to Chrome Web Store via OAuth2
+
+---
+
 ## Roadmap — Future Features
 
 ### Near-term
@@ -432,7 +476,6 @@ apps/sandbox/src/sandbox/
 | **R31** | **Storybook Integration** | Storybook stories for all UI and GenUI components with interactive controls. |
 | **R32** | **CLI Scaffold Tool** | `npx create-chativa-connector my-connector` — full project scaffold. |
 | **R33** | **Devtools Extension** | Browser devtools panel showing connector state, message pipeline, event bus log. |
-| **R34** | **Visual Theme Editor** | Drag-and-drop web-based theme builder that exports `ThemeConfig` JSON. |
 | **R35** | **Test Harness Package** | `@chativa/testing` — utilities for testing connectors, extensions, and message components with pre-built mocks. |
 | **R36** | **SSR / Hydration Support** | Server-render initial HTML shell for the widget; hydrate client-side on load. |
 | **R37** | **Mobile PWA App** | Standalone Progressive Web App shell using `ChatbotMixin`, offline support via Service Worker. |

@@ -1,0 +1,72 @@
+name: Publish Chrome Extension
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  publish-extension:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Update manifest version
+        run: |
+          node -e "
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('apps/chrome-extension/manifest.json', 'utf8'));
+          manifest.version = '${{ steps.version.outputs.VERSION }}';
+          fs.writeFileSync('apps/chrome-extension/manifest.json', JSON.stringify(manifest, null, 2) + '\n');
+          console.log('manifest version set to', manifest.version);
+          "
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build workspace packages
+        run: pnpm --filter=@chativa/core --filter=@chativa/ui --filter=@chativa/genui --filter=@chativa/connector-dummy build
+
+      - name: Build Chrome extension
+        run: pnpm build
+        working-directory: apps/chrome-extension
+
+      - name: Package extension as ZIP
+        run: |
+          cd apps/chrome-extension/dist
+          zip -r ../../../chativa-extension-${{ steps.version.outputs.VERSION }}.zip .
+          echo "Created chativa-extension-${{ steps.version.outputs.VERSION }}.zip"
+          ls -lh ../../../chativa-extension-*.zip
+
+      - name: Upload ZIP as workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chativa-extension-${{ steps.version.outputs.VERSION }}
+          path: chativa-extension-${{ steps.version.outputs.VERSION }}.zip
+          retention-days: 30
+
+      - name: Publish to Chrome Web Store
+        uses: mnao305/chrome-extension-upload@4.0.1
+        with:
+          file-path: chativa-extension-${{ steps.version.outputs.VERSION }}.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          publish: true

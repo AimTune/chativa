@@ -33,11 +33,25 @@ export const ChatbotMixin = <T extends Constructor<LitElement>>(
     override connectedCallback() {
       super.connectedCallback();
       this._lang = i18next.language;
-      this._unsubscribeChatStore = chatStore.subscribe(() =>
-        this.requestUpdate()
-      );
+      this._applyThemeVars();
+      this._unsubscribeChatStore = chatStore.subscribe(() => {
+        this._applyThemeVars();
+        this.requestUpdate();
+      });
       // Keep _lang in sync when language changes (I18nMixin already calls requestUpdate).
       i18next.on("languageChanged", () => { this._lang = i18next.language; });
+    }
+
+    /** Push ThemeConfig colors onto the host element as CSS custom properties
+     *  so that all `var(--chativa-*)` references inside shadow DOM pick them up. */
+    private _applyThemeVars() {
+      const { colors } = chatStore.getState().theme;
+      this.style.setProperty("--chativa-primary-color", colors.primary);
+      this.style.setProperty("--chativa-primary-dark", colors.secondary);
+      this.style.setProperty("--chativa-secondary-color", colors.secondary);
+      this.style.setProperty("--chativa-background", colors.background);
+      this.style.setProperty("--chativa-text", colors.text);
+      this.style.setProperty("--chativa-border", colors.border);
     }
 
     override disconnectedCallback() {

@@ -19,7 +19,7 @@ class ChatInput extends LitElement {
       align-items: center;
       gap: 8px;
       padding: 10px 12px 12px;
-      background: #ffffff;
+      background: var(--chativa-background, #ffffff);
       border-top: 1px solid #f1f5f9;
       position: relative;
     }

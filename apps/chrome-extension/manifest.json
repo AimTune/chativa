@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Chativa Theme Preview",
+  "version": "1.0.0",
+  "description": "Inject and preview the Chativa chat widget on any website — customize colors, position, and style.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Chativa Theme Preview"
+  }
+}

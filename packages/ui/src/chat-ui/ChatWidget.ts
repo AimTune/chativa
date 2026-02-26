@@ -61,7 +61,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       position: fixed;
       display: flex;
       flex-direction: column;
-      background: #ffffff;
+      background: var(--chativa-background, #ffffff);
       border-radius: 16px;
       box-shadow: 0 24px 64px rgba(0, 0, 0, 0.14), 0 6px 20px rgba(0, 0, 0, 0.08);
       overflow: hidden;
@@ -593,11 +593,14 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       return `left: ${this._dragPos.left}px; top: ${this._dragPos.top}px; width: ${w}; height: ${ht};`;
     }
 
-    const m      = positionMargin ? `${Number(positionMargin) * 0.5 + 0.5}rem` : "1rem";
+    const hLevel = layout?.horizontalSpace ?? positionMargin ?? "2";
+    const vLevel = layout?.verticalSpace   ?? positionMargin ?? "2";
+    const mH     = `${Number(hLevel) * 0.5 + 0.5}rem`;
+    const mV     = `${Number(vLevel) * 0.5 + 0.5}rem`;
     const btnPx  = SIZE_PX[size ?? "medium"] ?? 56;
-    const vOff   = `calc(${m} + ${btnPx}px + 12px)`;
+    const vOff   = `calc(${mV} + ${btnPx}px + 12px)`;
     const [v, h] = (position ?? "bottom-right").split("-");
-    return `${v}: ${vOff}; ${h}: ${m}; width: ${w}; height: ${ht};`;
+    return `${v}: ${vOff}; ${h}: ${mH}; width: ${w}; height: ${ht};`;
   }
 
   // ── Render ───────────────────────────────────────────────────────────
