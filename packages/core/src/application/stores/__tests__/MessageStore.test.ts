@@ -35,6 +35,15 @@ describe("MessageStore", () => {
     expect(msg?.data.text).toBe("new");
   });
 
+  it("updateById only patches the matching message and leaves others unchanged", () => {
+    messageStore.getState().addMessage({ id: "x", type: "text", data: { text: "x" } });
+    messageStore.getState().addMessage({ id: "y", type: "text", data: { text: "y" } });
+    messageStore.getState().updateById("x", { data: { text: "updated" } });
+    const msgs = messageStore.getState().messages;
+    expect(msgs.find((m) => m.id === "x")?.data.text).toBe("updated");
+    expect(msgs.find((m) => m.id === "y")?.data.text).toBe("y");
+  });
+
   it("clear empties the store", () => {
     messageStore.getState().addMessage({ id: "c", type: "text", data: {} });
     messageStore.getState().clear();

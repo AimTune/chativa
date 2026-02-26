@@ -1,7 +1,7 @@
 import { html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ChativaElement } from "@chativa/core";
-import type { GenUIComponentAPI } from "../types/GenUIComponentAPI";
+import type { GenUIComponentAPI } from "../types";
 
 export interface GenUIImage {
   src: string;

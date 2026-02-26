@@ -131,7 +131,7 @@ export class GenUIChart extends ChativaElement {
   /** Chart variant. Default: "bar". */
   @property({ type: String }) type: "bar" | "line" | "pie" = "bar";
   /** Optional title displayed above the chart. */
-  @property({ type: String }) title?: string;
+  @property({ type: String }) override title: string = "";
   /** X-axis labels (one per data point). */
   @property({ type: Array }) labels?: string[];
   /** Data series. Each series has an optional label, data array, and optional color. */

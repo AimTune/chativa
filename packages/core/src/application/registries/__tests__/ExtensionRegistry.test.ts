@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ExtensionRegistry } from "../ExtensionRegistry";
+import { SlashCommandRegistry } from "../SlashCommandRegistry";
 import type { IExtension, ExtensionContext } from "../../../domain/ports/IExtension";
 
 function makeMockExtension(
@@ -15,7 +16,10 @@ function makeMockExtension(
 }
 
 describe("ExtensionRegistry", () => {
-  beforeEach(() => ExtensionRegistry.clear());
+  beforeEach(() => {
+    ExtensionRegistry.clear();
+    SlashCommandRegistry.clear();
+  });
 
   it("installs an extension", () => {
     ExtensionRegistry.install(makeMockExtension("analytics"));
@@ -47,6 +51,10 @@ describe("ExtensionRegistry", () => {
     ExtensionRegistry.install(makeMockExtension("gone"));
     ExtensionRegistry.uninstall("gone");
     expect(ExtensionRegistry.has("gone")).toBe(false);
+  });
+
+  it("uninstall() is a no-op for unknown extension names", () => {
+    expect(() => ExtensionRegistry.uninstall("does-not-exist")).not.toThrow();
   });
 
   it("list() returns installed extension names", () => {
@@ -96,6 +104,49 @@ describe("ExtensionRegistry", () => {
       expect(result).toBeNull();
     });
 
+    it("short-circuits remaining afterReceive handlers when first returns null", () => {
+      const secondHandler = vi.fn();
+      ExtensionRegistry.install(
+        makeMockExtension("first-null", (ctx) => {
+          ctx.onAfterReceive(() => null);
+        })
+      );
+      ExtensionRegistry.install(
+        makeMockExtension("second", (ctx) => {
+          ctx.onAfterReceive((msg) => { secondHandler(); return msg; });
+        })
+      );
+      const result = ExtensionRegistry.runAfterReceive({
+        id: "1",
+        type: "text",
+        data: { text: "x" },
+      });
+      expect(result).toBeNull();
+      expect(secondHandler).not.toHaveBeenCalled();
+    });
+
+    it("short-circuits remaining beforeSend handlers when first returns null", () => {
+      const secondHandler = vi.fn();
+      ExtensionRegistry.install(
+        makeMockExtension("send-first-null", (ctx) => {
+          ctx.onBeforeSend(() => null);
+        })
+      );
+      ExtensionRegistry.install(
+        makeMockExtension("send-second", (ctx) => {
+          ctx.onBeforeSend((msg) => { secondHandler(); return msg; });
+        })
+      );
+      const result = ExtensionRegistry.runBeforeSend({
+        id: "1",
+        type: "text",
+        data: { text: "x" },
+        timestamp: 0,
+      });
+      expect(result).toBeNull();
+      expect(secondHandler).not.toHaveBeenCalled();
+    });
+
     it("transforms outgoing messages via onBeforeSend", () => {
       ExtensionRegistry.install(
         makeMockExtension("send-transformer", (ctx) => {
@@ -127,6 +178,18 @@ describe("ExtensionRegistry", () => {
       );
       ExtensionRegistry.notifyClose();
       expect(cb).toHaveBeenCalledOnce();
+    });
+
+    it("registerCommand delegates to SlashCommandRegistry", () => {
+      const fn = vi.fn();
+      ExtensionRegistry.install(
+        makeMockExtension("cmd-ext", (ctx) =>
+          ctx.registerCommand({ name: "ping", description: "ping cmd", execute: fn })
+        )
+      );
+      expect(SlashCommandRegistry.has("ping")).toBe(true);
+      SlashCommandRegistry.execute("ping", "");
+      expect(fn).toHaveBeenCalledOnce();
     });
   });
 });

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import chatStore from "../ChatStore";
+import { EventBus } from "../../EventBus";
 import { DEFAULT_THEME } from "../../../domain/value-objects/Theme";
 
 describe("ChatStore", () => {
@@ -104,5 +105,125 @@ describe("ChatStore", () => {
     expect(chatStore.getState().allowFullscreen).toBe(false);
     chatStore.getState().setAllowFullscreen(true);
     expect(chatStore.getState().allowFullscreen).toBe(true);
+  });
+
+  // ── unread / typing ────────────────────────────────────────────────
+
+  it("incrementUnread increases unreadCount by 1 each call", () => {
+    chatStore.getState().incrementUnread();
+    chatStore.getState().incrementUnread();
+    expect(chatStore.getState().unreadCount).toBe(2);
+  });
+
+  it("resetUnread sets unreadCount to 0", () => {
+    chatStore.getState().incrementUnread();
+    chatStore.getState().incrementUnread();
+    chatStore.getState().resetUnread();
+    expect(chatStore.getState().unreadCount).toBe(0);
+  });
+
+  it("open() resets unreadCount", () => {
+    chatStore.getState().incrementUnread();
+    chatStore.getState().open();
+    expect(chatStore.getState().unreadCount).toBe(0);
+  });
+
+  it("setTyping updates isTyping", () => {
+    chatStore.getState().setTyping(true);
+    expect(chatStore.getState().isTyping).toBe(true);
+    chatStore.getState().setTyping(false);
+    expect(chatStore.getState().isTyping).toBe(false);
+  });
+
+  // ── reconnect ──────────────────────────────────────────────────────
+
+  it("setReconnectAttempt updates reconnectAttempt", () => {
+    chatStore.getState().setReconnectAttempt(2);
+    expect(chatStore.getState().reconnectAttempt).toBe(2);
+    chatStore.getState().setReconnectAttempt(0);
+    expect(chatStore.getState().reconnectAttempt).toBe(0);
+  });
+
+  // ── history ────────────────────────────────────────────────────────
+
+  it("setHasMoreHistory updates hasMoreHistory", () => {
+    chatStore.getState().setHasMoreHistory(true);
+    expect(chatStore.getState().hasMoreHistory).toBe(true);
+    chatStore.getState().setHasMoreHistory(false);
+    expect(chatStore.getState().hasMoreHistory).toBe(false);
+  });
+
+  it("setIsLoadingHistory updates isLoadingHistory", () => {
+    chatStore.getState().setIsLoadingHistory(true);
+    expect(chatStore.getState().isLoadingHistory).toBe(true);
+    chatStore.getState().setIsLoadingHistory(false);
+    expect(chatStore.getState().isLoadingHistory).toBe(false);
+  });
+
+  it("setHistoryCursor updates historyCursor", () => {
+    chatStore.getState().setHistoryCursor("page2");
+    expect(chatStore.getState().historyCursor).toBe("page2");
+    chatStore.getState().setHistoryCursor(undefined);
+    expect(chatStore.getState().historyCursor).toBeUndefined();
+  });
+
+  // ── search ─────────────────────────────────────────────────────────
+
+  it("setSearchQuery updates searchQuery", () => {
+    chatStore.getState().setSearchQuery("hello");
+    expect(chatStore.getState().searchQuery).toBe("hello");
+  });
+
+  it("setSearchQuery emits search_query_changed event", () => {
+    const handler = vi.fn();
+    EventBus.on("search_query_changed", handler);
+    chatStore.getState().setSearchQuery("test");
+    expect(handler).toHaveBeenCalledWith({ query: "test" });
+    EventBus.off("search_query_changed", handler);
+  });
+
+  it("clearSearch resets searchQuery to empty string", () => {
+    chatStore.getState().setSearchQuery("something");
+    chatStore.getState().clearSearch();
+    expect(chatStore.getState().searchQuery).toBe("");
+  });
+
+  it("clearSearch emits search_query_changed with empty query", () => {
+    const handler = vi.fn();
+    EventBus.on("search_query_changed", handler);
+    chatStore.getState().clearSearch();
+    expect(handler).toHaveBeenCalledWith({ query: "" });
+    EventBus.off("search_query_changed", handler);
+  });
+
+  // ── EventBus integration ───────────────────────────────────────────
+
+  it("open() emits widget_opened event", () => {
+    const handler = vi.fn();
+    EventBus.on("widget_opened", handler);
+    chatStore.getState().open();
+    expect(handler).toHaveBeenCalledOnce();
+    EventBus.off("widget_opened", handler);
+  });
+
+  it("close() emits widget_closed event", () => {
+    const handler = vi.fn();
+    EventBus.on("widget_closed", handler);
+    chatStore.getState().close();
+    expect(handler).toHaveBeenCalledOnce();
+    EventBus.off("widget_closed", handler);
+  });
+
+  // ── subscribe ──────────────────────────────────────────────────────
+
+  it("subscribe() fires callback on state change and returns unsubscribe fn", () => {
+    const cb = vi.fn();
+    const unsub = chatStore.getState().subscribe(cb);
+    chatStore.getState().setTyping(true);
+    expect(cb).toHaveBeenCalled();
+    unsub();
+    cb.mockClear();
+    chatStore.getState().setTyping(false);
+    expect(cb).not.toHaveBeenCalled();
   });
 });
