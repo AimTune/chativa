@@ -9,6 +9,8 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -27,8 +29,46 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
-      - name: Run tests
-        run: pnpm test
+      - name: Run tests with coverage
+        run: pnpm test -- --coverage
+
+      - name: Update coverage badge in README
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkgs = [
+            'packages/core',
+            'packages/connector-dummy',
+            'packages/genui',
+          ];
+          let total = 0, covered = 0;
+          for (const pkg of pkgs) {
+            try {
+              const s = JSON.parse(fs.readFileSync(\`\${pkg}/coverage/coverage-summary.json\`, 'utf8'));
+              total   += s.total.lines.total;
+              covered += s.total.lines.covered;
+            } catch (_) {}
+          }
+          const pct   = total > 0 ? Math.round(covered / total * 100) : 0;
+          const color = pct >= 80 ? 'brightgreen' : pct >= 70 ? 'yellow' : pct >= 50 ? 'orange' : 'red';
+          const badge = \`[![Coverage](https://img.shields.io/badge/coverage-\${pct}%25-\${color})](https://github.com/AimTune/chativa/actions)\`;
+          let readme  = fs.readFileSync('README.md', 'utf8');
+          readme = readme.replace(/\[!\[Coverage\]\(.*?\)\]\(.*?\)/, badge);
+          fs.writeFileSync('README.md', readme);
+          console.log(\`Coverage: \${pct}% (\${color})\`);
+          "
+
+      - name: Commit updated badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git diff --quiet README.md || (
+            git add README.md &&
+            git commit -m "chore: update coverage badge [skip ci]"
+          )
+          git push
 
       - name: Build packages
         run: pnpm build

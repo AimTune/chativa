@@ -4,6 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![Built with LitElement](https://img.shields.io/badge/Built%20with-LitElement-324fff?logo=lit)](https://lit.dev/)
 [![Tests](https://img.shields.io/badge/Tests-Vitest-6e9f18?logo=vitest)](https://vitest.dev/)
+[![Coverage](https://img.shields.io/badge/coverage-0%25-red)](https://github.com/AimTune/chativa/actions)
 
 **Chativa** is an open-source, framework-agnostic chat widget built on [Web Components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) (LitElement). Drop a single `<script>` tag into any page — React, Vue, Angular, or plain HTML — and get a fully functional, themeable chat interface.
 
