@@ -123,12 +123,17 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
     @media (max-width: 480px) {
       .widget:not(.inline-mode) {
-        top: 0 !important;
+        /*
+         * --_vv-top / --_vv-height are set by the visualViewport JS listener
+         * so the widget tracks the visible area above the virtual keyboard on iOS.
+         * Fallback values (0px / 100dvh) cover Android and non-iOS browsers.
+         */
+        top: var(--_vv-top, 0px) !important;
         left: 0 !important;
         right: 0 !important;
-        bottom: auto !important;       /* let height control the bottom edge */
+        bottom: auto !important;
         width: 100% !important;
-        height: 100dvh !important;     /* dynamic: shrinks when virtual keyboard opens */
+        height: var(--_vv-height, 100dvh) !important;
         border-radius: 0 !important;
         animation: fadeIn 0.18s ease;
       }
@@ -210,6 +215,28 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   private _unsubscribeMessages!: () => void;
   private _engine!: ChatEngine;
   private _multiEngine: MultiConversationEngine | null = null;
+  private _vvRafId: number | null = null;
+
+  /**
+   * Tracks the visual viewport (the area above the virtual keyboard on iOS).
+   * On iOS Safari, `position: fixed` elements shift when the keyboard opens
+   * because the visual viewport scrolls. We compensate by setting CSS custom
+   * properties `--_vv-top` and `--_vv-height` on the host element; the shadow
+   * stylesheet uses `var(--_vv-top)` / `var(--_vv-height)` inside the mobile
+   * media query so that the widget always fills exactly the visible area.
+   * rAF-throttled to avoid layout thrashing during keyboard animation.
+   */
+  private _onVisualViewport = () => {
+    if (this._vvRafId !== null) return;
+    this._vvRafId = requestAnimationFrame(() => {
+      this._vvRafId = null;
+      if (window.innerWidth > 480) return;
+      const vv = window.visualViewport;
+      if (!vv) return;
+      this.style.setProperty("--_vv-top",    `${Math.round(vv.offsetTop)}px`);
+      this.style.setProperty("--_vv-height", `${Math.round(vv.height)}px`);
+    });
+  };
 
   connectedCallback() {
     super.connectedCallback();
@@ -233,6 +260,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       console.error("[ChatWidget] Engine init failed:", err);
     });
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
+    window.visualViewport?.addEventListener("resize", this._onVisualViewport);
+    window.visualViewport?.addEventListener("scroll", this._onVisualViewport);
     document.addEventListener("keydown", this._onKeyDown);
     this.addEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.addEventListener("chat-action", this._onChatAction as EventListener);
@@ -250,6 +279,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   disconnectedCallback() {
     this._unsubscribeMessages?.();
     this._multiEngine?.destroy().catch(() => {});
+    window.visualViewport?.removeEventListener("resize", this._onVisualViewport);
+    window.visualViewport?.removeEventListener("scroll", this._onVisualViewport);
+    if (this._vvRafId !== null) cancelAnimationFrame(this._vvRafId);
     document.removeEventListener("keydown", this._onKeyDown);
     this.removeEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
