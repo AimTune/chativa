@@ -270,6 +270,12 @@ ThemeBuilder.create()
 | **R6** | **Server-side Message Search** | `connector.searchMessages?(query, cursor?)` optional method. Results highlighted in `ChatMessageList`. |
 | **R7** | **Conversation Export** | Download chat as `.txt`, `.json`, or `.pdf`. Extension hook: `onExport?(messages)`. |
 | **R8** | **Persistent Local Cache** | `localStorage`/`IndexedDB` message cache per conversation ID. Hydrate on reconnect, no flash of empty state. |
+| **R8b** | **Message Pinning** | Pin important messages to the top of the chat window. `connector.pinMessage?(id)` optional. Pinned messages shown in a collapsible strip. |
+| **R8c** | **Inline Link Preview** | Auto-fetch Open Graph metadata for pasted URLs. Renders title + image + description card below the message. |
+| **R8d** | **Read Position Indicator** | "Jump to last read" button when user scrolls up. `MessageStore` tracks last-seen message ID per session. |
+| **R8e** | **Chat Window Modes** | `theme.windowMode: "popup" \| "side-panel" \| "fullscreen" \| "inline"`. Side-panel docks widget to the page edge; inline embeds it in a container. |
+| **R8f** | **Message Copy Button** | One-click copy on hover for any text message. Copies plain text (strips Markdown). Toast confirmation. |
+| **R8g** | **Command Palette (`Ctrl+K`)** | Fuzzy-search across slash commands, recent messages, and quick actions. Keyboard-navigable overlay. |
 
 ---
 
@@ -291,6 +297,11 @@ ThemeBuilder.create()
 | **R13** | **`connector-langchain`** | LangChain agent streaming via LangServe SSE endpoint. |
 | **R14** | **`connector-firebase`** | Firestore real-time listener for messages; Firebase Storage for file upload. |
 | **R15** | **`connector-mqtt`** | MQTT.js broker connector for IoT/edge chat scenarios. |
+| **R15b** | **`connector-twilio`** | Twilio Conversations API; supports SMS and WhatsApp Business channels. |
+| **R15c** | **`connector-telegram`** | Telegram Bot API via long-polling or webhook proxy. |
+| **R15d** | **`connector-slack`** | Slack Web API + Events API; post messages to channels or DMs. |
+| **R15e** | **`connector-matrix`** | Matrix/Element protocol via `matrix-js-sdk`; federated open messaging. |
+| **R15f** | **`connector-grpc`** | gRPC server streaming connector for high-throughput / low-latency backends. |
 
 ---
 
@@ -299,12 +310,18 @@ ThemeBuilder.create()
 | ID | Feature | Description |
 |---|---|---|
 | **R16** | **`genui-map`** | Interactive map using Leaflet. Drop-in for location-based bot responses. |
-| **R17** | **`genui-code`** | Syntax-highlighted code block with copy button. |
+| **R17** | **`genui-code`** | Syntax-highlighted code block with copy button. Uses highlight.js or Shiki. |
 | **R18** | **`genui-video-player`** | Embedded responsive video player with captions. |
 | **R19** | **`genui-poll`** | Single/multi-choice poll widget; emits `poll_answer`. |
 | **R20** | **`genui-pdf-viewer`** | Inline PDF viewer using `pdf.js`. |
 | **R21** | **`genui-kanban`** | Drag-and-drop Kanban board streamed inline. |
 | **R22** | **`genui-signature`** | Canvas-based signature pad; emits `signature_complete` with base64. |
+| **R22b** | **`genui-countdown`** | Countdown timer with configurable end date; emits `timer_expired`. |
+| **R22c** | **`genui-payment`** | Stripe Elements embed for inline payment collection; emits `payment_complete`. |
+| **R22d** | **`genui-calendar`** | Appointment/date range scheduler; emits `slot_selected`. |
+| **R22e** | **`genui-audio-player`** | Audio file playback with waveform visualization. |
+| **R22f** | **`genui-flowchart`** | Mermaid.js diagram render — flowcharts, sequence diagrams, ER diagrams. |
+| **R22g** | **`genui-diff-viewer`** | Side-by-side or unified code diff view. |
 
 ---
 
@@ -320,6 +337,15 @@ ThemeBuilder.create()
 | **R28** | **End-to-End Encryption** | Client-side message encryption (Web Crypto API). Key exchange via connector handshake. |
 | **R29** | **Plugin Marketplace** | Registry of community extensions/connectors. Install by name: `npx chativa add my-plugin`. |
 | **R30** | **Admin Dashboard** | Optional companion dashboard showing live sessions, message analytics, bot health. |
+| **R30b** | **Bot → Human Handoff** | `connector.requestHandoff?()` triggers transfer to live agent. UI shows "Connected to agent" banner. Queue position indicator. |
+| **R30c** | **Session Summary (AI)** | After conversation ends, AI generates a short summary. Shown to user and optionally sent to backend via `connector.submitSummary?()`. |
+| **R30d** | **Sentiment Indicator** | Real-time sentiment analysis on user messages (positive / neutral / negative badge). Connector-side or client-side via ONNX/WASM model. |
+| **R30e** | **Suggested Replies** | Bot can stream a `suggested_replies` chunk; chips appear above input. Clicking sends as user message. |
+| **R30f** | **Token-by-Token Streaming (non-GenUI)** | Connector streams raw text tokens for fast perceived response. `ChatEngine` appends to last bot message without a full GenUI stream. |
+| **R30g** | **Auth Token Refresh Hook** | `connector.onTokenExpired?(refresh: () => Promise<string>)` — automatic token re-injection without reconnect. |
+| **R30h** | **Client-side Rate Limiting** | `theme.rateLimitMs?: number` — debounce send button; show cooldown countdown. Prevents spam. |
+| **R30i** | **XSS Sanitization Layer** | Mandatory DOMPurify pass on all incoming `text` message HTML before render. Configurable allowed-tag list. |
+| **R30j** | **CSP-Compatible Build** | No `eval`, no inline styles injected at runtime. Ships a `Content-Security-Policy` example header. Nonce support for Lit styles. |
 
 ---
 
@@ -334,6 +360,14 @@ ThemeBuilder.create()
 | **R35** | **Test Harness Package** | `@chativa/testing` — utilities for testing connectors, extensions, and message components with pre-built mocks. |
 | **R36** | **SSR / Hydration Support** | Server-render initial HTML shell for the widget; hydrate client-side on load. |
 | **R37** | **Mobile PWA App** | Standalone Progressive Web App shell using `ChatbotMixin`, offline support via Service Worker. |
+| **R37b** | **Playwright E2E Test Suite** | Full browser integration tests: open widget, send message, check response, file upload, history scroll. |
+| **R37c** | **Visual Regression Tests** | Chromatic / Percy snapshot comparison for all UI components on every PR. |
+| **R37d** | **axe-core Accessibility Audit** | Automated WCAG 2.1 AA audit in CI via `axe-playwright`. Blocks merge on new violations. |
+| **R37e** | **Connector Mock Recorder/Playback** | Record a real connector session to JSON fixture; replay deterministically in tests. |
+| **R37f** | **Hot Reload for Sandbox Connectors** | HMR support in `apps/sandbox` for connector code — no full page reload needed during connector development. |
+| **R37g** | **OpenAPI/AsyncAPI Schema Validation** | Optional schema file per connector. `ChatEngine` validates outgoing/incoming message shapes at runtime in dev mode. |
+| **R37h** | **Web Worker Message Pipeline** | Move `ChatEngine` message processing off the main thread via `SharedWorker`. UI stays responsive under heavy message load. |
+| **R37i** | **More Language Packs** | Community-contributed translations: German (`de`), French (`fr`), Spanish (`es`), Arabic (`ar`), Japanese (`ja`), Chinese (`zh`), Korean (`ko`). |
 
 ---
 
