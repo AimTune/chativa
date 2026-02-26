@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chativa — Visual Theme Editor</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: #e2e8f0;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* ── Top bar ── */
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 20px;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        flex-shrink: 0;
+      }
+
+      .back-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        background: #f1f5f9;
+        border: 1.5px solid #e2e8f0;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: #475569;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+      }
+      .back-btn:hover { background: #e2e8f0; border-color: #cbd5e1; }
+
+      .topbar-title {
+        font-size: 0.9375rem;
+        font-weight: 700;
+        color: #0f172a;
+      }
+
+      .topbar-sub {
+        font-size: 0.8125rem;
+        color: #94a3b8;
+      }
+
+      /* ── Body ── */
+      .editor-wrap {
+        flex: 1;
+        overflow: hidden;
+        display: flex;
+      }
+
+      theme-editor-app {
+        flex: 1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <a href="/" class="back-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+        </svg>
+        Back to Sandbox
+      </a>
+      <div>
+        <div class="topbar-title">Visual Theme Editor</div>
+        <div class="topbar-sub">Build and export your ThemeConfig — drag color presets onto fields</div>
+      </div>
+    </div>
+
+    <div class="editor-wrap">
+      <theme-editor-app></theme-editor-app>
+    </div>
+
+    <script type="module" src="/src/theme-editor-main.ts"></script>
+  </body>
+</html>
