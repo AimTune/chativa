@@ -506,7 +506,7 @@ class ChatInput extends LitElement {
               <button
                 class="file-chip-remove"
                 type="button"
-                aria-label="Remove file"
+                aria-label="${t("input.removeFile", { name: f.name })}"
                 @click=${() => this._removeFile(i)}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10">
@@ -534,7 +534,7 @@ class ChatInput extends LitElement {
         <button
           class="icon-btn ${hasFiles ? "active" : ""}"
           type="button"
-          aria-label="Attach file"
+          aria-label="${t("input.attachFile")}"
           ?disabled=${!connected}
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._openFilePicker(); }}
         >
@@ -548,6 +548,9 @@ class ChatInput extends LitElement {
           class="icon-btn ${this._pickerOpen ? "active" : ""}"
           type="button"
           aria-label="${t("input.emoji")}"
+          aria-haspopup="true"
+          aria-expanded="${this._pickerOpen}"
+          aria-controls="emoji-popup"
           ?disabled=${!connected}
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
         >
@@ -566,6 +569,11 @@ class ChatInput extends LitElement {
           @input=${this._onInput}
           @keydown=${this._onKeyDown}
           placeholder="${t("input.placeholder")}"
+          aria-label="${t("input.placeholder")}"
+          aria-autocomplete="list"
+          aria-expanded="${this._slashMatches.length > 0}"
+          aria-controls="${this._slashMatches.length > 0 ? "slash-popup" : nothing}"
+          aria-owns="${this._slashMatches.length > 0 ? "slash-popup" : nothing}"
           autocomplete="off"
           spellcheck="true"
           ?disabled=${!connected}
@@ -586,11 +594,13 @@ class ChatInput extends LitElement {
 
       <!-- Slash command popup -->
       ${this._slashMatches.length > 0 ? html`
-        <div class="slash-popup">
+        <div class="slash-popup" id="slash-popup" role="listbox">
           ${this._slashMatches.map((cmd, i) => html`
             <button
               class="slash-item ${i === this._slashFocusIdx ? "focused" : ""}"
               type="button"
+              role="option"
+              aria-selected="${i === this._slashFocusIdx}"
               @click=${() => this._selectSlashCommand(cmd)}
             >
               <span class="slash-item-name">/${cmd.name}</span>
@@ -603,7 +613,7 @@ class ChatInput extends LitElement {
 
       <!-- Emoji picker popup -->
       ${this._pickerOpen ? html`
-        <div class="picker-popup" @click=${(e: MouseEvent) => e.stopPropagation()}>
+        <div class="picker-popup" id="emoji-popup" @click=${(e: MouseEvent) => e.stopPropagation()}>
           <emoji-picker @emoji-select=${this._onEmojiSelect}></emoji-picker>
         </div>
       ` : nothing}

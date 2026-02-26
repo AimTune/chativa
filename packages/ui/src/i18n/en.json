@@ -25,6 +25,8 @@
         "placeholder": "Type a message…",
         "send": "Send message",
         "emoji": "Emoji",
+        "attachFile": "Attach file",
+        "removeFile": "Remove {{name}}",
         "dropHere": "Drop files here",
         "dropHereSubtitle": "Release to attach"
     },
@@ -40,7 +42,20 @@
         "reconnecting": "Reconnecting… (attempt {{attempt}})",
         "searchEmpty": "No messages match your search.",
         "searchResult": "{{count}} result(s) found",
-        "loadingHistory": "Loading previous messages…"
+        "loadingHistory": "Loading previous messages…",
+        "ariaLabel": "Chat messages",
+        "typingIndicator": "Assistant is typing"
+    },
+    "message": {
+        "from": {
+            "bot": "Assistant",
+            "user": "You"
+        },
+        "likeButton": "Like this message",
+        "dislikeButton": "Dislike this message",
+        "statusSending": "Sending",
+        "statusSent": "Sent",
+        "statusRead": "Read"
     },
     "emojiPicker": {
         "searchPlaceholder": "Search emoji…",

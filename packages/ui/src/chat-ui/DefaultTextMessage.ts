@@ -2,6 +2,8 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
+import { t } from "i18next";
+import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
 
 
@@ -200,6 +202,18 @@ export class DefaultTextMessage extends LitElement {
 
   @state() private _feedback: "like" | "dislike" | null = null;
 
+  private _onLangChange = () => { this.requestUpdate(); };
+
+  override connectedCallback() {
+    super.connectedCallback();
+    i18next.on("languageChanged", this._onLangChange);
+  }
+
+  override disconnectedCallback() {
+    i18next.off("languageChanged", this._onLangChange);
+    super.disconnectedCallback();
+  }
+
   private _onFeedback(type: "like" | "dislike") {
     if (this._feedback === type) {
       this._feedback = null;
@@ -265,8 +279,8 @@ export class DefaultTextMessage extends LitElement {
     if (this.status === "read") {
       // Double tick
       return html`
-        <span class="status-icon" title="Read">
-          <svg viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <span class="status-icon" aria-label="${t("message.statusRead")}">
+          <svg viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <path d="M1 6l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M6 6l4 4L18 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
@@ -275,8 +289,8 @@ export class DefaultTextMessage extends LitElement {
     }
     // Single tick (sending = gray, sent = primary)
     return html`
-      <span class="status-icon" title=${this.status === "sending" ? "Sending…" : "Sent"}>
-        <svg viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <span class="status-icon" aria-label="${this.status === "sending" ? t("message.statusSending") : t("message.statusSent")}">
+        <svg viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M1 5l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
@@ -296,8 +310,11 @@ export class DefaultTextMessage extends LitElement {
     const showUserAvatar = avatarCfg?.showUser !== false;
     const showStatus = theme.showMessageStatus === true && isUser;
 
+    const senderLabel = isUser ? t("message.from.user") : t("message.from.bot");
+    const articleLabel = `${senderLabel}: ${raw}`;
+
     return html`
-      <div class="message ${isUser ? "user" : "bot"}">
+      <div class="message ${isUser ? "user" : "bot"}" role="article" aria-label="${articleLabel}">
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
@@ -306,19 +323,21 @@ export class DefaultTextMessage extends LitElement {
             <div class="feedback ${this._feedback ? "active" : ""}">
               <button
                 class="feedback-btn ${this._feedback === "like" ? "selected-like" : ""}"
-                title="Like"
+                aria-label="${t("message.likeButton")}"
+                aria-pressed="${this._feedback === "like"}"
                 @click=${() => this._onFeedback("like")}
               >👍</button>
               <button
                 class="feedback-btn ${this._feedback === "dislike" ? "selected-dislike" : ""}"
-                title="Dislike"
+                aria-label="${t("message.dislikeButton")}"
+                aria-pressed="${this._feedback === "dislike"}"
                 @click=${() => this._onFeedback("dislike")}
               >👎</button>
             </div>
           ` : nothing}
           ${this._time || showStatus ? html`
             <div class="meta">
-              ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+              ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}
               ${showStatus ? this._renderStatusIcon() : nothing}
             </div>
           ` : nothing}

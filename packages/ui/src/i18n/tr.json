@@ -25,6 +25,8 @@
         "placeholder": "Bir mesaj yazın…",
         "send": "Mesaj gönder",
         "emoji": "Emoji",
+        "attachFile": "Dosya ekle",
+        "removeFile": "{{name}} kaldır",
         "dropHere": "Dosyaları buraya bırakın",
         "dropHereSubtitle": "Eklemek için bırakın"
     },
@@ -40,7 +42,20 @@
         "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})",
         "searchEmpty": "Aramanızla eşleşen mesaj yok.",
         "searchResult": "{{count}} sonuç bulundu",
-        "loadingHistory": "Önceki mesajlar yükleniyor…"
+        "loadingHistory": "Önceki mesajlar yükleniyor…",
+        "ariaLabel": "Sohbet mesajları",
+        "typingIndicator": "Asistan yazıyor"
+    },
+    "message": {
+        "from": {
+            "bot": "Asistan",
+            "user": "Siz"
+        },
+        "likeButton": "Bu mesajı beğen",
+        "dislikeButton": "Bu mesajı beğenme",
+        "statusSending": "Gönderiliyor",
+        "statusSent": "Gönderildi",
+        "statusRead": "Okundu"
     },
     "emojiPicker": {
         "searchPlaceholder": "Emoji ara…",

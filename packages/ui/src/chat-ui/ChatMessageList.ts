@@ -484,9 +484,9 @@ class ChatMessageList extends LitElement {
     if (connectorStatus === "connecting" && messages.length === 0) {
       return html`
         <div class="list">
-          <div class="connecting">
-            <div class="spinner"></div>
-            <p class="connecting-text">${t("messageList.connecting")}</p>
+          <div class="connecting" role="status" aria-label="${t("messageList.connecting")}">
+            <div class="spinner" aria-hidden="true"></div>
+            <p class="connecting-text" aria-hidden="true">${t("messageList.connecting")}</p>
           </div>
         </div>
       `;
@@ -497,12 +497,12 @@ class ChatMessageList extends LitElement {
         class="list"
         role="log"
         aria-live="polite"
-        aria-label="Chat messages"
+        aria-label="${t("messageList.ariaLabel")}"
         aria-relevant="additions"
       >
         ${connectorStatus === "connecting" && messages.length > 0 ? html`
-          <div class="reconnecting-banner">
-            <div class="mini-spinner"></div>
+          <div class="reconnecting-banner" role="status">
+            <div class="mini-spinner" aria-hidden="true"></div>
             ${t("messageList.reconnecting", { attempt: reconnectAttempt })}
           </div>
         ` : null}
@@ -515,12 +515,12 @@ class ChatMessageList extends LitElement {
           >
             ${isLoadingHistory
               ? html`<div class="mini-spinner" role="status" aria-label="${t("messageList.loadingHistory")}"></div>`
-              : html`↑ ${t("messageList.loadMore", { defaultValue: "Load previous messages" })}`}
+              : html`<span aria-hidden="true">↑</span> ${t("messageList.loadMore", { defaultValue: "Load previous messages" })}`}
           </button>
         ` : null}
 
         ${searchQuery ? html`
-          <div class="search-result-bar">
+          <div class="search-result-bar" role="status" aria-live="polite">
             ${displayMessages.length === 0
               ? t("messageList.searchEmpty")
               : t("messageList.searchResult", { count: displayMessages.length })}
@@ -529,8 +529,8 @@ class ChatMessageList extends LitElement {
 
         ${displayMessages.length === 0 && !searchQuery
           ? html`
-              <div class="empty">
-                <div class="empty-icon">
+              <div class="empty" aria-label="${t("messageList.emptyTitle")}">
+                <div class="empty-icon" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path
                       d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
@@ -544,14 +544,20 @@ class ChatMessageList extends LitElement {
           : displayMessages.map((msg, i) => this._renderMessage(msg, i, displayMessages))}
 
         ${isTyping ? html`
-          <div class="typing-bubble">
-            <span></span><span></span><span></span>
+          <div
+            class="typing-bubble"
+            role="status"
+            aria-label="${t("messageList.typingIndicator")}"
+          >
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
           </div>
         ` : null}
       </div>
       ${this._hasNewMessages ? html`
         <button class="new-msg-pill" @click=${this._scrollToBottom}>
-          ↓ ${t("messageList.newMessage")}
+          <span aria-hidden="true">↓</span> ${t("messageList.newMessage")}
         </button>
       ` : null}
     `;

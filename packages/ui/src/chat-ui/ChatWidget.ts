@@ -180,6 +180,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       console.error("[ChatWidget] Engine init failed:", err);
     });
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
+    document.addEventListener("keydown", this._onKeyDown);
     this.addEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.addEventListener("chat-action", this._onChatAction as EventListener);
     this.addEventListener("chat-retry", this._onChatRetry as EventListener);
@@ -192,6 +193,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   disconnectedCallback() {
     this._unsubscribeMessages?.();
     this._engine?.destroy().catch(() => {});
+    document.removeEventListener("keydown", this._onKeyDown);
     this.removeEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
     this.removeEventListener("chat-retry", this._onChatRetry as EventListener);
@@ -366,13 +368,69 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     chatInput?.addFiles(files);
   };
 
+  // ── Accessibility: focus trap + ESC to close ─────────────────────────
+
+  /** Element focused before the dialog opened — restored when it closes. */
+  private _prevActiveElement: HTMLElement | null = null;
+
+  /**
+   * Walk the composed shadow tree and collect all focusable elements in DOM
+   * order. Needed because querySelectorAll does not pierce shadow roots.
+   */
+  private _getFocusable(): HTMLElement[] {
+    const SELECTOR =
+      'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+    const result: HTMLElement[] = [];
+    const collect = (root: ShadowRoot | Element) => {
+      for (const el of root.querySelectorAll<HTMLElement>("*")) {
+        if ((el as HTMLElement).matches?.(SELECTOR)) result.push(el);
+        if (el.shadowRoot) collect(el.shadowRoot);
+      }
+    };
+    if (this.shadowRoot) collect(this.shadowRoot);
+    return result;
+  }
+
+  private _onKeyDown = (e: KeyboardEvent) => {
+    if (!this.themeState.isOpened) return;
+
+    if (e.key === "Escape") {
+      e.preventDefault();
+      this.themeState.close();
+      return;
+    }
+
+    if (e.key !== "Tab") return;
+
+    const focusable = this._getFocusable();
+    if (focusable.length === 0) return;
+
+    // Resolve the deeply-nested active element across shadow roots
+    let active: Element | null = document.activeElement;
+    while (active?.shadowRoot?.activeElement) {
+      active = active.shadowRoot.activeElement;
+    }
+
+    const idx = focusable.indexOf(active as HTMLElement);
+
+    if (!e.shiftKey && (idx === -1 || idx >= focusable.length - 1)) {
+      e.preventDefault();
+      focusable[0].focus();
+    } else if (e.shiftKey && idx <= 0) {
+      e.preventDefault();
+      focusable[focusable.length - 1].focus();
+    }
+  };
+
   // ── Focus management ─────────────────────────────────────────────────
 
   protected override updated(changed: Map<PropertyKey, unknown>) {
     super.updated?.(changed);
-    // Focus the textarea only when the widget transitions from closed → open
     const isOpened = this.themeState.isOpened;
+
     if (isOpened && !this._wasOpened) {
+      // Store previously focused element so we can restore it on close
+      this._prevActiveElement = document.activeElement as HTMLElement;
       this.updateComplete.then(() => {
         const input = this.shadowRoot
           ?.querySelector("chat-input")
@@ -380,6 +438,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
         input?.focus();
       });
     }
+
+    if (!isOpened && this._wasOpened) {
+      // Return focus to the element that was active before the dialog opened
+      this._prevActiveElement?.focus();
+      this._prevActiveElement = null;
+    }
+
     this._wasOpened = isOpened;
   }
 

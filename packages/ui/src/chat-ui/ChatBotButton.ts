@@ -67,6 +67,11 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       transform: scale(0.94);
     }
 
+    .launcher:focus-visible {
+      outline: 3px solid var(--chativa-primary-color, #4f46e5);
+      outline-offset: 3px;
+    }
+
     /* Default icon animation (only shown when no slot content) */
     .icon-wrap {
       position: relative;
@@ -182,12 +187,13 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       >
         <slot @slotchange=${this._onSlotChange}>
           <!-- Default: animated chat / close icons -->
-          <span class="icon-wrap">
+          <span class="icon-wrap" aria-hidden="true">
             <svg
               class="icon-chat"
               viewBox="0 0 24 24"
               fill="currentColor"
               xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
             >
               <path
                 d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
@@ -201,6 +207,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
               stroke-width="2.5"
               stroke-linecap="round"
               xmlns="http://www.w3.org/2000/svg"
+              aria-hidden="true"
             >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
@@ -208,7 +215,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
         </slot>
         ${unreadCount > 0 && !isOpen
           ? html`<span class="badge" aria-label="${unreadCount} unread messages">
-              ${unreadCount > 9 ? "9+" : unreadCount}
+              <span aria-hidden="true">${unreadCount > 9 ? "9+" : unreadCount}</span>
             </span>`
           : nothing}
       </button>
