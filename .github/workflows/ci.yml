@@ -29,8 +29,11 @@ jobs:
       - name: Type check
         run: pnpm typecheck
 
+      - name: Run tests
+        run: pnpm test
+
       - name: Run tests with coverage
-        run: pnpm test -- --coverage
+        run: pnpm test:coverage
 
       - name: Update coverage badge in README
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

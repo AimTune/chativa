@@ -18,7 +18,7 @@
     "build": "pnpm -r --filter './packages/**' build",
     "test": "pnpm -r --filter './packages/**' test",
     "test:watch": "pnpm -r --filter './packages/**' exec vitest",
-    "test:coverage": "pnpm --filter '@chativa/core' --filter '@chativa/connector-dummy' --filter '@chativa/genui' exec vitest run --coverage",
+    "test:coverage": "pnpm --filter '@chativa/core' run test -- --coverage && pnpm --filter '@chativa/connector-dummy' run test -- --coverage && pnpm --filter '@chativa/genui' run test -- --coverage",
     "typecheck": "pnpm -r --filter './packages/**' typecheck"
   },
   "devDependencies": {

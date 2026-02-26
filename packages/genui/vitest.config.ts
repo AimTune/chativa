@@ -1,6 +1,13 @@
 import { defineConfig } from "vitest/config";
+import path from "path";
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      // Resolve @chativa/core from source so tests don't need a pre-built dist
+      "@chativa/core": path.resolve(__dirname, "../core/src/index.ts"),
+    },
+  },
   test: {
     environment: "jsdom",
     include: ["src/**/__tests__/**/*.test.ts", "src/**/*.test.ts"],
