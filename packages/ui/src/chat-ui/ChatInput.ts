@@ -254,6 +254,13 @@ class ChatInput extends LitElement {
       text-overflow: ellipsis;
       white-space: nowrap;
     }
+
+    /* ── Mobile: prevent iOS auto-zoom on input focus ──────── */
+    @media (max-width: 480px) {
+      .text-input {
+        font-size: 1rem; /* ≥16px stops iOS Safari from zooming */
+      }
+    }
   `;
 
   @property({ type: String }) value = "";

@@ -123,9 +123,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
     @media (max-width: 480px) {
       .widget:not(.inline-mode) {
-        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: auto !important;       /* let height control the bottom edge */
         width: 100% !important;
-        height: 100% !important;
+        height: 100dvh !important;     /* dynamic: shrinks when virtual keyboard opens */
         border-radius: 0 !important;
         animation: fadeIn 0.18s ease;
       }
