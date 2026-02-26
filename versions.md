@@ -14,7 +14,7 @@
 | **Hexagonal (Ports & Adapters) Architecture** | 4 layers: Domain → Application → Infrastructure ← UI. Strict dependency rule enforced. |
 | **Monorepo** | `pnpm` workspace with packages: `core`, `ui`, `genui`, `connector-*`, `apps/sandbox` |
 | **TypeScript Strict** | Full type exports from all packages |
-| **Vitest Test Suite** | 168 passing tests (core + connector-dummy + genui). Coverage targets ≥ 80% |
+| **Vitest Test Suite** | 224 passing tests (core + connector-dummy + genui). Coverage targets ≥ 80% |
 | **Vite Build** | ESM + CJS dual output, `vite-plugin-dts` for type generation |
 | **CI/CD** | GitHub Actions: auto-version from git tag, NPM publish |
 
@@ -297,6 +297,39 @@ apps/sandbox/src/sandbox/
 - Each section is an independent `@customElement` with its own `_open` accordion state
 - Chevron animates on open/close
 - `sandboxShared.ts` provides shared `sectionStyles` (CSSResult) + helper functions
+
+---
+
+### F21 — Multi-Conversation & Agent Panel
+
+**Popup multi-conversation mode (`theme.enableMultiConversation`):**
+- `ThemeConfig.enableMultiConversation?: boolean` (default `false`)
+- When enabled, a `←` back arrow button appears at the **top-left of the chat header**
+- Clicking it slides in a `<conversation-list>` view (fills the popup); selecting a conversation returns to chat
+- Sandbox "Features" panel has a **Multi-Conversation On/Off** toggle
+
+**Agent Panel (`<agent-panel>`):**
+- Standalone `@customElement("agent-panel")` for support/agent desk UIs
+- Two-column layout: sidebar (`<conversation-list>`) + chat area (`<chat-header>` + `<chat-message-list>` + `<chat-input>`)
+- Attributes: `connector` (default `"dummy"`) and `sidebar-width` (default `"260px"`)
+- Accessible at `/agent-panel.html` — linked from the sandbox panel as "Agent Panel Demo →"
+
+**New domain / application layer:**
+- `Conversation` entity: `{ id, title, contact?, avatar?, lastMessage?, lastMessageAt?, unreadCount?, status }`
+- `ConversationStore` (Zustand): CRUD, `activeConversationId`, snapshot message cache
+- `MultiConversationEngine`: wraps a single `ChatEngine`; snapshot-based message switching; optional `IConnector` methods
+
+**New IConnector optional methods:**
+- `listConversations?()` → `Conversation[]`
+- `createConversation?(title?, metadata?)` → `Conversation`
+- `switchConversation?(id)` → `void`
+- `closeConversation?(id)` → `void`
+- `onConversationUpdate?(cb)` — push updates from backend
+
+**DummyConnector:**
+- Ships 3 demo conversations (Alice Johnson, Bob Martinez, Carol Smith)
+- Injects a greeting message on first visit to each conversation
+- `name` option is now configurable (default `"dummy"`) for multi-instance use (`"dummy-agent"` for the agent panel demo)
 
 ---
 

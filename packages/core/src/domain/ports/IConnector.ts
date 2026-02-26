@@ -9,6 +9,7 @@
 
 import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
 import type { GenUIChunkHandler } from "../entities/GenUI";
+import type { Conversation } from "../entities/Conversation";
 
 export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
@@ -16,6 +17,8 @@ export type DisconnectHandler = (reason?: string) => void;
 export type TypingHandler = (isTyping: boolean) => void;
 export type FeedbackType = "like" | "dislike";
 export type MessageStatusHandler = (messageId: string, status: MessageStatus) => void;
+/** Called when a conversation's metadata changes (e.g. unread count, status, last message). */
+export type ConversationHandler = (conversation: Conversation) => void;
 
 export interface IConnector {
   /** Unique identifier used to select this connector at runtime. */
@@ -71,4 +74,28 @@ export interface IConnector {
    * @param payload   Arbitrary payload from the UI component.
    */
   receiveComponentEvent?(streamId: string, eventType: string, payload: unknown): void;
+
+  // ── Multi-conversation / Agent-panel support (all optional) ──────────
+
+  /** Optional: list all available conversations for this user/session. */
+  listConversations?(): Promise<Conversation[]>;
+
+  /** Optional: create a new conversation and return it. */
+  createConversation?(title?: string, metadata?: Record<string, unknown>): Promise<Conversation>;
+
+  /**
+   * Optional: tell the connector that the active conversation has changed.
+   * Called before messageStore is swapped so the connector can route
+   * subsequent messages to the correct conversation.
+   */
+  switchConversation?(conversationId: string): Promise<void>;
+
+  /** Optional: close / archive a conversation. */
+  closeConversation?(conversationId: string): Promise<void>;
+
+  /**
+   * Optional: subscribe to per-conversation metadata updates
+   * (e.g. unread count, status, last message preview).
+   */
+  onConversationUpdate?(callback: ConversationHandler): void;
 }

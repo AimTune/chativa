@@ -91,4 +91,102 @@ describe("DummyConnector", () => {
     await new Promise((r) => setTimeout(r, 20));
     expect(msgHandler).not.toHaveBeenCalled();
   });
+
+  // ── Name customisation ────────────────────────────────────────────
+
+  it("accepts a custom name via options", () => {
+    const named = new DummyConnector({ name: "my-connector", replyDelay: 0, connectDelay: 0 });
+    expect(named.name).toBe("my-connector");
+  });
+
+  // ── Multi-conversation ────────────────────────────────────────────
+
+  describe("multi-conversation", () => {
+    beforeEach(async () => {
+      await connector.connect();
+    });
+
+    it("listConversations returns 3 demo conversations", async () => {
+      const convs = await connector.listConversations!();
+      expect(convs).toHaveLength(3);
+    });
+
+    it("listConversations conversations have required fields", async () => {
+      const convs = await connector.listConversations!();
+      for (const c of convs) {
+        expect(c.id).toBeDefined();
+        expect(c.title).toBeDefined();
+        expect(typeof c.status).toBe("string");
+      }
+    });
+
+    it("listConversations returns a copy — mutations do not affect internal state", async () => {
+      const convs = await connector.listConversations!();
+      convs.splice(0, convs.length); // clear the returned array
+      const convs2 = await connector.listConversations!();
+      expect(convs2).toHaveLength(3);
+    });
+
+    it("createConversation returns a new conversation with the given title", async () => {
+      const conv = await connector.createConversation!("Test Chat");
+      expect(conv.title).toBe("Test Chat");
+      expect(conv.id).toBeDefined();
+      expect(conv.status).toBe("open");
+    });
+
+    it("createConversation uses a default title when none is provided", async () => {
+      const conv = await connector.createConversation!();
+      expect(conv.title).toBeDefined();
+      expect(conv.title.length).toBeGreaterThan(0);
+    });
+
+    it("createConversation adds the new conversation to the list", async () => {
+      await connector.createConversation!("Extra Conv");
+      const convs = await connector.listConversations!();
+      expect(convs).toHaveLength(4);
+      expect(convs.some((c) => c.title === "Extra Conv")).toBe(true);
+    });
+
+    it("switchConversation resolves without error", async () => {
+      await expect(connector.switchConversation!("conv-1")).resolves.toBeUndefined();
+    });
+
+    it("switchConversation injects a greeting on first visit", async () => {
+      const handler = vi.fn();
+      connector.onMessage(handler);
+      await connector.switchConversation!("conv-1");
+      await vi.waitFor(() => expect(handler).toHaveBeenCalledOnce());
+      const msg = handler.mock.calls[0][0];
+      expect(msg.type).toBe("text");
+      expect(msg.from).toBe("bot");
+    });
+
+    it("switchConversation does not inject a greeting on subsequent visits", async () => {
+      const handler = vi.fn();
+      connector.onMessage(handler);
+      await connector.switchConversation!("conv-2");
+      await vi.waitFor(() => expect(handler).toHaveBeenCalledOnce());
+      handler.mockClear();
+      // Visit again — no greeting this time
+      await connector.switchConversation!("conv-2");
+      await new Promise((r) => setTimeout(r, 300));
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it("closeConversation resolves without error", async () => {
+      await expect(connector.closeConversation!("conv-1")).resolves.toBeUndefined();
+    });
+
+    it("closeConversation fires the onConversationUpdate callback", async () => {
+      const updateHandler = vi.fn();
+      connector.onConversationUpdate!(updateHandler);
+      await connector.closeConversation!("conv-1");
+      expect(updateHandler).toHaveBeenCalledOnce();
+      expect(updateHandler.mock.calls[0][0]).toMatchObject({ id: "conv-1", status: "closed" });
+    });
+
+    it("onConversationUpdate registers without throwing", () => {
+      expect(() => connector.onConversationUpdate!(() => {})).not.toThrow();
+    });
+  });
 });

@@ -2,6 +2,7 @@
 export type { IncomingMessage, OutgoingMessage, MessageSender, MessageAction, MessageStatus, HistoryResult } from "./entities/Message";
 export type { AIChunk, AIChunkText, AIChunkUI, AIChunkEvent, GenUIStreamState, GenUIChunkHandler } from "./entities/GenUI";
 export { createOutgoingMessage } from "./entities/Message";
+export type { Conversation, ConversationStatus } from "./entities/Conversation";
 export type {
   IConnector,
   MessageHandler,
@@ -10,6 +11,7 @@ export type {
   TypingHandler,
   FeedbackType,
   MessageStatusHandler,
+  ConversationHandler,
 } from "./ports/IConnector";
 // Note: GenUIChunkHandler is exported from ./entities/GenUI above
 export type { IExtension, ExtensionContext, MessageTransformer } from "./ports/IExtension";

@@ -48,4 +48,46 @@ describe("MessageStore", () => {
     messageStore.getState().addMessage(msg);
     expect(messageStore.getState().messages).toHaveLength(1);
   });
+
+  // ── restoreMessages ────────────────────────────────────────────────
+
+  it("restoreMessages replaces the message list", () => {
+    messageStore.getState().addMessage({ id: "old-1", type: "text", data: {} });
+    messageStore.getState().restoreMessages([
+      { id: "new-1", type: "text", data: { text: "a" } },
+      { id: "new-2", type: "text", data: { text: "b" } },
+    ]);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(2);
+    expect(msgs[0].id).toBe("new-1");
+    expect(msgs[1].id).toBe("new-2");
+  });
+
+  it("restoreMessages with empty array clears all messages", () => {
+    messageStore.getState().addMessage({ id: "x", type: "text", data: {} });
+    messageStore.getState().restoreMessages([]);
+    expect(messageStore.getState().messages).toHaveLength(0);
+  });
+
+  it("restoreMessages resets deduplication — allows re-adding restored ids", () => {
+    messageStore.getState().addMessage({ id: "dup", type: "text", data: {} });
+    messageStore.getState().restoreMessages([]);
+    messageStore.getState().addMessage({ id: "dup", type: "text", data: {} });
+    expect(messageStore.getState().messages).toHaveLength(1);
+  });
+
+  it("restoreMessages tracks restored ids for future deduplication", () => {
+    messageStore.getState().restoreMessages([
+      { id: "r1", type: "text", data: {} },
+    ]);
+    // Attempting to add the same id again should be a no-op
+    messageStore.getState().addMessage({ id: "r1", type: "text", data: {} });
+    expect(messageStore.getState().messages).toHaveLength(1);
+  });
+
+  it("restoreMessages increments the version counter", () => {
+    const before = messageStore.getState().version;
+    messageStore.getState().restoreMessages([]);
+    expect(messageStore.getState().version).toBeGreaterThan(before);
+  });
 });

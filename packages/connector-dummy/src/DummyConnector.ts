@@ -10,6 +10,8 @@ import type {
   MessageStatusHandler,
   GenUIChunkHandler,
   AIChunk,
+  Conversation,
+  ConversationHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -20,7 +22,7 @@ import type { OutgoingMessage } from "@chativa/core";
  * Sending "/disconnect" as a message triggers a graceful disconnect.
  */
 export class DummyConnector implements IConnector {
-  readonly name = "dummy";
+  readonly name: string;
   readonly addSentToHistory = true;
 
   private messageHandler: MessageHandler | null = null;
@@ -28,8 +30,49 @@ export class DummyConnector implements IConnector {
   private typingHandler: TypingHandler | null = null;
   private statusHandler: MessageStatusHandler | null = null;
   private genUIChunkHandler: GenUIChunkHandler | null = null;
+  private conversationHandler: ConversationHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
+
+  // ── Multi-conversation demo state ─────────────────────────────────────
+
+  /** Mutable demo conversations list. Reset on each new DummyConnector instance. */
+  private _conversations: Conversation[];
+  /** Track which conversations have received their first-visit greeting. */
+  private _visitedConversations = new Set<string>();
+
+  private static _makeDemoConversations(): Conversation[] {
+    const now = Date.now();
+    return [
+      {
+        id: "conv-1",
+        title: "Support Request",
+        contact: "Alice Johnson",
+        lastMessage: "Hi, I need help with my order",
+        lastMessageAt: now - 3 * 60 * 1000,
+        unreadCount: 2,
+        status: "open",
+      },
+      {
+        id: "conv-2",
+        title: "Billing Question",
+        contact: "Bob Martinez",
+        lastMessage: "Why was I charged twice?",
+        lastMessageAt: now - 15 * 60 * 1000,
+        unreadCount: 0,
+        status: "pending",
+      },
+      {
+        id: "conv-3",
+        title: "Account Issue",
+        contact: "Carol Smith",
+        lastMessage: "I can't log in to my account",
+        lastMessageAt: now - 2 * 60 * 60 * 1000,
+        unreadCount: 1,
+        status: "open",
+      },
+    ];
+  }
 
   /** Fake history pages — two pages of 5 messages each. */
   private static _historyPages: IncomingMessage[][] = [
@@ -49,9 +92,11 @@ export class DummyConnector implements IConnector {
     })),
   ];
 
-  constructor(options: { replyDelay?: number; connectDelay?: number } = {}) {
+  constructor(options: { replyDelay?: number; connectDelay?: number; name?: string } = {}) {
+    this.name = options.name ?? "dummy";
     this.replyDelay = options.replyDelay ?? 500;
     this.connectDelay = options.connectDelay ?? 2000;
+    this._conversations = DummyConnector._makeDemoConversations();
   }
 
   async connect(): Promise<void> {
@@ -860,6 +905,60 @@ export class DummyConnector implements IConnector {
       hasMore: nextPage < DummyConnector._historyPages.length,
       cursor: nextPage < DummyConnector._historyPages.length ? String(nextPage) : undefined,
     };
+  }
+
+  // ── Multi-conversation (IConnector optional methods) ──────────────────
+
+  async listConversations(): Promise<Conversation[]> {
+    return [...this._conversations];
+  }
+
+  async createConversation(title?: string): Promise<Conversation> {
+    const id = `conv-${Date.now()}`;
+    const conv: Conversation = {
+      id,
+      title: title ?? "New Conversation",
+      contact: "New Customer",
+      lastMessage: "",
+      lastMessageAt: Date.now(),
+      unreadCount: 0,
+      status: "open",
+    };
+    this._conversations.push(conv);
+    return conv;
+  }
+
+  async switchConversation(conversationId: string): Promise<void> {
+    // Inject a greeting on first visit to this conversation
+    if (!this._visitedConversations.has(conversationId)) {
+      this._visitedConversations.add(conversationId);
+      const conv = this._conversations.find((c) => c.id === conversationId);
+      if (conv) {
+        setTimeout(() => {
+          this.messageHandler?.({
+            id: `greeting-${conversationId}-${Date.now()}`,
+            type: "text",
+            from: "bot",
+            data: {
+              text: `You are now talking with **${conv.contact ?? conv.title}**. How can I help?`,
+            },
+            timestamp: Date.now(),
+          });
+        }, 200);
+      }
+    }
+  }
+
+  async closeConversation(conversationId: string): Promise<void> {
+    const conv = this._conversations.find((c) => c.id === conversationId);
+    if (conv) {
+      conv.status = "closed";
+      this.conversationHandler?.(conv);
+    }
+  }
+
+  onConversationUpdate(callback: ConversationHandler): void {
+    this.conversationHandler = callback;
   }
 
   /**

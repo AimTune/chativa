@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, state } from "lit/decorators.js";
+import { customElement, property, state } from "lit/decorators.js";
 import { t } from "i18next";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
@@ -170,6 +170,13 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     }
   `;
 
+  /**
+   * When true, show a "conversations" icon button in the header actions area.
+   * The button dispatches a `show-conversations` event (bubbles, composed).
+   * Set by `ChatWidget` when `theme.enableMultiConversation` is on.
+   */
+  @property({ type: Boolean, attribute: "show-conv-toggle" }) showConvToggle = false;
+
   @state() private _searchOpen = false;
 
   private get _statusLabel(): string {
@@ -206,6 +213,12 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     );
   }
 
+  private _onConvToggle() {
+    this.dispatchEvent(
+      new CustomEvent("show-conversations", { bubbles: true, composed: true })
+    );
+  }
+
   private _toggleSearch() {
     this._searchOpen = !this._searchOpen;
     if (!this._searchOpen) {
@@ -234,6 +247,19 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         @mousedown=${this._onHeaderMouseDown}
         @touchstart=${this._onHeaderTouchStart}
       >
+        ${this.showConvToggle && !this._searchOpen ? html`
+          <button
+            class="icon-btn"
+            @click=${this._onConvToggle}
+            aria-label="Back to conversations"
+            title="Back to conversations"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
+            </svg>
+          </button>
+        ` : nothing}
+
         ${this._searchOpen ? nothing : html`
           <div class="avatar">
             <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">

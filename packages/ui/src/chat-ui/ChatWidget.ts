@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { t } from "i18next";
 import {
   ChatEngine,
+  MultiConversationEngine,
   ConnectorRegistry,
   MessageTypeRegistry,
   messageStore,
@@ -22,6 +23,7 @@ import "./CarouselMessage";
 import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
+import "./ConversationList";
 MessageTypeRegistry.setFallback(
   customElements.get("default-text-message") as unknown as typeof HTMLElement
 );
@@ -104,6 +106,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       min-height: 400px;
     }
 
+    /* ── Conversation list view (popup multi-conv) ─────────── */
+    conversation-list {
+      flex: 1;
+      overflow: hidden;
+      animation: slideInFromLeft 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
     /* Applied directly via JS — no transition during drag */
     .widget.dragging {
       transition: none !important;
@@ -156,6 +165,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       font-size: 0.8125rem;
       color: rgba(79, 70, 229, 0.65);
     }
+
   `;
 
   @property({ type: String }) connector = "dummy";
@@ -175,6 +185,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   // ── File-drop overlay ────────────────────────────────────────────────
 
   @state() private _showDropOverlay = false;
+  @state() private _showConvList = false;
   /** Depth counter to handle dragenter/dragleave firing over child elements. */
   private _dropDepth = 0;
 
@@ -195,6 +206,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   private _unsubscribeMessages!: () => void;
   private _engine!: ChatEngine;
+  private _multiEngine: MultiConversationEngine | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -212,8 +224,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     });
 
     const adapter = ConnectorRegistry.get(this.connector);
-    this._engine = new ChatEngine(adapter);
-    this._engine.init().catch((err: unknown) => {
+    this._multiEngine = new MultiConversationEngine(adapter);
+    this._engine = this._multiEngine.chatEngine;
+    this._multiEngine.init().catch((err: unknown) => {
       console.error("[ChatWidget] Engine init failed:", err);
     });
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
@@ -225,11 +238,15 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("send-file", this._onSendFile as EventListener);
     this.addEventListener("chat-load-history", this._onLoadHistory as EventListener);
     this.addEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
+    this.addEventListener("show-conversations", this._onShowConversations as EventListener);
+    this.addEventListener("conversation-select", this._onConvSelect as EventListener);
+    this.addEventListener("new-conversation", this._onNewConv as EventListener);
+    this.addEventListener("conversation-close", this._onConvClose as EventListener);
   }
 
   disconnectedCallback() {
     this._unsubscribeMessages?.();
-    this._engine?.destroy().catch(() => {});
+    this._multiEngine?.destroy().catch(() => {});
     document.removeEventListener("keydown", this._onKeyDown);
     this.removeEventListener("chat-drag-start", this._onDragStart as EventListener);
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
@@ -238,6 +255,10 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("send-file", this._onSendFile as EventListener);
     this.removeEventListener("chat-load-history", this._onLoadHistory as EventListener);
     this.removeEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
+    this.removeEventListener("show-conversations", this._onShowConversations as EventListener);
+    this.removeEventListener("conversation-select", this._onConvSelect as EventListener);
+    this.removeEventListener("new-conversation", this._onNewConv as EventListener);
+    this.removeEventListener("conversation-close", this._onConvClose as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -374,6 +395,32 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   private _onGenUISendEvent = (e: CustomEvent<{ msgId: string; eventType: string; payload: unknown }>) => {
     this._engine.receiveComponentEvent(e.detail.msgId, e.detail.eventType, e.detail.payload);
+  };
+
+  // ── Multi-conversation handlers ───────────────────────────────────────
+
+  private _onShowConversations = () => {
+    this._showConvList = true;
+  };
+
+  private _onConvSelect = (e: CustomEvent<{ id: string }>) => {
+    this._showConvList = false;
+    this._multiEngine?.switchTo(e.detail.id).catch((err: unknown) =>
+      console.error("[ChatWidget] switchTo failed:", err)
+    );
+  };
+
+  private _onNewConv = () => {
+    this._showConvList = false;
+    this._multiEngine?.createNew().catch((err: unknown) =>
+      console.error("[ChatWidget] createNew failed:", err)
+    );
+  };
+
+  private _onConvClose = (e: CustomEvent<{ id: string }>) => {
+    this._multiEngine?.close(e.detail.id).catch((err: unknown) =>
+      console.error("[ChatWidget] close failed:", err)
+    );
   };
 
   // ── Widget-level file drop ────────────────────────────────────────────
@@ -547,9 +594,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
         @dragleave=${this._onFileDragLeave}
         @drop=${this._onFileDrop}
       >
-        <chat-header></chat-header>
-        <chat-message-list></chat-message-list>
-        <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>
+        ${this._showConvList && this.theme.enableMultiConversation ? html`
+          <conversation-list></conversation-list>
+        ` : html`
+          <chat-header .showConvToggle=${this.theme.enableMultiConversation === true}></chat-header>
+          <chat-message-list></chat-message-list>
+          <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>
+        `}
 
         ${this._showDropOverlay ? html`
           <div class="drop-overlay" aria-hidden="true">

@@ -72,6 +72,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
   hasMoreHistory: false,
   isLoadingHistory: false,
   historyCursor: undefined,
+  showMessageStatus: true,
   searchQuery: "",
 
   toggle: () => {

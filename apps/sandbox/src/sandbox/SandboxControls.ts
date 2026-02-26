@@ -108,6 +108,27 @@ export class SandboxControls extends LitElement {
       background: #f1f5f9;
       margin: 10px 0;
     }
+
+    /* ── Agent Panel link ── */
+    .agent-panel-link {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 12px;
+      border-radius: 9px;
+      background: #f1f5f9;
+      border: 1.5px solid #e2e8f0;
+      color: #475569;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .agent-panel-link:hover {
+      background: #ede9fe;
+      border-color: #c4b5fd;
+      color: #4f46e5;
+    }
   `;
 
   @state() private _isOpen = true;
@@ -150,6 +171,16 @@ export class SandboxControls extends LitElement {
           <sandbox-genui-section></sandbox-genui-section>
           <div class="divider"></div>
           <sandbox-actions-section></sandbox-actions-section>
+          <div class="divider"></div>
+          <a href="/agent-panel.html" class="agent-panel-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/>
+            </svg>
+            Agent Panel Demo
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:auto">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </a>
         </div>
 
       </div>

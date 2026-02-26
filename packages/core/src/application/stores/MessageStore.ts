@@ -16,6 +16,12 @@ export interface MessageStoreState {
   removeById: (id: string) => void;
   updateById: (id: string, patch: Partial<StoredMessage>) => void;
   clear: () => void;
+  /**
+   * Replace the entire message list with a snapshot (used when switching
+   * conversations in multi-conversation / agent-panel mode).
+   * Resets the deduplication set so restored IDs are tracked correctly.
+   */
+  restoreMessages: (msgs: StoredMessage[]) => void;
 }
 
 /** Track rendered IDs to prevent duplicates. */
@@ -56,6 +62,12 @@ const store = createStore<MessageStoreState>((setState) => ({
   clear: () => {
     renderedIds.clear();
     setState((state) => ({ messages: [], version: state.version + 1 }));
+  },
+
+  restoreMessages: (msgs) => {
+    renderedIds.clear();
+    msgs.forEach((m) => renderedIds.add(m.id));
+    setState((state) => ({ messages: [...msgs], version: state.version + 1 }));
   },
 }));
 

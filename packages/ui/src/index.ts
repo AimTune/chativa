@@ -2,6 +2,8 @@
 // Named exports
 export { ChatbotMixin } from "./mixins/ChatbotMixin";
 export { ChatWidget } from "./chat-ui/ChatWidget";
+export { AgentPanel } from "./chat-ui/AgentPanel";
+export { ConversationList } from "./chat-ui/ConversationList";
 export { default as ChatBotButton } from "./chat-ui/ChatBotButton";
 export { default as i18n } from "./i18n/i18n";
 export { registerCommand } from "./commands/index";
@@ -24,3 +26,5 @@ import "./chat-ui/VideoMessage";
 import "./chat-ui/CarouselMessage";
 import "./chat-ui/QuickReplyMessage";
 import "./chat-ui/EmojiPicker";
+import "./chat-ui/ConversationList";
+import "./chat-ui/AgentPanel";

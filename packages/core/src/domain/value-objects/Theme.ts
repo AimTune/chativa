@@ -62,6 +62,14 @@ export interface ThemeConfig {
    * See `WindowMode` for details.
    */
   windowMode?: WindowMode;
+  /**
+   * Enable multi-conversation mode inside the popup.
+   * When `true`, a conversations icon button appears in the chat header.
+   * Clicking it opens a conversation list view (slide-in within the popup).
+   * Requires the connector to implement `listConversations` / `switchConversation`.
+   * Default: `false`.
+   */
+  enableMultiConversation?: boolean;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -83,6 +91,7 @@ export const DEFAULT_THEME: ThemeConfig = {
     horizontalSpace: "2",
     verticalSpace: "2",
   },
+  showMessageStatus: true,
 };
 
 /** Build CSS variable map from a ThemeConfig. */

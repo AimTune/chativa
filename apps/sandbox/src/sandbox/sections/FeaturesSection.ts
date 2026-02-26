@@ -50,6 +50,17 @@ export class FeaturesSection extends LitElement {
             </div>
           </div>
 
+          <!-- Multi-Conversation -->
+          <div>
+            <div class="sub-label">Multi-Conversation</div>
+            <div class="toggle-group">
+              <button class="tg-btn ${this._theme.enableMultiConversation === true ? "active" : ""}"
+                @click=${() => this._set({ enableMultiConversation: true })}>On</button>
+              <button class="tg-btn ${this._theme.enableMultiConversation !== true ? "active" : ""}"
+                @click=${() => this._set({ enableMultiConversation: false })}>Off</button>
+            </div>
+          </div>
+
           <!-- Language -->
           <div>
             <div class="sub-label">Language</div>
