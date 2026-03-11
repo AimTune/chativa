@@ -7,6 +7,7 @@ import messageStore from "./stores/MessageStore";
 import chatStore from "./stores/ChatStore";
 import type { ConnectorStatus } from "./stores/ChatStore";
 import { EventBus } from "./EventBus";
+import { createChativaContext } from "./createChativaContext";
 
 export class ChatEngine {
   private connector: IConnector;
@@ -65,6 +66,9 @@ export class ChatEngine {
     this.connector.onGenUIChunk?.((streamId, chunk, done) => {
       this._handleGenUIChunk(streamId, chunk, done);
     });
+
+    // Inject Chativa context so connector event handlers can interact with the UI
+    this.connector.setContext?.(createChativaContext());
 
     this._setStatus("connecting");
     try {

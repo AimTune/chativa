@@ -10,6 +10,7 @@
 import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
 import type { GenUIChunkHandler } from "../entities/GenUI";
 import type { Conversation } from "../entities/Conversation";
+import type { ChativaContext } from "../../application/ChativaContext";
 
 export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
@@ -30,6 +31,13 @@ export interface IConnector {
    * Default: true
    */
   readonly addSentToHistory?: boolean;
+
+  /**
+   * Optional: inject the Chativa context so the connector (and its event handlers)
+   * can interact with messages, UI state, theme, and the event bus.
+   * Called by ChatEngine before `connect()`.
+   */
+  setContext?(ctx: ChativaContext): void;
 
   /** Establish connection to the backend. */
   connect(): Promise<void>;

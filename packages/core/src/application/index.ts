@@ -13,3 +13,7 @@ export type { StoredMessage, MessageStoreState } from "./stores/MessageStore";
 export type { ConversationStoreState } from "./stores/ConversationStore";
 export { EventBus } from "./EventBus";
 export type { EventBusPayloadMap, EventBusEventName } from "./EventBus";
+export type { ChativaContext } from "./ChativaContext";
+export { createChativaContext } from "./createChativaContext";
+export { applyGlobalSettings } from "./ChativaSettings";
+export type { ChativaSettings } from "./ChativaSettings";

@@ -9,7 +9,17 @@ import { messageStore, chatStore, type StoredMessage } from "@chativa/core";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);
-  return name ?? "default-text-message";
+  if (name) return name;
+
+  // Fallback for browsers without customElements.getName():
+  // create a temporary instance to read its tagName.
+  try {
+    const tmp = new component();
+    const tag = tmp.tagName?.toLowerCase();
+    if (tag && tag.includes("-")) return tag;
+  } catch { /* custom element may require arguments */ }
+
+  return "default-text-message";
 }
 
 @customElement("chat-message-list")
@@ -481,7 +491,7 @@ class ChatMessageList extends LitElement {
     }
 
     // Initial connecting (no messages yet)
-    if (connectorStatus === "connecting" && messages.length === 0) {
+    if ((connectorStatus === "connecting" || connectorStatus === "idle") && messages.length === 0) {
       return html`
         <div class="list">
           <div class="connecting" role="status" aria-label="${t("messageList.connecting")}">

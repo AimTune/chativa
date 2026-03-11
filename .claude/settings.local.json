@@ -1,12 +1,11 @@
 {
-  "permissions": {
-    "allow": [
-      "Bash(git -C /Users/aimtune/Projects/chativa log --oneline -20)",
-      "Bash(npm test:*)",
-      "Bash(npx tsc:*)",
-      "Bash(npx vitest run:*)",
-      "Bash(pnpm exec vitest:*)",
-      "Bash(pnpm test:*)"
-    ]
-  }
+    "permissions": {
+        "allow": [
+            "Bash(npm test:*)",
+            "Bash(npx tsc:*)",
+            "Bash(npx vitest run:*)",
+            "Bash(pnpm exec vitest:*)",
+            "Bash(pnpm test:*)"
+        ]
+    }
 }

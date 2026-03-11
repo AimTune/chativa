@@ -73,14 +73,18 @@ export function mapActivityToMessage(
   const id = msg.id ?? `dl-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
   const timestamp = msg.timestamp ? new Date(msg.timestamp).getTime() : Date.now();
 
+  // Preserve channelData (e.g. correlationId used for feedback)
+  const channelData = (msg as unknown as { channelData?: Record<string, unknown> }).channelData;
+
   // Map suggested actions (may be used as top-level actions or as quick-reply)
   const suggestedActions = mapSuggestedActions(msg);
 
   // If there are attachments, process them
   if (msg.attachments && msg.attachments.length > 0) {
     const result = mapAttachments(msg, id, timestamp);
-    if (result && suggestedActions.length > 0) {
-      result.actions = suggestedActions;
+    if (result) {
+      if (suggestedActions.length > 0) result.actions = suggestedActions;
+      if (channelData) result.data.channelData = channelData;
     }
     return result;
   }
@@ -91,7 +95,7 @@ export function mapActivityToMessage(
       id,
       type: "quick-reply",
       from: "bot",
-      data: { text: msg.text ?? "", actions: suggestedActions },
+      data: { text: msg.text ?? "", actions: suggestedActions, ...(channelData ? { channelData } : {}) },
       timestamp,
     };
   }
@@ -102,7 +106,7 @@ export function mapActivityToMessage(
       id,
       type: "text",
       from: "bot",
-      data: { text: msg.text },
+      data: { text: msg.text, ...(channelData ? { channelData } : {}) },
       timestamp,
     };
   }
@@ -123,8 +127,8 @@ function mapAttachments(
   const attachments = msg.attachments!;
   const layout = msg.attachmentLayout;
 
-  // Multiple hero/thumbnail/flex cards with carousel layout
-  const cardTypes = [CT_HERO, CT_THUMBNAIL, CT_FLEX];
+  // Multiple cards with carousel layout
+  const cardTypes = [CT_HERO, CT_THUMBNAIL, CT_FLEX, CT_ADAPTIVE];
   const allCards = attachments.every((a) => cardTypes.includes(a.contentType));
 
   if (allCards && (attachments.length > 1 || layout === "carousel")) {
@@ -133,9 +137,14 @@ function mapAttachments(
       type: "carousel",
       from: "bot",
       data: {
-        cards: attachments.map((a) =>
-          mapHeroLikeCard((a as HeroCard | Thumbnail | FlexCard).content),
-        ),
+        cards: attachments.map((a) => {
+          if (a.contentType === CT_ADAPTIVE) {
+            return adaptiveCardToCardData(
+              (a as AdaptiveCard).content as Record<string, unknown>,
+            );
+          }
+          return mapHeroLikeCard((a as HeroCard | Thumbnail | FlexCard).content);
+        }),
       },
       timestamp,
     };
@@ -364,50 +373,81 @@ interface AdaptiveElement {
   [key: string]: unknown;
 }
 
+/** Recursively walk Adaptive Card elements and collect texts, the first image, and buttons. */
+function walkAdaptiveElements(
+  elements: AdaptiveElement[] | undefined,
+  texts: string[],
+  buttons: MessageAction[],
+  onImage: (url: string) => void,
+) {
+  if (!elements) return;
+  for (const el of elements) {
+    switch (el.type) {
+      case "TextBlock":
+        if (el.text) texts.push(el.text);
+        break;
+      case "Image":
+        if (el.url) onImage(el.url);
+        break;
+      case "ActionSet":
+        if (el.actions) mapAdaptiveActions(el.actions, buttons);
+        break;
+      case "Container":
+        walkAdaptiveElements(el.items, texts, buttons, onImage);
+        break;
+      case "ColumnSet":
+        for (const col of el.columns ?? []) {
+          walkAdaptiveElements(col.items, texts, buttons, onImage);
+        }
+        break;
+      case "Column":
+        walkAdaptiveElements(el.items, texts, buttons, onImage);
+        break;
+    }
+  }
+}
+
+/** Parse an Adaptive Card body into { image, title, subtitle, buttons }. */
+function parseAdaptiveCardBody(content: Record<string, unknown>) {
+  const texts: string[] = [];
+  let image: string | undefined;
+  const buttons: MessageAction[] = [];
+
+  walkAdaptiveElements(
+    content.body as AdaptiveElement[] | undefined,
+    texts,
+    buttons,
+    (url) => { image = image ?? url; },
+  );
+
+  if (Array.isArray(content.actions)) {
+    mapAdaptiveActions(content.actions as AdaptiveElement["actions"] & object, buttons);
+  }
+
+  return { texts, image, buttons };
+}
+
+/**
+ * Extract card-like data from an Adaptive Card — used inside carousels.
+ */
+function adaptiveCardToCardData(
+  content: Record<string, unknown>,
+): Record<string, unknown> {
+  const { texts, image, buttons } = parseAdaptiveCardBody(content);
+  return {
+    image,
+    title: texts[0] ?? "",
+    subtitle: texts.slice(1).join("\n"),
+    buttons,
+  };
+}
+
 function mapAdaptiveCard(
   content: Record<string, unknown>,
   id: string,
   timestamp: number,
 ): IncomingMessage {
-  const texts: string[] = [];
-  let image: string | undefined;
-  const buttons: MessageAction[] = [];
-
-  // Recursive body parser
-  function walk(elements?: AdaptiveElement[]) {
-    if (!elements) return;
-    for (const el of elements) {
-      switch (el.type) {
-        case "TextBlock":
-          if (el.text) texts.push(el.text);
-          break;
-        case "Image":
-          if (!image && el.url) image = el.url;
-          break;
-        case "ActionSet":
-          if (el.actions) mapAdaptiveActions(el.actions, buttons);
-          break;
-        case "Container":
-          walk(el.items);
-          break;
-        case "ColumnSet":
-          for (const col of el.columns ?? []) {
-            walk(col.items);
-          }
-          break;
-        case "Column":
-          walk(el.items);
-          break;
-      }
-    }
-  }
-
-  walk(content.body as AdaptiveElement[] | undefined);
-
-  // Top-level actions
-  if (Array.isArray(content.actions)) {
-    mapAdaptiveActions(content.actions as AdaptiveElement["actions"] & object, buttons);
-  }
+  const { texts, image, buttons } = parseAdaptiveCardBody(content);
 
   // Fallback text
   const fallback =

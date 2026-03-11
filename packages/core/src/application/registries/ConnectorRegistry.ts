@@ -1,4 +1,5 @@
 import type { IConnector } from "../../domain/ports/IConnector";
+import { createChativaContext } from "../createChativaContext";
 
 const registry = new Map<string, IConnector>();
 
@@ -10,6 +11,8 @@ export const ConnectorRegistry = {
           `Call ConnectorRegistry.unregister("${connector.name}") first.`
       );
     }
+    // Inject ChativaContext so event handlers can interact with the UI
+    connector.setContext?.(createChativaContext());
     registry.set(connector.name, connector);
   },
 

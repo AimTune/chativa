@@ -190,6 +190,11 @@ export class DefaultTextMessage extends LitElement {
       background: #fef2f2;
       color: #dc2626;
     }
+
+    .feedback-btn:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
   `;
 
   @property({ type: Object }) messageData: Record<string, unknown> = {};
@@ -204,6 +209,21 @@ export class DefaultTextMessage extends LitElement {
 
   private _onLangChange = () => { this.requestUpdate(); };
 
+  /** Whether feedback is locked by the bot (DisableFeedbackButton event). */
+  private get _feedbackDisabled(): boolean {
+    return !!(this.messageData as Record<string, unknown>)?.feedbackDisabled;
+  }
+
+  /** Effective feedback state: server-confirmed value takes priority over local. */
+  private get _effectiveFeedback(): "like" | "dislike" | null {
+    if (this._feedbackDisabled) {
+      const ft = (this.messageData as Record<string, unknown>)?.feedbackType;
+      if (ft === 0) return "like";
+      if (ft === 1) return "dislike";
+    }
+    return this._feedback;
+  }
+
   override connectedCallback() {
     super.connectedCallback();
     i18next.on("languageChanged", this._onLangChange);
@@ -215,6 +235,7 @@ export class DefaultTextMessage extends LitElement {
   }
 
   private _onFeedback(type: "like" | "dislike") {
+    if (this._feedbackDisabled) return;
     if (this._feedback === type) {
       this._feedback = null;
       return;
@@ -320,17 +341,19 @@ export class DefaultTextMessage extends LitElement {
         <div class="content">
           <div class="bubble">${bubbleContent}</div>
           ${!isUser ? html`
-            <div class="feedback ${this._feedback ? "active" : ""}">
+            <div class="feedback ${this._effectiveFeedback ? "active" : ""}">
               <button
-                class="feedback-btn ${this._feedback === "like" ? "selected-like" : ""}"
+                class="feedback-btn ${this._effectiveFeedback === "like" ? "selected-like" : ""}"
                 aria-label="${t("message.likeButton")}"
-                aria-pressed="${this._feedback === "like"}"
+                aria-pressed="${this._effectiveFeedback === "like"}"
+                ?disabled=${this._feedbackDisabled}
                 @click=${() => this._onFeedback("like")}
               >👍</button>
               <button
-                class="feedback-btn ${this._feedback === "dislike" ? "selected-dislike" : ""}"
+                class="feedback-btn ${this._effectiveFeedback === "dislike" ? "selected-dislike" : ""}"
                 aria-label="${t("message.dislikeButton")}"
-                aria-pressed="${this._feedback === "dislike"}"
+                aria-pressed="${this._effectiveFeedback === "dislike"}"
+                ?disabled=${this._feedbackDisabled}
                 @click=${() => this._onFeedback("dislike")}
               >👎</button>
             </div>

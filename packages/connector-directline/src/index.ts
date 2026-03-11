@@ -1,2 +1,2 @@
 export { DirectLineConnector } from "./DirectLineConnector";
-export type { DirectLineConnectorOptions } from "./DirectLineConnector";
+export type { DirectLineConnectorOptions, EventHandler, EventHandlerContext } from "./DirectLineConnector";

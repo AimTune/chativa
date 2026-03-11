@@ -47,6 +47,13 @@ class ChatHeader extends ChatbotMixin(LitElement) {
       color: white;
     }
 
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
     .info {
       flex: 1;
       min-width: 0;
@@ -238,6 +245,23 @@ class ChatHeader extends ChatbotMixin(LitElement) {
     if (e.key === "Escape") this._toggleSearch();
   }
 
+  private _renderHeaderAvatar(headerUrl?: string) {
+    if (headerUrl) {
+      return html`<div class="avatar"><img src=${headerUrl} alt="bot avatar" /></div>`;
+    }
+    return html`
+      <div class="avatar">
+        <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <rect x="5" y="8" width="14" height="12" rx="2.5" />
+          <circle cx="9.5" cy="13" r="1.5" fill="white" />
+          <circle cx="14.5" cy="13" r="1.5" fill="white" />
+          <path d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8" stroke="white" stroke-width="1.2" stroke-linecap="round" fill="none" />
+          <path d="M12 5v3" stroke="white" stroke-width="1.5" stroke-linecap="round" />
+          <circle cx="12" cy="4" r="1.5" fill="white" />
+        </svg>
+      </div>`;
+  }
+
   render() {
     const { connectorStatus, isFullscreen, allowFullscreen, theme } = this.themeState;
     const enableSearch = theme.enableSearch !== false;
@@ -261,16 +285,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
         ` : nothing}
 
         ${this._searchOpen ? nothing : html`
-          <div class="avatar">
-            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <rect x="5" y="8" width="14" height="12" rx="2.5" />
-              <circle cx="9.5" cy="13" r="1.5" fill="white" />
-              <circle cx="14.5" cy="13" r="1.5" fill="white" />
-              <path d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8" stroke="white" stroke-width="1.2" stroke-linecap="round" fill="none" />
-              <path d="M12 5v3" stroke="white" stroke-width="1.5" stroke-linecap="round" />
-              <circle cx="12" cy="4" r="1.5" fill="white" />
-            </svg>
-          </div>
+          ${this._renderHeaderAvatar(theme.avatar?.header)}
           <div class="info">
             <span class="title">${t("header.title")}</span>
             <div class="status">

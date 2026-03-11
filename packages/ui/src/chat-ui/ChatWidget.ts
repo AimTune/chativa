@@ -8,6 +8,7 @@ import {
   MessageTypeRegistry,
   messageStore,
   createOutgoingMessage,
+  applyGlobalSettings,
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { registerCommand } from "../commands/index";
@@ -215,6 +216,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   private _unsubscribeMessages!: () => void;
   private _engine!: ChatEngine;
   private _multiEngine: MultiConversationEngine | null = null;
+  /** True once the engine has been initialised (on first open). */
+  private _engineInitialised = false;
   private _vvRafId: number | null = null;
 
   /**
@@ -241,6 +244,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   connectedCallback() {
     super.connectedCallback();
 
+    // Apply window.chativaSettings (once) before anything else
+    applyGlobalSettings();
+
     // Register built-in slash commands with inline translations
     registerCommand({
       name: "clear",
@@ -253,12 +259,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       },
     });
 
-    const adapter = ConnectorRegistry.get(this.connector);
+    // Prefer connector from global settings, fall back to HTML attribute
+    const connectorName = this.themeState.activeConnector !== "dummy"
+      ? this.themeState.activeConnector
+      : this.connector;
+    const adapter = ConnectorRegistry.get(connectorName);
     this._multiEngine = new MultiConversationEngine(adapter);
     this._engine = this._multiEngine.chatEngine;
-    this._multiEngine.init().catch((err: unknown) => {
-      console.error("[ChatWidget] Engine init failed:", err);
-    });
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
     window.visualViewport?.addEventListener("resize", this._onVisualViewport);
     window.visualViewport?.addEventListener("scroll", this._onVisualViewport);
@@ -552,6 +559,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     const isOpened = this.themeState.isOpened;
 
     if (isOpened && !this._wasOpened) {
+      // Lazy-connect: initialise the engine on first open
+      if (!this._engineInitialised) {
+        this._engineInitialised = true;
+        this._multiEngine?.init().catch((err: unknown) => {
+          console.error("[ChatWidget] Engine init failed:", err);
+        });
+      }
       // Store previously focused element so we can restore it on close
       this._prevActiveElement = document.activeElement as HTMLElement;
       this.updateComplete.then(() => {
