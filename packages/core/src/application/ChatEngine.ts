@@ -128,8 +128,7 @@ export class ChatEngine {
     await this.connector.sendMessage(transformed);
     EventBus.emit("message_sent", transformed);
 
-    // Only set "sent" if the connector doesn't manage status itself
-    if (this.connector.addSentToHistory !== false && !this.connector.onMessageStatus) {
+    if (this.connector.addSentToHistory !== false) {
       messageStore.getState().updateById(transformed.id, { status: "sent" });
     }
   }
