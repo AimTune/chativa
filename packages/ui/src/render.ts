@@ -18,7 +18,8 @@ export interface RenderOptions extends ChativaSettings {
  * Chativa.render(document.body, {
  *     connector: myConnector,
  *     theme:  { colors: { primary: "#1B1464" } },
- *     i18n:   { header: { title: "Hey, DO!" } },
+ *     locale: "tr",
+ *     i18n:   { en: { header: { title: "Hey!" } }, tr: { header: { title: "Selam!" } } },
  *     button: '<img src="bot.gif" alt="Chat" style="width:96px;height:62px" />',
  * });
  * ```

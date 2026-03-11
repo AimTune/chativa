@@ -10,6 +10,7 @@ export { registerCommand } from "./commands/index";
 export type { LocalizedCommandConfig, CommandTranslations } from "./commands/index";
 export { render } from "./render";
 export type { RenderOptions } from "./render";
+export { GenUIRegistry } from "@chativa/genui";
 
 // Side-effect registrations (registers custom elements)
 // @chativa/genui: registers genui-message custom element + MessageTypeRegistry.register("genui", ...)
