@@ -142,6 +142,12 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       to   { transform: scale(1); }
     }
 
+    /* When slotted content is provided and hideButtonOnOpen is enabled,
+       hide the button while chat is open */
+    .launcher.has-slot.hide-on-open.is-open {
+      display: none;
+    }
+
     /* On mobile chat goes fullscreen — hide the toggle button so it
        doesn't float above the open chat panel. */
     @media (max-width: 480px) {
@@ -154,9 +160,9 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
   /** True when consumer has placed content in the default slot */
   @state() private _hasSlot = false;
 
-  override connectedCallback() {
-    super.connectedCallback();
-    this._hasSlot = this.childElementCount > 0;
+  private _onSlotChange(e: Event) {
+    const slot = e.target as HTMLSlotElement;
+    this._hasSlot = slot.assignedNodes({ flatten: true }).length > 0;
   }
 
   #positionStyle(): string {
@@ -172,10 +178,12 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
 
   render() {
     const { isOpened: isOpen, unreadCount } = this.themeState;
+    const hideOnOpen = this.theme.hideButtonOnOpen === true;
     const classes = [
       "launcher",
       isOpen ? "is-open" : "",
       this._hasSlot ? "has-slot" : "",
+      this._hasSlot && hideOnOpen ? "hide-on-open" : "",
     ]
       .filter(Boolean)
       .join(" ");
@@ -189,7 +197,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
         aria-label="${isOpen ? t("chatButton.close") : t("chatButton.open")}"
         aria-expanded="${isOpen}"
       >
-        <slot>
+        <slot @slotchange=${this._onSlotChange}>
           <!-- Default: animated chat / close icons -->
           <span class="icon-wrap" aria-hidden="true">
             <svg

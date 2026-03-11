@@ -1,11 +1,17 @@
 {
-    "permissions": {
-        "allow": [
-            "Bash(npm test:*)",
-            "Bash(npx tsc:*)",
-            "Bash(npx vitest run:*)",
-            "Bash(pnpm exec vitest:*)",
-            "Bash(pnpm test:*)"
-        ]
-    }
+  "permissions": {
+    "allow": [
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vitest run:*)",
+      "Bash(pnpm exec vitest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(pnpm --filter @chativa/ui build)",
+      "Bash(pnpm --filter @chativa/genui build)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm build:*)",
+      "Bash(pnpm -r --filter './packages/**' build)",
+      "Bash(npx vite:*)"
+    ]
+  }
 }

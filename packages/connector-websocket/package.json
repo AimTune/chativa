@@ -33,7 +33,7 @@
     "url": "git+https://github.com/AimTune/chativa.git"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.config.cdn.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
@@ -42,6 +42,7 @@
   },
   "devDependencies": {
     "@chativa/core": "workspace:*",
+    "terser": "^5.46.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.3",
     "vite-plugin-dts": "^4.5.4",

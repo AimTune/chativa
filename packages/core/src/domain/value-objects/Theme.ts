@@ -79,6 +79,12 @@ export interface ThemeConfig {
     enableMultiConversation?: boolean;
     /** Enable the file upload button in the chat input. Default: true. */
     enableFileUpload?: boolean;
+    /**
+     * Hide the launcher button when the chat window is open.
+     * Only applies when slotted (custom) content is used.
+     * Default: `false`.
+     */
+    hideButtonOnOpen?: boolean;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {

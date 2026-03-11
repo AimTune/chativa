@@ -16,7 +16,7 @@ importers:
         version: 5.8.3
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   apps/chrome-extension:
     dependencies:
@@ -41,7 +41,7 @@ importers:
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
 
   apps/sandbox:
     dependencies:
@@ -66,7 +66,7 @@ importers:
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
 
   packages/connector-directline:
     dependencies:
@@ -77,18 +77,21 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/connector-dummy:
     devDependencies:
@@ -97,40 +100,46 @@ importers:
         version: link:../core
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0))
+        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0)(terser@5.46.0))
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/connector-http:
     devDependencies:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/connector-signalr:
     dependencies:
@@ -141,54 +150,63 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/connector-sse:
     devDependencies:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/connector-websocket:
     devDependencies:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/core:
     dependencies:
@@ -204,7 +222,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0))
+        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0)(terser@5.46.0))
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
@@ -213,13 +231,13 @@ importers:
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/genui:
     dependencies:
@@ -235,7 +253,7 @@ importers:
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
-        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0))
+        version: 4.0.18(vitest@4.0.18(jsdom@28.1.0)(terser@5.46.0))
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
@@ -244,13 +262,13 @@ importers:
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   packages/ui:
     dependencies:
@@ -279,18 +297,21 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
       vite:
         specifier: ^7.0.3
-        version: 7.3.1
+        version: 7.3.1(terser@5.46.0)
       vite-plugin-dts:
         specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1)
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0))
       vitest:
         specifier: ^4.0.18
-        version: 4.0.18(jsdom@28.1.0)
+        version: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
 packages:
 
@@ -536,9 +557,15 @@ packages:
       '@noble/hashes':
         optional: true
 
+  '@jridgewell/gen-mapping@0.3.13':
+    resolution: {integrity: sha512-2kkt/7niJ6MgEPxF0bYdQ6etZaA+fQvDcLKckhy1yIQOzaoKjBBjSj63/aLVjYE3qhRt5dvM+uUyfCg6UKCBbA==}
+
   '@jridgewell/resolve-uri@3.1.2':
     resolution: {integrity: sha512-bRISgCIjP20/tbWSPWMEi54QVPRZExkuD9lJL+UIxUKtwVJA8wW1Trb1jMs1RFXo1CBTNZ/5hpC9QvmKWdopKw==}
     engines: {node: '>=6.0.0'}
+
+  '@jridgewell/source-map@0.3.11':
+    resolution: {integrity: sha512-ZMp1V8ZFcPG5dIWnQLr3NSI1MiCU7UETdS/A0G8V/XWHvJv3ZsFqutJn1Y5RPmAPX6F3BiE397OqveU/9NCuIA==}
 
   '@jridgewell/sourcemap-codec@1.5.5':
     resolution: {integrity: sha512-cYQ9310grqxueWbl+WuIUIaiUaDcj7WOq5fVhEljNVgRfOUhY9fy2zTvfoqWsnebh8Sl70VScFbICvJnLKB0Og==}
@@ -614,66 +641,79 @@ packages:
     resolution: {integrity: sha512-t4ONHboXi/3E0rT6OZl1pKbl2Vgxf9vJfWgmUoCEVQVxhW6Cw/c8I6hbbu7DAvgp82RKiH7TpLwxnJeKv2pbsw==}
     cpu: [arm]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm-musleabihf@4.59.0':
     resolution: {integrity: sha512-CikFT7aYPA2ufMD086cVORBYGHffBo4K8MQ4uPS/ZnY54GKj36i196u8U+aDVT2LX4eSMbyHtyOh7D7Zvk2VvA==}
     cpu: [arm]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-arm64-gnu@4.59.0':
     resolution: {integrity: sha512-jYgUGk5aLd1nUb1CtQ8E+t5JhLc9x5WdBKew9ZgAXg7DBk0ZHErLHdXM24rfX+bKrFe+Xp5YuJo54I5HFjGDAA==}
     cpu: [arm64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-arm64-musl@4.59.0':
     resolution: {integrity: sha512-peZRVEdnFWZ5Bh2KeumKG9ty7aCXzzEsHShOZEFiCQlDEepP1dpUl/SrUNXNg13UmZl+gzVDPsiCwnV1uI0RUA==}
     cpu: [arm64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-loong64-gnu@4.59.0':
     resolution: {integrity: sha512-gbUSW/97f7+r4gHy3Jlup8zDG190AuodsWnNiXErp9mT90iCy9NKKU0Xwx5k8VlRAIV2uU9CsMnEFg/xXaOfXg==}
     cpu: [loong64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-loong64-musl@4.59.0':
     resolution: {integrity: sha512-yTRONe79E+o0FWFijasoTjtzG9EBedFXJMl888NBEDCDV9I2wGbFFfJQQe63OijbFCUZqxpHz1GzpbtSFikJ4Q==}
     cpu: [loong64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-ppc64-gnu@4.59.0':
     resolution: {integrity: sha512-sw1o3tfyk12k3OEpRddF68a1unZ5VCN7zoTNtSn2KndUE+ea3m3ROOKRCZxEpmT9nsGnogpFP9x6mnLTCaoLkA==}
     cpu: [ppc64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-ppc64-musl@4.59.0':
     resolution: {integrity: sha512-+2kLtQ4xT3AiIxkzFVFXfsmlZiG5FXYW7ZyIIvGA7Bdeuh9Z0aN4hVyXS/G1E9bTP/vqszNIN/pUKCk/BTHsKA==}
     cpu: [ppc64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-riscv64-gnu@4.59.0':
     resolution: {integrity: sha512-NDYMpsXYJJaj+I7UdwIuHHNxXZ/b/N2hR15NyH3m2qAtb/hHPA4g4SuuvrdxetTdndfj9b1WOmy73kcPRoERUg==}
     cpu: [riscv64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-riscv64-musl@4.59.0':
     resolution: {integrity: sha512-nLckB8WOqHIf1bhymk+oHxvM9D3tyPndZH8i8+35p/1YiVoVswPid2yLzgX7ZJP0KQvnkhM4H6QZ5m0LzbyIAg==}
     cpu: [riscv64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-linux-s390x-gnu@4.59.0':
     resolution: {integrity: sha512-oF87Ie3uAIvORFBpwnCvUzdeYUqi2wY6jRFWJAy1qus/udHFYIkplYRW+wo+GRUP4sKzYdmE1Y3+rY5Gc4ZO+w==}
     cpu: [s390x]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-gnu@4.59.0':
     resolution: {integrity: sha512-3AHmtQq/ppNuUspKAlvA8HtLybkDflkMuLK4DPo77DfthRb71V84/c4MlWJXixZz4uruIH4uaa07IqoAkG64fg==}
     cpu: [x64]
     os: [linux]
+    libc: [glibc]
 
   '@rollup/rollup-linux-x64-musl@4.59.0':
     resolution: {integrity: sha512-2UdiwS/9cTAx7qIUZB/fWtToJwvt0Vbo0zmnYt7ED35KPg13Q0ym1g442THLC7VyI6JfYTP4PiSOWyoMdV2/xg==}
     cpu: [x64]
     os: [linux]
+    libc: [musl]
 
   '@rollup/rollup-openbsd-x64@4.59.0':
     resolution: {integrity: sha512-M3bLRAVk6GOwFlPTIxVBSYKUaqfLrn8l0psKinkCFxl4lQvOSz8ZrKDz2gxcBwHFpci0B6rttydI4IpS4IS/jQ==}
@@ -906,12 +946,18 @@ packages:
     resolution: {integrity: sha512-fy6KJm2RawA5RcHkLa1z/ScpBeA762UF9KmZQxwIbDtRJrgLzM10depAiEQ+CXYcoiqW1/m96OAAoke2nE9EeA==}
     engines: {node: 18 || 20 || >=22}
 
+  buffer-from@1.1.2:
+    resolution: {integrity: sha512-E+XQCRwSbaaiChtv6k6Dwgc+bx+Bs6vuKJHHl5kox/BaKbhiXzqQOwK4cO22yElGp2OCmjwVhT3HmxgyPGnJfQ==}
+
   buffer@6.0.3:
     resolution: {integrity: sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==}
 
   chai@6.2.2:
     resolution: {integrity: sha512-NUPRluOfOiTKBKvWPtSD4PhFvWCqOi0BGStNWs57X9js7XGTprSmFoz5F0tWhR4WPjNeR9jXqdC7/UpSJTnlRg==}
     engines: {node: '>=18'}
+
+  commander@2.20.3:
+    resolution: {integrity: sha512-GpVkmM8vF2vQUkj2LvZmD35JxeJOLCwJ9cUkugyk2nuhbv3+mJvpLYYt+0+USMxE+oj+ey/lJEnhZw75x/OMcQ==}
 
   compare-versions@6.1.1:
     resolution: {integrity: sha512-4hm4VPpIecmlg59CHXnRDnqGplJFrbLG4aFEl5vl6cK1u76ws3LLvX7ikFnTDl5vo39sjWD6AaDPYodJp/NNHg==}
@@ -1284,6 +1330,9 @@ packages:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
+  source-map-support@0.5.21:
+    resolution: {integrity: sha512-uBHU3L3czsIyYXKX88fdrGovxdSCoTGDRZ6SYXtSRxLZUzHg5P/66Ht6uoUlHu9EZod+inXhKo3qQgwXUT/y1w==}
+
   source-map@0.6.1:
     resolution: {integrity: sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==}
     engines: {node: '>=0.10.0'}
@@ -1323,6 +1372,11 @@ packages:
 
   symbol-tree@3.2.4:
     resolution: {integrity: sha512-9QNk5KwDF+Bvz+PyObkmSYjI5ksVUYtjW7AU22r2NKcfLJcXp96hkDWU3+XndOsUb+AQ9QhfzfCT2O+CNWT5Tw==}
+
+  terser@5.46.0:
+    resolution: {integrity: sha512-jTwoImyr/QbOWFFso3YoU3ik0jBBDJ6JTOQiy/J2YxVJdZCc+5u7skhNwiOR3FQIygFqVUPHl7qbbxtjW2K3Qg==}
+    engines: {node: '>=10'}
+    hasBin: true
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -1704,7 +1758,17 @@ snapshots:
 
   '@exodus/bytes@1.14.1': {}
 
+  '@jridgewell/gen-mapping@0.3.13':
+    dependencies:
+      '@jridgewell/sourcemap-codec': 1.5.5
+      '@jridgewell/trace-mapping': 0.3.31
+
   '@jridgewell/resolve-uri@3.1.2': {}
+
+  '@jridgewell/source-map@0.3.11':
+    dependencies:
+      '@jridgewell/gen-mapping': 0.3.13
+      '@jridgewell/trace-mapping': 0.3.31
 
   '@jridgewell/sourcemap-codec@1.5.5': {}
 
@@ -1922,7 +1986,7 @@ snapshots:
     dependencies:
       '@types/node': 10.17.60
 
-  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(jsdom@28.1.0))':
+  '@vitest/coverage-v8@4.0.18(vitest@4.0.18(jsdom@28.1.0)(terser@5.46.0))':
     dependencies:
       '@bcoe/v8-coverage': 1.0.2
       '@vitest/utils': 4.0.18
@@ -1934,7 +1998,7 @@ snapshots:
       obug: 2.1.1
       std-env: 3.10.0
       tinyrainbow: 3.0.3
-      vitest: 4.0.18(jsdom@28.1.0)
+      vitest: 4.0.18(jsdom@28.1.0)(terser@5.46.0)
 
   '@vitest/expect@4.0.18':
     dependencies:
@@ -1945,13 +2009,13 @@ snapshots:
       chai: 6.2.2
       tinyrainbow: 3.0.3
 
-  '@vitest/mocker@4.0.18(vite@7.3.1)':
+  '@vitest/mocker@4.0.18(vite@7.3.1(terser@5.46.0))':
     dependencies:
       '@vitest/spy': 4.0.18
       estree-walker: 3.0.3
       magic-string: 0.30.21
     optionalDependencies:
-      vite: 7.3.1
+      vite: 7.3.1(terser@5.46.0)
 
   '@vitest/pretty-format@4.0.18':
     dependencies:
@@ -2101,12 +2165,16 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
+  buffer-from@1.1.2: {}
+
   buffer@6.0.3:
     dependencies:
       base64-js: 1.5.1
       ieee754: 1.2.1
 
   chai@6.2.2: {}
+
+  commander@2.20.3: {}
 
   compare-versions@6.1.1: {}
 
@@ -2510,6 +2578,11 @@ snapshots:
 
   source-map-js@1.2.1: {}
 
+  source-map-support@0.5.21:
+    dependencies:
+      buffer-from: 1.1.2
+      source-map: 0.6.1
+
   source-map@0.6.1: {}
 
   sprintf-js@1.0.3: {}
@@ -2535,6 +2608,13 @@ snapshots:
   symbol-observable@1.0.1: {}
 
   symbol-tree@3.2.4: {}
+
+  terser@5.46.0:
+    dependencies:
+      '@jridgewell/source-map': 0.3.11
+      acorn: 8.16.0
+      commander: 2.20.3
+      source-map-support: 0.5.21
 
   tinybench@2.9.0: {}
 
@@ -2597,7 +2677,7 @@ snapshots:
 
   uuid@8.3.2: {}
 
-  vite-plugin-dts@4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1):
+  vite-plugin-dts@4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(terser@5.46.0)):
     dependencies:
       '@microsoft/api-extractor': 7.57.4
       '@rollup/pluginutils': 5.3.0(rollup@4.59.0)
@@ -2610,13 +2690,13 @@ snapshots:
       magic-string: 0.30.21
       typescript: 5.8.3
     optionalDependencies:
-      vite: 7.3.1
+      vite: 7.3.1(terser@5.46.0)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
       - supports-color
 
-  vite@7.3.1:
+  vite@7.3.1(terser@5.46.0):
     dependencies:
       esbuild: 0.27.3
       fdir: 6.5.0(picomatch@4.0.3)
@@ -2626,11 +2706,12 @@ snapshots:
       tinyglobby: 0.2.15
     optionalDependencies:
       fsevents: 2.3.3
+      terser: 5.46.0
 
-  vitest@4.0.18(jsdom@28.1.0):
+  vitest@4.0.18(jsdom@28.1.0)(terser@5.46.0):
     dependencies:
       '@vitest/expect': 4.0.18
-      '@vitest/mocker': 4.0.18(vite@7.3.1)
+      '@vitest/mocker': 4.0.18(vite@7.3.1(terser@5.46.0))
       '@vitest/pretty-format': 4.0.18
       '@vitest/runner': 4.0.18
       '@vitest/snapshot': 4.0.18
@@ -2647,7 +2728,7 @@ snapshots:
       tinyexec: 1.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.0.3
-      vite: 7.3.1
+      vite: 7.3.1(terser@5.46.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
       jsdom: 28.1.0
