@@ -8,11 +8,13 @@
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/chativa-genui.global.js",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "default": "./dist/chativa-genui.global.js"
     }
   },
   "files": [
@@ -35,7 +37,7 @@
     "url": "git+https://github.com/AimTune/chativa.git"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build && vite build --config vite.config.cdn.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
@@ -50,6 +52,7 @@
     "typescript": "~5.8.3",
     "vite": "^7.0.3",
     "vite-plugin-dts": "^4.5.4",
+    "terser": "^5.46.0",
     "vitest": "^4.0.18"
   }
 }
