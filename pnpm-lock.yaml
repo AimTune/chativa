@@ -226,6 +226,9 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
@@ -257,6 +260,9 @@ importers:
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
