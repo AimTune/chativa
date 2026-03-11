@@ -44,12 +44,15 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       padding: 0;
     }
 
-    /* When the slot has custom content, reset the background so it doesn't
-       interfere with user styles. Consumers can keep the gradient by NOT
-       targeting ::part(launcher). */
+    /* When the slot has custom content, fully reset default styles so the
+       consumer's slotted element defines the appearance.
+       !important needed to override the inline width/height from #positionStyle(). */
     .launcher.has-slot {
       background: transparent;
       box-shadow: none;
+      border-radius: 0;
+      width: auto !important;
+      height: auto !important;
     }
 
     .launcher:hover {
@@ -107,11 +110,9 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       transform: scale(1) rotate(0deg);
     }
 
-    /* Slotted content fills the launcher area */
+    /* Slotted content — display as block so images keep their natural aspect ratio */
     ::slotted(*) {
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: block;
     }
 
     /* Unread badge */
@@ -153,15 +154,18 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
   /** True when consumer has placed content in the default slot */
   @state() private _hasSlot = false;
 
-  private _onSlotChange(e: Event) {
-    const slot = e.target as HTMLSlotElement;
-    this._hasSlot = slot.assignedNodes({ flatten: true }).length > 0;
+  override connectedCallback() {
+    super.connectedCallback();
+    this._hasSlot = this.childElementCount > 0;
   }
 
   #positionStyle(): string {
     const { position, positionMargin, size } = this.theme;
     const m = positionMargin ? `${Number(positionMargin) * 0.5 + 0.5}rem` : "1rem";
     const [v, h] = (position ?? "bottom-right").split("-");
+    if (this._hasSlot) {
+      return `${v}: ${m}; ${h}: ${m};`;
+    }
     const px = SIZE_PX[size ?? "medium"] ?? 56;
     return `${v}: ${m}; ${h}: ${m}; width: ${px}px; height: ${px}px;`;
   }
@@ -185,7 +189,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
         aria-label="${isOpen ? t("chatButton.close") : t("chatButton.open")}"
         aria-expanded="${isOpen}"
       >
-        <slot @slotchange=${this._onSlotChange}>
+        <slot>
           <!-- Default: animated chat / close icons -->
           <span class="icon-wrap" aria-hidden="true">
             <svg

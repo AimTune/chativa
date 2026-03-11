@@ -13,6 +13,8 @@ export interface MessageAction {
   label: string;
   /** Text to send when tapped; falls back to `label` if omitted. */
   value?: string;
+  /** If set, the action opens this URL instead of sending a message. */
+  url?: string;
 }
 
 export interface IncomingMessage {

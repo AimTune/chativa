@@ -258,6 +258,11 @@ export class CarouselMessage extends LitElement {
   }
 
   private _onButtonClick(action: MessageAction) {
+    if (action.url) {
+      window.open(action.url, "_blank", "noopener");
+      return;
+    }
+
     this.dispatchEvent(
       new CustomEvent<string>("chat-action", {
         detail: action.value ?? action.label,

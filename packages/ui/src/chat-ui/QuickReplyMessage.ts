@@ -126,6 +126,12 @@ export class QuickReplyMessage extends LitElement {
 
   private _onChipClick(action: MessageAction) {
     if (this._used) return;
+
+    if (action.url) {
+      window.open(action.url, "_blank", "noopener");
+      return;
+    }
+
     this._used = true;
     this.dispatchEvent(
       new CustomEvent<string>("chat-action", {

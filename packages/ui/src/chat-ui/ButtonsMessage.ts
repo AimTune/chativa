@@ -158,6 +158,11 @@ export class ButtonsMessage extends LitElement {
       this._selected = action.label;
     }
 
+    if (action.url) {
+      window.open(action.url, "_blank", "noopener");
+      return;
+    }
+
     this.dispatchEvent(
       new CustomEvent<string>("chat-action", {
         detail: action.value ?? action.label,

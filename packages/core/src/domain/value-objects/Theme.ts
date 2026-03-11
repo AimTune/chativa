@@ -70,6 +70,8 @@ export interface ThemeConfig {
    * Default: `false`.
    */
   enableMultiConversation?: boolean;
+  /** Enable the file upload button in the chat input. Default: true. */
+  enableFileUpload?: boolean;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
