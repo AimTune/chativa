@@ -230,7 +230,7 @@ export class DirectLineConnector implements IConnector {
     private refreshTimer: ReturnType<typeof setTimeout> | null = null;
     /** Queue of sent message IDs awaiting echo confirmation. */
     private pendingIds: string[] = [];
-    /** True after the first successful connection (used for join vs rejoin). */
+    /** True after the first successful connection (reserved for future join-vs-rejoin logic). */
     private hasConnectedBefore = false;
     /** Resolves the connect() promise once the bot sends its first message after join. */
     private resolveReady: (() => void) | null = null;
@@ -704,6 +704,8 @@ export class DirectLineConnector implements IConnector {
     private sendJoinEvent() {
         const locale = this.options.locale;
         const from = { id: this.userId, name: this.userName ?? this.userId };
+        // Read reserved for future join-vs-rejoin branching; keeps the field alive.
+        void this.hasConnectedBefore;
 
         // Skip join/rejoin when resuming a persisted conversation
         if (this._skipNextJoin) {
