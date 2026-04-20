@@ -19,7 +19,7 @@ export function createChativaContext(): ChativaContext {
       open: () => chatStore.getState().open(),
       close: () => chatStore.getState().close(),
       toggle: () => chatStore.getState().toggle(),
-      setTyping: (v) => chatStore.getState().setTyping(v),
+      setTyping: (v, opts) => chatStore.getState().setTyping(v, opts),
       setFullscreen: (v) => chatStore.getState().setFullscreen(v),
       getStatus: () => chatStore.getState().connectorStatus,
       isOpened: () => chatStore.getState().isOpened,

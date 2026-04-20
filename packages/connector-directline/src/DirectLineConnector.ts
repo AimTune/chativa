@@ -89,6 +89,17 @@ export interface DirectLineConnectorOptions {
      * to localStorage so the conversation can be resumed across page reloads.
      */
     resumeConversation?: boolean;
+    /**
+     * How long (ms) to keep the typing indicator visible after a bot typing
+     * signal before auto-clearing it. Each new typing signal resets the timer.
+     * Default: 3000. Ignored when `typingUntilMessage` is true.
+     */
+    typingTimeoutMs?: number;
+    /**
+     * When true, the typing indicator stays on until the next bot message
+     * arrives (no auto-clear timeout).
+     */
+    typingUntilMessage?: boolean;
 }
 
 /* ── Constants ────────────────────────────────────────────────────── */
@@ -745,11 +756,15 @@ export class DirectLineConnector implements IConnector {
     private handleTyping() {
         this.clearTypingTimeout();
         this.typingHandler?.(true);
-        // Auto-clear typing after 3 seconds (bot may not send a stop signal)
+        if (this.options.typingUntilMessage) {
+            // No timer — rely on next bot message (handled by ChatEngine) to clear.
+            return;
+        }
+        const ms = this.options.typingTimeoutMs ?? 3000;
         this.typingTimeout = setTimeout(() => {
             this.typingHandler?.(false);
             this.typingTimeout = null;
-        }, 3000);
+        }, ms);
     }
 
     private clearTypingTimeout() {

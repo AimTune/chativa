@@ -5,7 +5,7 @@
  */
 
 import type { StoredMessage } from "./stores/MessageStore";
-import type { ConnectorStatus } from "./stores/ChatStore";
+import type { ConnectorStatus, TypingOptions } from "./stores/ChatStore";
 import type { ThemeConfig, DeepPartial } from "../domain/value-objects/Theme";
 import type { EventBusEventName, EventBusPayloadMap } from "./EventBus";
 
@@ -24,7 +24,7 @@ export interface ChativaContext {
     open(): void;
     close(): void;
     toggle(): void;
-    setTyping(v: boolean): void;
+    setTyping(v: boolean, opts?: TypingOptions): void;
     setFullscreen(v: boolean): void;
     getStatus(): ConnectorStatus;
     isOpened(): boolean;

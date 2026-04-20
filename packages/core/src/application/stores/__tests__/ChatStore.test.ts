@@ -135,6 +135,60 @@ describe("ChatStore", () => {
     expect(chatStore.getState().isTyping).toBe(false);
   });
 
+  it("setTyping with durationMs auto-clears after timeout", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.advanceTimersByTime(499);
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.advanceTimersByTime(1);
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("setTyping with durationMs resets timer when called again (extend)", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    vi.advanceTimersByTime(400);
+    expect(chatStore.getState().isTyping).toBe(true);
+    // Extend: re-apply with the same (or new) duration
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    vi.advanceTimersByTime(400);
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.advanceTimersByTime(100);
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("setTyping with untilMessage keeps typing on indefinitely", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { untilMessage: true });
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.advanceTimersByTime(60_000);
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("setTyping with untilMessage cancels any running duration timer", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    chatStore.getState().setTyping(true, { untilMessage: true });
+    vi.advanceTimersByTime(5000);
+    expect(chatStore.getState().isTyping).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("setTyping(false) clears any running duration timer", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    chatStore.getState().setTyping(false);
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.advanceTimersByTime(1000);
+    // Should remain false (no re-toggle to false from a stale timer).
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.useRealTimers();
+  });
+
   // ── reconnect ──────────────────────────────────────────────────────
 
   it("setReconnectAttempt updates reconnectAttempt", () => {

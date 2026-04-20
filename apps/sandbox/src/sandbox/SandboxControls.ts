@@ -5,6 +5,7 @@ import "./sections/AppearanceSection";
 import "./sections/FeaturesSection";
 import "./sections/MessagesSection";
 import "./sections/GenUISection";
+import "./sections/TypingSection";
 import "./sections/ActionsSection";
 
 @customElement("sandbox-controls")
@@ -169,6 +170,8 @@ export class SandboxControls extends LitElement {
           <sandbox-messages-section></sandbox-messages-section>
           <div class="divider"></div>
           <sandbox-genui-section></sandbox-genui-section>
+          <div class="divider"></div>
+          <sandbox-typing-section></sandbox-typing-section>
           <div class="divider"></div>
           <sandbox-actions-section></sandbox-actions-section>
           <div class="divider"></div>

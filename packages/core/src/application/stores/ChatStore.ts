@@ -17,6 +17,22 @@ export type ConnectorStatus =
     | "error"
     | "disconnected";
 
+/**
+ * Options for {@link ChatStoreState.setTyping} when turning typing on.
+ *
+ * - `durationMs` — auto-clear after N ms. Calling `setTyping(true, {durationMs})`
+ *   again before it expires resets the timer (extending the indicator).
+ * - `untilMessage` — keep typing on indefinitely until the next message arrives.
+ *   When set, any previous `durationMs` timer is cancelled.
+ *
+ * If neither option is given, the indicator stays on until explicitly cleared
+ * (e.g. by `setTyping(false)` or by `ChatEngine`'s onMessage handler).
+ */
+export interface TypingOptions {
+    durationMs?: number;
+    untilMessage?: boolean;
+}
+
 export interface ChatStoreState {
     isOpened: boolean;
     isRendered: boolean;
@@ -52,7 +68,7 @@ export interface ChatStoreState {
     getTheme: () => ThemeConfig;
     setConnector: (name: string) => void;
     setConnectorStatus: (status: ConnectorStatus) => void;
-    setTyping: (v: boolean) => void;
+    setTyping: (v: boolean, opts?: TypingOptions) => void;
     incrementUnread: () => void;
     resetUnread: () => void;
     setReconnectAttempt: (n: number) => void;
@@ -66,6 +82,9 @@ export interface ChatStoreState {
 
 // Re-export for downstream consumers
 export type { DeepPartial };
+
+// Module-level timer so it doesn't cause store re-renders.
+let _typingTimer: ReturnType<typeof setTimeout> | null = null;
 
 const store = createStore<ChatStoreState>((setState, getState) => ({
     isOpened: false,
@@ -124,7 +143,20 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     setConnectorStatus: (status: ConnectorStatus) =>
         setState(() => ({ connectorStatus: status })),
 
-    setTyping: (v: boolean) => setState(() => ({ isTyping: v })),
+    setTyping: (v: boolean, opts?: TypingOptions) => {
+        if (_typingTimer !== null) {
+            clearTimeout(_typingTimer);
+            _typingTimer = null;
+        }
+        if (v && opts?.durationMs !== undefined && !opts.untilMessage) {
+            const ms = Math.max(0, opts.durationMs);
+            _typingTimer = setTimeout(() => {
+                _typingTimer = null;
+                setState(() => ({ isTyping: false }));
+            }, ms);
+        }
+        setState(() => ({ isTyping: v }));
+    },
 
     incrementUnread: () =>
         setState((s) => ({ unreadCount: s.unreadCount + 1 })),
