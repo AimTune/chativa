@@ -62,7 +62,7 @@ jobs:
           retention-days: 30
 
       - name: Publish to Chrome Web Store
-        uses: mnao305/chrome-extension-upload@4.0.1
+        uses: mnao305/chrome-extension-upload@v4.0.1
         with:
           file-path: chativa-extension-${{ steps.version.outputs.VERSION }}.zip
           extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
