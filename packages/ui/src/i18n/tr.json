@@ -76,9 +76,9 @@
         "commentRequired": "Lütfen neyin yanlış gittiğini yazın",
         "submit": "Gönder",
         "skip": "Atla",
-        "thankYouTitle": "Geri bildiriminiz için teşekkürler!",
-        "thankYouBody": "Yanıtınız gelişmemize yardımcı oluyor.",
-        "close": "Sohbeti kapat",
+        "thankYouTitle": "Değerlendirmeni Aldık!",
+        "thankYouBody": "Değerli görüş ve yorumların için teşekkür ederiz.",
+        "close": "Kapat",
         "starLabel_one": "{{count}} yıldız",
         "starLabel_other": "{{count}} yıldız"
     }

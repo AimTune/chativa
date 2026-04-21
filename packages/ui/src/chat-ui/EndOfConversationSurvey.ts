@@ -26,6 +26,12 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
       --ring: rgba(79, 70, 229, 0.35);
     }
 
+    :host([overlay]) {
+      flex: 1;
+      min-height: 0;
+      display: block;
+    }
+
     .card {
       background: #ffffff;
       border: 1px solid var(--chativa-border, #e2e8f0);
@@ -44,10 +50,35 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
       height: 100%;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       border: none;
       border-radius: 0;
       box-shadow: none;
+      padding: 24px 20px;
+      box-sizing: border-box;
+    }
+
+    :host([overlay]) .title {
+      margin-top: 8px;
+    }
+
+    :host([overlay]) textarea {
+      flex: 1;
+      min-height: 96px;
+    }
+
+    :host([overlay]) .actions {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid var(--chativa-border, #e2e8f0);
+      gap: 10px;
+    }
+
+    :host([overlay]) .actions button {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      min-height: 44px;
     }
 
     .title {
@@ -122,6 +153,88 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
       text-align: left;
     }
 
+    /* ── Thank-you state ──────────────────────────────────────── */
+
+    .thanks {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 14px;
+      padding: 24px 4px 8px;
+    }
+
+    :host([overlay]) .thanks {
+      flex: 1;
+      padding: 0;
+      gap: 0;
+    }
+
+    .thanks-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    :host([overlay]) .thanks-main {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .thanks-icon {
+      width: 96px;
+      height: 96px;
+      flex-shrink: 0;
+    }
+
+    .thanks-title {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--chativa-primary-color, #4f46e5);
+    }
+
+    .thanks-body {
+      margin: 0;
+      font-size: 0.875rem;
+      color: var(--chativa-secondary-color, #475569);
+      max-width: 28ch;
+      line-height: 1.4;
+    }
+
+    .thanks-footer {
+      margin-top: 4px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+    }
+
+    :host([overlay]) .thanks-footer {
+      margin-top: 0;
+      padding-top: 16px;
+      border-top: 1px solid var(--chativa-border, #e2e8f0);
+    }
+
+    .close-btn {
+      width: 100%;
+      max-width: 320px;
+      background: var(--chativa-primary-color, #4f46e5);
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      padding: 12px 22px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      font-family: inherit;
+    }
+
+    .close-btn:hover { opacity: 0.9; }
+
     .actions {
       display: flex;
       justify-content: center;
@@ -168,6 +281,7 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
   @state() private _rating = 0;
   @state() private _hovered = 0;
   @state() private _comment = "";
+  @state() private _submitted = false;
 
   private get _config(): EndOfConversationSurveyConfig {
     return chatStore.getState().theme.endOfConversationSurvey ?? {};
@@ -207,6 +321,7 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
 
   private _submit() {
     if (this._rating === 0 || this._commentRequired) return;
+    this._submitted = true;
     this.dispatchEvent(
       new CustomEvent("survey-submitted", {
         bubbles: true,
@@ -224,6 +339,16 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
   private _skip() {
     this.dispatchEvent(
       new CustomEvent("survey-skipped", {
+        bubbles: true,
+        composed: true,
+        detail: { messageId: this.messageId },
+      }),
+    );
+  }
+
+  private _close() {
+    this.dispatchEvent(
+      new CustomEvent("survey-close", {
         bubbles: true,
         composed: true,
         detail: { messageId: this.messageId },
@@ -266,7 +391,43 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
     `;
   }
 
+  private _renderThanks() {
+    return html`
+      <div class="thanks">
+        <div class="thanks-main">
+          <svg class="thanks-icon" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="60" cy="60" r="44" fill="#dcfce7" />
+            <circle cx="60" cy="60" r="30" fill="#16a34a" />
+            <path d="M46 60 l10 10 l18 -20" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+            ${[
+              [18, 30],
+              [100, 32],
+              [22, 92],
+              [98, 88],
+              [58, 14],
+              [60, 108],
+            ].map(
+              ([cx, cy]) => html`<g transform="translate(${cx} ${cy})">
+                <path d="M0 -4 L1.2 -1.2 L4 0 L1.2 1.2 L0 4 L-1.2 1.2 L-4 0 L-1.2 -1.2 Z" fill="#86efac" opacity="0.75" />
+              </g>`,
+            )}
+          </svg>
+          <h3 class="thanks-title">${t("survey.thankYouTitle")}</h3>
+          <p class="thanks-body">${t("survey.thankYouBody")}</p>
+        </div>
+        <div class="thanks-footer">
+          <button class="close-btn" type="button" @click=${this._close}>
+            ${t("survey.close")}
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
   override render() {
+    if (this._submitted) {
+      return html`<div class="card">${this._renderThanks()}</div>`;
+    }
     const needsComment = this._commentRequired;
     return html`
       <div class="card">

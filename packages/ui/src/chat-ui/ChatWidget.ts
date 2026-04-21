@@ -296,6 +296,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("chat-reset-survey-state", this._onResetSurveyState as EventListener);
     this.addEventListener("survey-submitted", this._onSurveySubmitted as EventListener);
     this.addEventListener("survey-skipped", this._onSurveySkipped as EventListener);
+    this.addEventListener("survey-close", this._onSurveyClose as EventListener);
   }
 
   disconnectedCallback() {
@@ -321,6 +322,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("chat-reset-survey-state", this._onResetSurveyState as EventListener);
     this.removeEventListener("survey-submitted", this._onSurveySubmitted as EventListener);
     this.removeEventListener("survey-skipped", this._onSurveySkipped as EventListener);
+    this.removeEventListener("survey-close", this._onSurveyClose as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -499,14 +501,16 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
    */
   private _requestClose(): void {
     const cfg = this._getSurveyConfig();
-    if (!cfg || this._surveyResolved || (cfg.trigger ?? "onClose") !== "onClose") {
+    if (!cfg || (cfg.trigger ?? "onClose") !== "onClose") {
       this.themeState.close();
       return;
     }
 
-    // Survey is already visible — a second close request means "I don't
-    // want to fill this out": treat it as a skip and run the reset flow.
-    if (this._showSurveyOverlay || this._inlineSurveyInjected) {
+    // Survey already active this session — either showing the form, showing
+    // the thank-you screen, or already submitted. In every case a close
+    // press means "wrap up" and should run the reset flow rather than
+    // opening another survey.
+    if (this._showSurveyOverlay || this._inlineSurveyInjected || this._surveyResolved) {
       this._resetConversation();
       return;
     }
@@ -551,10 +555,17 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine
       .sendSurvey({ rating, comment, kind })
       .catch((err: unknown) => console.error("[ChatWidget] sendSurvey failed:", err));
-    this._resetConversation();
+    // The component transitions to its thank-you state; reset runs only when
+    // the user explicitly clicks the close button (`survey-close`) or when a
+    // second close press is interpreted as skip.
+    this._surveyResolved = true;
   };
 
   private _onSurveySkipped = () => {
+    this._resetConversation();
+  };
+
+  private _onSurveyClose = () => {
     this._resetConversation();
   };
 

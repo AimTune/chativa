@@ -76,9 +76,9 @@
         "commentRequired": "Please tell us what went wrong",
         "submit": "Submit",
         "skip": "Skip",
-        "thankYouTitle": "Thanks for your feedback!",
-        "thankYouBody": "Your response helps us improve.",
-        "close": "Close chat",
+        "thankYouTitle": "We received your feedback!",
+        "thankYouBody": "Thank you for your valuable thoughts and comments.",
+        "close": "Close",
         "starLabel_one": "{{count}} star",
         "starLabel_other": "{{count}} stars"
     }
