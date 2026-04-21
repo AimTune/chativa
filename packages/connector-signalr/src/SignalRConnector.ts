@@ -3,6 +3,7 @@ import type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
+  SurveyPayload,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -11,6 +12,8 @@ export interface SignalRConnectorOptions {
   hubName?: string;
   receiveMethod?: string;
   sendMethod?: string;
+  /** Hub method used by `sendSurvey`. Default: "SendSurvey". */
+  surveyMethod?: string;
   accessTokenFactory?: () => string | Promise<string>;
 }
 
@@ -38,6 +41,7 @@ export class SignalRConnector implements IConnector {
       hubName: "chat",
       receiveMethod: "ReceiveMessage",
       sendMethod: "SendMessage",
+      surveyMethod: "SendSurvey",
       accessTokenFactory: () => "",
       ...options,
     };
@@ -94,6 +98,13 @@ export class SignalRConnector implements IConnector {
       throw new Error("SignalRConnector: not connected.");
     }
     await this.connection.invoke(this.options.sendMethod, message);
+  }
+
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    if (!this.connection) {
+      throw new Error("SignalRConnector: not connected.");
+    }
+    await this.connection.invoke(this.options.surveyMethod, payload);
   }
 
   onMessage(callback: MessageHandler): void {

@@ -9,6 +9,8 @@ import {
   messageStore,
   createOutgoingMessage,
   applyGlobalSettings,
+  type EndOfConversationSurveyConfig,
+  type SurveyPayload,
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { registerCommand } from "../commands/index";
@@ -25,6 +27,7 @@ import "./ChatInput";
 import "./ChatMessageList";
 import "./ChatHeader";
 import "./ConversationList";
+import "./EndOfConversationSurvey";
 MessageTypeRegistry.setFallback(
   customElements.get("default-text-message") as unknown as typeof HTMLElement
 );
@@ -195,6 +198,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
   @state() private _showDropOverlay = false;
   @state() private _showConvList = false;
+  /** True when screen-mode survey is currently displayed over the message list. */
+  @state() private _showSurveyOverlay = false;
+  /** True once the end-of-conversation survey has been submitted or skipped this session. */
+  private _surveyResolved = false;
+  /** True once the inline survey message has been injected this session. */
+  private _inlineSurveyInjected = false;
   /** Depth counter to handle dragenter/dragleave firing over child elements. */
   private _dropDepth = 0;
 
@@ -281,6 +290,11 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("conversation-select", this._onConvSelect as EventListener);
     this.addEventListener("new-conversation", this._onNewConv as EventListener);
     this.addEventListener("conversation-close", this._onConvClose as EventListener);
+    this.addEventListener("chat-close-requested", this._onCloseRequested as EventListener);
+    this.addEventListener("chat-minimize-requested", this._onMinimizeRequested as EventListener);
+    this.addEventListener("chat-reset-survey-state", this._onResetSurveyState as EventListener);
+    this.addEventListener("survey-submitted", this._onSurveySubmitted as EventListener);
+    this.addEventListener("survey-skipped", this._onSurveySkipped as EventListener);
   }
 
   disconnectedCallback() {
@@ -301,6 +315,11 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("conversation-select", this._onConvSelect as EventListener);
     this.removeEventListener("new-conversation", this._onNewConv as EventListener);
     this.removeEventListener("conversation-close", this._onConvClose as EventListener);
+    this.removeEventListener("chat-close-requested", this._onCloseRequested as EventListener);
+    this.removeEventListener("chat-minimize-requested", this._onMinimizeRequested as EventListener);
+    this.removeEventListener("chat-reset-survey-state", this._onResetSurveyState as EventListener);
+    this.removeEventListener("survey-submitted", this._onSurveySubmitted as EventListener);
+    this.removeEventListener("survey-skipped", this._onSurveySkipped as EventListener);
     this._detachDragListeners();
     super.disconnectedCallback();
   }
@@ -465,6 +484,87 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     );
   };
 
+  // ── End-of-conversation survey ───────────────────────────────────────
+
+  private _getSurveyConfig(): EndOfConversationSurveyConfig | null {
+    const cfg = this.theme.endOfConversationSurvey;
+    if (!cfg || !cfg.enabled) return null;
+    return cfg;
+  }
+
+  /**
+   * Decide whether to intercept a user-initiated close in order to show the survey.
+   * Called from the header close button and the Escape key path.
+   */
+  private _requestClose(): void {
+    const cfg = this._getSurveyConfig();
+    if (!cfg || this._surveyResolved || (cfg.trigger ?? "onClose") !== "onClose") {
+      this.themeState.close();
+      return;
+    }
+
+    const mode = cfg.mode ?? "inline";
+    if (mode === "screen") {
+      this._showSurveyOverlay = true;
+      return;
+    }
+
+    // inline mode — append a bot-authored survey message and keep the widget open
+    if (!this._inlineSurveyInjected) {
+      this._inlineSurveyInjected = true;
+      const Component = MessageTypeRegistry.resolve("end-of-conversation-survey");
+      messageStore.getState().addMessage({
+        id: `survey-${Date.now()}`,
+        type: "end-of-conversation-survey",
+        from: "bot",
+        data: {},
+        timestamp: Date.now(),
+        component: Component,
+      });
+    }
+  }
+
+  private _onCloseRequested = () => {
+    this._requestClose();
+  };
+
+  private _onMinimizeRequested = () => {
+    // Minimize bypasses the survey — the user is just hiding the widget.
+    this.themeState.close();
+  };
+
+  private _onResetSurveyState = () => {
+    // Lets tooling (e.g. the sandbox) re-trigger the survey without a full reload.
+    this._surveyResolved = false;
+    this._inlineSurveyInjected = false;
+    this._showSurveyOverlay = false;
+  };
+
+  private _onSurveySubmitted = (e: CustomEvent<SurveyPayload & { messageId?: string }>) => {
+    const { rating, comment, kind } = e.detail;
+    this._engine
+      .sendSurvey({ rating, comment, kind })
+      .catch((err: unknown) => console.error("[ChatWidget] sendSurvey failed:", err));
+    this._resetConversation();
+  };
+
+  private _onSurveySkipped = () => {
+    this._resetConversation();
+  };
+
+  /**
+   * Wipe the current chat session and close the widget. The user starts fresh
+   * the next time they open it: message history clears and survey flags reset
+   * so a future close can trigger the survey again.
+   */
+  private _resetConversation(): void {
+    messageStore.getState().clear();
+    this._surveyResolved = false;
+    this._inlineSurveyInjected = false;
+    this._showSurveyOverlay = false;
+    this.themeState.close();
+  }
+
   // ── Widget-level file drop ────────────────────────────────────────────
 
   private _onFileDragEnter = (e: DragEvent) => {
@@ -526,7 +626,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
 
     if (e.key === "Escape") {
       e.preventDefault();
-      this.themeState.close();
+      this._requestClose();
       return;
     }
 
@@ -648,6 +748,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       >
         ${this._showConvList && this.theme.enableMultiConversation ? html`
           <conversation-list></conversation-list>
+        ` : this._showSurveyOverlay ? html`
+          <chat-header .showConvToggle=${this.theme.enableMultiConversation === true}></chat-header>
+          <end-of-conversation-survey overlay></end-of-conversation-survey>
         ` : html`
           <chat-header .showConvToggle=${this.theme.enableMultiConversation === true}></chat-header>
           <chat-message-list></chat-message-list>

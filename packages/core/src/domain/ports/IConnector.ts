@@ -18,6 +18,17 @@ export type DisconnectHandler = (reason?: string) => void;
 export type TypingHandler = (isTyping: boolean) => void;
 export type FeedbackType = "like" | "dislike";
 export type MessageStatusHandler = (messageId: string, status: MessageStatus) => void;
+
+/**
+ * Payload for end-of-conversation (or mid-conversation) survey submissions.
+ * `kind` distinguishes different surveys that a backend may ask for
+ * (e.g. "bot" vs "agent", or a numeric type code used by DirectLine bots).
+ */
+export interface SurveyPayload {
+  rating: number;
+  comment?: string;
+  kind?: string | number;
+}
 /** Called when a conversation's metadata changes (e.g. unread count, status, last message). */
 export type ConversationHandler = (conversation: Conversation) => void;
 
@@ -62,6 +73,13 @@ export interface IConnector {
 
   /** Optional: send a like/dislike reaction on a bot message to the backend. */
   sendFeedback?(messageId: string, feedback: FeedbackType): Promise<void>;
+
+  /**
+   * Optional: submit an end-of-conversation (or mid-conversation) survey
+   * result. Each connector implementation decides how to deliver this to
+   * its backend (DirectLine event, POST request, hub invoke, …).
+   */
+  sendSurvey?(payload: SurveyPayload): Promise<void>;
 
   /** Optional: upload a file to the backend. */
   sendFile?(file: File, metadata?: Record<string, unknown>): Promise<void>;

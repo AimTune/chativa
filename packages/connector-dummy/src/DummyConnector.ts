@@ -7,6 +7,7 @@ import type {
   MessageStatus,
   HistoryResult,
   FeedbackType,
+  SurveyPayload,
   MessageStatusHandler,
   GenUIChunkHandler,
   AIChunk,
@@ -871,6 +872,10 @@ export class DummyConnector implements IConnector {
 
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
     console.log(`[DummyConnector] Feedback received — messageId: ${messageId}, feedback: ${feedback}`);
+  }
+
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    console.log("[DummyConnector] Survey received:", payload);
   }
 
   async sendFile(file: File, metadata?: Record<string, unknown>): Promise<void> {

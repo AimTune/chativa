@@ -337,7 +337,18 @@ class ChatHeader extends ChatbotMixin(LitElement) {
 
           <button
             class="icon-btn"
-            @click=${() => this.themeState.close()}
+            @click=${() => this.dispatchEvent(new CustomEvent("chat-minimize-requested", { bubbles: true, composed: true }))}
+            aria-label="${t("header.minimize")}"
+            title="${t("header.minimize")}"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
+              <path d="M6 19h12" />
+            </svg>
+          </button>
+
+          <button
+            class="icon-btn"
+            @click=${() => this.dispatchEvent(new CustomEvent("chat-close-requested", { bubbles: true, composed: true }))}
             aria-label="${t("header.close")}"
             title="${t("header.close")}"
           >

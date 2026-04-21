@@ -4,6 +4,7 @@ import type {
   ConnectHandler,
   DisconnectHandler,
   HistoryResult,
+  SurveyPayload,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -87,6 +88,14 @@ export class HttpConnector implements IConnector {
     await this._fetch(`${this.options.url}/messages`, {
       method: "POST",
       body: JSON.stringify(message),
+    });
+  }
+
+  /** POST the survey payload to `{url}/survey`. */
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    await this._fetch(`${this.options.url}/survey`, {
+      method: "POST",
+      body: JSON.stringify(payload),
     });
   }
 

@@ -51,6 +51,41 @@ export interface LayoutConfig {
     verticalSpace?: SpaceLevel;
 }
 
+/**
+ * End-of-conversation survey configuration.
+ * The connector must implement `sendSurvey` for submissions to be delivered.
+ */
+export interface EndOfConversationSurveyConfig {
+    /** Enable the survey flow. Default: `false` (opt-in). */
+    enabled?: boolean;
+    /**
+     * Where the survey is shown.
+     * - `"inline"` — appended to the message list as a bot-authored card (default)
+     * - `"screen"` — full-height overlay over the chat view
+     */
+    mode?: "inline" | "screen";
+    /**
+     * When to trigger the survey.
+     * - `"onClose"` — intercept the close button and show the survey first (default)
+     * - `"manual"`  — only shown when the host dispatches `show-survey`
+     */
+    trigger?: "onClose" | "manual";
+    /** Maximum rating value (stars). Default: `5`. */
+    maxRating?: number;
+    /**
+     * If the user selects a rating at or below this value, a comment is required
+     * before submit is enabled. Set to `0` to never require a comment.
+     * Default: `3`.
+     */
+    requireCommentBelow?: number;
+    /**
+     * Opaque identifier forwarded to the connector as `SurveyPayload.kind`.
+     * Useful when the backend distinguishes bot-vs-agent surveys.
+     * Default: `1`.
+     */
+    kind?: string | number;
+}
+
 export interface ThemeConfig {
     allowFullscreen?: boolean;
     colors: ThemeColors;
@@ -85,6 +120,8 @@ export interface ThemeConfig {
      * Default: `false`.
      */
     hideButtonOnOpen?: boolean;
+    /** End-of-conversation survey configuration. Default: disabled. */
+    endOfConversationSurvey?: EndOfConversationSurveyConfig;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -130,6 +167,13 @@ export function mergeTheme(
         ...overrides,
         colors: { ...base.colors, ...(overrides.colors ?? {}) },
         layout: { ...base.layout, ...(overrides.layout ?? {}) },
+        endOfConversationSurvey:
+            base.endOfConversationSurvey || overrides.endOfConversationSurvey
+                ? {
+                      ...(base.endOfConversationSurvey ?? {}),
+                      ...(overrides.endOfConversationSurvey ?? {}),
+                  }
+                : undefined,
     } as ThemeConfig;
 }
 

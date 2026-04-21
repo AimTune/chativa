@@ -15,6 +15,7 @@
             "exit": "Tam ekrandan çık"
         },
         "close": "Kapat",
+        "minimize": "Küçült",
         "search": {
             "toggle": "Ara",
             "placeholder": "Mesaj ara…",
@@ -67,5 +68,18 @@
     },
     "widget": {
         "title": "Sohbet"
+    },
+    "survey": {
+        "title": "Görüşmemizi değerlendirir misiniz?",
+        "ratingLabel": "Deneyiminizi puanlayın",
+        "commentPlaceholder": "Neyi daha iyi yapabiliriz?",
+        "commentRequired": "Lütfen neyin yanlış gittiğini yazın",
+        "submit": "Gönder",
+        "skip": "Atla",
+        "thankYouTitle": "Geri bildiriminiz için teşekkürler!",
+        "thankYouBody": "Yanıtınız gelişmemize yardımcı oluyor.",
+        "close": "Sohbeti kapat",
+        "starLabel_one": "{{count}} yıldız",
+        "starLabel_other": "{{count}} yıldız"
     }
 }

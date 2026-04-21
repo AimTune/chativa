@@ -15,6 +15,7 @@
             "exit": "Exit fullscreen"
         },
         "close": "Close",
+        "minimize": "Minimize",
         "search": {
             "toggle": "Search",
             "placeholder": "Search messages…",
@@ -67,5 +68,18 @@
     },
     "widget": {
         "title": "Chat"
+    },
+    "survey": {
+        "title": "How did we do?",
+        "ratingLabel": "Rate your experience",
+        "commentPlaceholder": "What could we do better?",
+        "commentRequired": "Please tell us what went wrong",
+        "submit": "Submit",
+        "skip": "Skip",
+        "thankYouTitle": "Thanks for your feedback!",
+        "thankYouBody": "Your response helps us improve.",
+        "close": "Close chat",
+        "starLabel_one": "{{count}} star",
+        "starLabel_other": "{{count}} stars"
     }
 }

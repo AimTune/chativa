@@ -36,6 +36,7 @@ function createMockConnector(): IConnector & {
     disconnect: vi.fn().mockResolvedValue(undefined),
     sendMessage: vi.fn().mockResolvedValue(undefined),
     sendFeedback: vi.fn().mockResolvedValue(undefined),
+    sendSurvey: vi.fn().mockResolvedValue(undefined),
     sendFile: vi.fn().mockResolvedValue(undefined),
     receiveComponentEvent: vi.fn(),
     onMessage(cb) { msgHandler = cb; },
@@ -265,6 +266,28 @@ describe("ChatEngine", () => {
     const engine = new ChatEngine(connector);
     await engine.init();
     await expect(engine.sendFeedback("x", "dislike")).resolves.toBeUndefined();
+  });
+
+  // ── sendSurvey ─────────────────────────────────────────────────────
+
+  it("delegates sendSurvey to connector and emits survey_submitted", async () => {
+    const busHandler = vi.fn();
+    EventBus.on("survey_submitted", busHandler);
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    const payload = { rating: 4, comment: "nice", kind: 1 };
+    await engine.sendSurvey(payload);
+    expect(connector.sendSurvey).toHaveBeenCalledWith(payload);
+    expect(busHandler).toHaveBeenCalledWith(payload);
+  });
+
+  it("sendSurvey does nothing if connector has no sendSurvey", async () => {
+    const connector = createMockConnector();
+    (connector as IConnector).sendSurvey = undefined;
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    await expect(engine.sendSurvey({ rating: 5 })).resolves.toBeUndefined();
   });
 
   // ── sendFile ───────────────────────────────────────────────────────

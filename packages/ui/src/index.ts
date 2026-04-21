@@ -31,3 +31,12 @@ import "./chat-ui/QuickReplyMessage";
 import "./chat-ui/EmojiPicker";
 import "./chat-ui/ConversationList";
 import "./chat-ui/AgentPanel";
+import "./chat-ui/EndOfConversationSurvey";
+
+import { MessageTypeRegistry } from "@chativa/core";
+import { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
+export { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
+MessageTypeRegistry.register(
+  "end-of-conversation-survey",
+  EndOfConversationSurvey as unknown as typeof HTMLElement,
+);

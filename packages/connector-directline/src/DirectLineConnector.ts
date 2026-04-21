@@ -6,6 +6,7 @@ import type {
     TypingHandler,
     MessageStatusHandler,
     ChativaContext,
+    SurveyPayload,
 } from "@chativa/core";
 import type {
     OutgoingMessage,
@@ -442,6 +443,42 @@ export class DirectLineConnector implements IConnector {
         if (!res.ok) {
             throw new Error(`DirectLine file upload failed: ${res.status}`);
         }
+    }
+
+    /**
+     * Submit an end-of-conversation survey as a DirectLine event activity.
+     * Matches the legacy `webchat/customerfeedback` event shape so existing
+     * bot flows keep working:
+     *   value: { rating, comment, type }
+     * where `type` is `kind` coerced to a number (defaulting to 1) to preserve
+     * compatibility with bots that switch on numeric survey types.
+     */
+    async sendSurvey(payload: SurveyPayload): Promise<void> {
+        const rawType =
+            typeof payload.kind === "number"
+                ? payload.kind
+                : payload.kind !== undefined
+                  ? Number(payload.kind)
+                  : 1;
+        const type = Number.isFinite(rawType) ? rawType : 1;
+
+        return new Promise<void>((resolve, reject) => {
+            this.directLine
+                .postActivity({
+                    type: "event",
+                    name: "webchat/customerfeedback",
+                    from: { id: this.userId, name: this.userId },
+                    value: {
+                        rating: payload.rating,
+                        comment: payload.comment ?? "",
+                        type,
+                    },
+                })
+                .subscribe({
+                    next: () => resolve(),
+                    error: (err: unknown) => reject(err),
+                });
+        });
     }
 
     async sendFeedback(

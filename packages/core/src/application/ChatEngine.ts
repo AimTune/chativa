@@ -1,4 +1,4 @@
-import type { IConnector, FeedbackType } from "../domain/ports/IConnector";
+import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
 import type { AIChunk, GenUIStreamState } from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
@@ -109,6 +109,11 @@ export class ChatEngine {
 
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
     await this.connector.sendFeedback?.(messageId, feedback);
+  }
+
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    await this.connector.sendSurvey?.(payload);
+    EventBus.emit("survey_submitted", payload);
   }
 
   async send(message: OutgoingMessage): Promise<void> {

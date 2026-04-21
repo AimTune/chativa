@@ -16,6 +16,7 @@
  */
 import type { OutgoingMessage, IncomingMessage } from "../domain/entities/Message";
 import type { ConnectorStatus } from "./stores/ChatStore";
+import type { SurveyPayload } from "../domain/ports/IConnector";
 
 // ── Event payload map ──────────────────────────────────────────────────────────
 
@@ -40,6 +41,8 @@ export interface EventBusPayloadMap {
   history_loaded: { count: number };
   /** Search query updated (empty string = search cleared). */
   search_query_changed: { query: string };
+  /** User submitted an end-of-conversation survey. */
+  survey_submitted: SurveyPayload;
 }
 
 export type EventBusEventName = keyof EventBusPayloadMap;

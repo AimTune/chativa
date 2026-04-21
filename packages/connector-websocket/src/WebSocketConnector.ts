@@ -3,6 +3,7 @@ import type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
+  SurveyPayload,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -91,6 +92,14 @@ export class WebSocketConnector implements IConnector {
       throw new Error("WebSocketConnector: not connected.");
     }
     this.ws.send(JSON.stringify(message));
+  }
+
+  /** Send the survey as a JSON frame with discriminator `{ type: "survey", ... }`. */
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      throw new Error("WebSocketConnector: not connected.");
+    }
+    this.ws.send(JSON.stringify({ type: "survey", ...payload }));
   }
 
   onMessage(callback: MessageHandler): void {

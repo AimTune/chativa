@@ -5,6 +5,7 @@ import type {
   DisconnectHandler,
   TypingHandler,
   HistoryResult,
+  SurveyPayload,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -153,6 +154,22 @@ export class SseConnector implements IConnector {
         ...this.options.headers,
       },
       body: JSON.stringify(message),
+    });
+
+    if (!res.ok) {
+      throw new Error(`SseConnector: HTTP ${res.status} ${res.statusText}`);
+    }
+  }
+
+  /** POST the survey alongside normal messages, tagged as `type: "survey"`. */
+  async sendSurvey(payload: SurveyPayload): Promise<void> {
+    const res = await fetch(this.options.sendUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...this.options.headers,
+      },
+      body: JSON.stringify({ type: "survey", ...payload }),
     });
 
     if (!res.ok) {

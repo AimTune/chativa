@@ -10,6 +10,7 @@ export type {
   DisconnectHandler,
   TypingHandler,
   FeedbackType,
+  SurveyPayload,
   MessageStatusHandler,
   ConversationHandler,
 } from "./ports/IConnector";
@@ -28,6 +29,7 @@ export type {
   DeepPartial,
   AvatarConfig,
   WindowMode,
+  EndOfConversationSurveyConfig,
 } from "./value-objects/Theme";
 export { DEFAULT_THEME, mergeTheme, themeToCSS } from "./value-objects/Theme";
 export { ThemeBuilder } from "./value-objects/ThemeBuilder";
