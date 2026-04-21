@@ -55,9 +55,14 @@ export interface DirectLineConnectorOptions {
     token?: string;
     /** URL of a custom token-generating endpoint (POST, returns { token, conversationId? }). */
     tokenGeneratorUrl?: string;
-    /** Override the user ID instead of auto-generating one. */
+    /**
+     * Override the user ID. When omitted, a random per-instance ID is
+     * generated — unless `resumeConversation` is true, in which case the ID
+     * is persisted to localStorage so reloads can rejoin the same
+     * conversation.
+     */
     userId?: string;
-    /** Display name sent with activities. */
+    /** Display name sent with activities. Defaults to the (resolved) userId. */
     userName?: string;
     /** Sovereign-cloud DirectLine endpoint (e.g. government, china). */
     domain?: string;
@@ -87,7 +92,9 @@ export interface DirectLineConnectorOptions {
     eventHandlers?: Record<string, EventHandler>;
     /**
      * When true, persist conversation state (conversationId, token, watermark)
-     * to localStorage so the conversation can be resumed across page reloads.
+     * and the auto-generated userId to localStorage so the conversation can
+     * be resumed across page reloads. Default: `false` — each new connector
+     * instance gets a fresh userId and opens a new conversation.
      */
     resumeConversation?: boolean;
     /**
@@ -117,6 +124,15 @@ interface PersistedConversation {
 
 /* ── Module-level helpers ─────────────────────────────────────────── */
 
+function randomUserId(): string {
+    return (
+        Math.random().toString(36).slice(2, 15) +
+        Math.random().toString(36).slice(2, 15)
+    );
+}
+
+/** Read a persisted userId for conversation-resume mode, generating and
+ * storing one on first use. Only called when `resumeConversation` is true. */
 function getOrCreateUserId(): string {
     try {
         const stored = localStorage.getItem(USER_ID_KEY);
@@ -124,9 +140,7 @@ function getOrCreateUserId(): string {
     } catch {
         // localStorage unavailable (e.g. incognito, SSR)
     }
-    const id =
-        Math.random().toString(36).slice(2, 15) +
-        Math.random().toString(36).slice(2, 15);
+    const id = randomUserId();
     try {
         localStorage.setItem(USER_ID_KEY, id);
     } catch {
@@ -284,7 +298,11 @@ export class DirectLineConnector implements IConnector {
     }
 
     async connect(): Promise<void> {
-        this.userId = this.options.userId ?? getOrCreateUserId();
+        this.userId =
+            this.options.userId ??
+            (this.options.resumeConversation
+                ? getOrCreateUserId()
+                : randomUserId());
         this.userName = this.options.userName;
 
         // ── Try to resume a persisted conversation ────────────────────
