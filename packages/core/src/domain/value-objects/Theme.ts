@@ -56,12 +56,12 @@ export interface LayoutConfig {
  * The connector must implement `sendSurvey` for submissions to be delivered.
  */
 export interface EndOfConversationSurveyConfig {
-    /** Enable the survey flow. Default: `false` (opt-in). */
+    /** Enable the survey flow. Default: `true`. */
     enabled?: boolean;
     /**
      * Where the survey is shown.
-     * - `"inline"` — appended to the message list as a bot-authored card (default)
-     * - `"screen"` — full-height overlay over the chat view
+     * - `"inline"` — appended to the message list as a bot-authored card
+     * - `"screen"` — full-height overlay over the chat view (default)
      */
     mode?: "inline" | "screen";
     /**
@@ -84,6 +84,14 @@ export interface EndOfConversationSurveyConfig {
      * Default: `1`.
      */
     kind?: string | number;
+    /**
+     * After submit or skip, fully tear down the engine and connector so the
+     * next open starts from scratch (fresh connection, empty history, launcher
+     * view). Set to `false` to keep the session alive and just close the
+     * widget (messages, connection, and state are preserved).
+     * Default: `true`.
+     */
+    resetOnSubmit?: boolean;
 }
 
 export interface ThemeConfig {
@@ -144,6 +152,15 @@ export const DEFAULT_THEME: ThemeConfig = {
         verticalSpace: "2",
     },
     showMessageStatus: true,
+    endOfConversationSurvey: {
+        enabled: true,
+        mode: "screen",
+        trigger: "onClose",
+        maxRating: 5,
+        requireCommentBelow: 3,
+        kind: 1,
+        resetOnSubmit: true,
+    },
 };
 
 /** Build CSS variable map from a ThemeConfig. */

@@ -7,6 +7,7 @@ import {
   ConnectorRegistry,
   MessageTypeRegistry,
   messageStore,
+  chatStore,
   createOutgoingMessage,
   applyGlobalSettings,
   type EndOfConversationSurveyConfig,
@@ -503,25 +504,30 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       return;
     }
 
-    const mode = cfg.mode ?? "inline";
+    // Survey is already visible — a second close request means "I don't
+    // want to fill this out": treat it as a skip and run the reset flow.
+    if (this._showSurveyOverlay || this._inlineSurveyInjected) {
+      this._resetConversation();
+      return;
+    }
+
+    const mode = cfg.mode ?? "screen";
     if (mode === "screen") {
       this._showSurveyOverlay = true;
       return;
     }
 
     // inline mode — append a bot-authored survey message and keep the widget open
-    if (!this._inlineSurveyInjected) {
-      this._inlineSurveyInjected = true;
-      const Component = MessageTypeRegistry.resolve("end-of-conversation-survey");
-      messageStore.getState().addMessage({
-        id: `survey-${Date.now()}`,
-        type: "end-of-conversation-survey",
-        from: "bot",
-        data: {},
-        timestamp: Date.now(),
-        component: Component,
-      });
-    }
+    this._inlineSurveyInjected = true;
+    const Component = MessageTypeRegistry.resolve("end-of-conversation-survey");
+    messageStore.getState().addMessage({
+      id: `survey-${Date.now()}`,
+      type: "end-of-conversation-survey",
+      from: "bot",
+      data: {},
+      timestamp: Date.now(),
+      component: Component,
+    });
   }
 
   private _onCloseRequested = () => {
@@ -553,16 +559,82 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   };
 
   /**
-   * Wipe the current chat session and close the widget. The user starts fresh
-   * the next time they open it: message history clears and survey flags reset
-   * so a future close can trigger the survey again.
+   * Reset the widget after a survey submit / skip.
+   *
+   * When `resetOnSubmit` is true (default), fully tear down the engine and
+   * connector, wipe runtime state, and rebuild the engine so the next open
+   * starts from scratch (fresh connection, empty history, launcher view).
+   * Theme config and the active connector *name* are preserved; host pages
+   * can listen for `chativa-reset` to swap the registered connector instance
+   * before the rebuild (e.g. rotate a DirectLine userId / token).
+   *
+   * When `resetOnSubmit` is false, the session is kept alive — we only close
+   * the widget and reset local survey flags so the next close can trigger
+   * the survey again.
    */
   private _resetConversation(): void {
-    messageStore.getState().clear();
-    this._surveyResolved = false;
-    this._inlineSurveyInjected = false;
-    this._showSurveyOverlay = false;
-    this.themeState.close();
+    const cfg = this._getSurveyConfig();
+    const doFullReset = cfg?.resetOnSubmit !== false; // default: true
+
+    if (!doFullReset) {
+      this._surveyResolved = false;
+      this._inlineSurveyInjected = false;
+      this._showSurveyOverlay = false;
+      this.themeState.close();
+      return;
+    }
+
+    this.dispatchEvent(
+      new CustomEvent("chativa-reset", { bubbles: true, composed: true }),
+    );
+
+    const rebuild = () => {
+      // Clear runtime state but keep theme, active connector, and fullscreen prefs.
+      messageStore.getState().clear();
+      chatStore.setState({
+        connectorStatus: "idle",
+        isTyping: false,
+        unreadCount: 0,
+        reconnectAttempt: 0,
+        hasMoreHistory: false,
+        isLoadingHistory: false,
+        historyCursor: undefined,
+        searchQuery: "",
+        isFullscreen: false,
+        isRendered: false,
+      });
+
+      // Widget-local flags.
+      this._surveyResolved = false;
+      this._inlineSurveyInjected = false;
+      this._showSurveyOverlay = false;
+      this._showConvList = false;
+      this._showDropOverlay = false;
+      this._dropDepth = 0;
+
+      // Rebuild the engine so the next open reconnects fresh. The host page
+      // may have swapped the registered connector in its `chativa-reset`
+      // listener; ConnectorRegistry.get picks up whatever is there now.
+      const connectorName = chatStore.getState().activeConnector;
+      const adapter = ConnectorRegistry.get(connectorName);
+      this._multiEngine = new MultiConversationEngine(adapter);
+      this._engine = this._multiEngine.chatEngine;
+      this._engineInitialised = false;
+
+      this.themeState.close();
+    };
+
+    const prev = this._multiEngine;
+    this._multiEngine = null;
+    this._engine = undefined as unknown as ChatEngine;
+
+    if (prev) {
+      prev.destroy()
+        .catch((err: unknown) => console.error("[ChatWidget] reset: destroy failed:", err))
+        .finally(rebuild);
+    } else {
+      rebuild();
+    }
   }
 
   // ── Widget-level file drop ────────────────────────────────────────────

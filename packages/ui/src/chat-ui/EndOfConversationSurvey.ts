@@ -97,12 +97,22 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
       resize: vertical;
       margin-bottom: 10px;
       color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
     }
 
     textarea:focus {
       outline: none;
       border-color: var(--chativa-primary-color, #4f46e5);
       box-shadow: 0 0 0 3px var(--ring);
+    }
+
+    textarea.invalid {
+      border-color: #ef4444;
+    }
+
+    textarea.invalid:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
     }
 
     .required-note {
@@ -158,7 +168,6 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
   @state() private _rating = 0;
   @state() private _hovered = 0;
   @state() private _comment = "";
-  @state() private _touched = false;
 
   private get _config(): EndOfConversationSurveyConfig {
     return chatStore.getState().theme.endOfConversationSurvey ?? {};
@@ -192,19 +201,12 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
     );
   }
 
-  /** The submit button itself stays active once a rating is picked — the
-   * comment-required case is handled via a visible note on click instead of
-   * a silently-disabled button. */
   private get _submitDisabled(): boolean {
-    return this._rating === 0;
+    return this._rating === 0 || this._commentRequired;
   }
 
   private _submit() {
-    if (this._rating === 0) return;
-    if (this._commentRequired) {
-      this._touched = true;
-      return;
-    }
+    if (this._rating === 0 || this._commentRequired) return;
     this.dispatchEvent(
       new CustomEvent("survey-submitted", {
         bubbles: true,
@@ -265,17 +267,19 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
   }
 
   override render() {
-    const showNote = this._touched && this._commentRequired;
+    const needsComment = this._commentRequired;
     return html`
       <div class="card">
         <h3 class="title">${t("survey.title")}</h3>
         ${this._renderStars()}
         <textarea
+          class=${needsComment ? "invalid" : ""}
           placeholder=${t("survey.commentPlaceholder")}
+          aria-invalid=${needsComment}
           .value=${this._comment}
           @input=${this._onComment}
         ></textarea>
-        ${showNote
+        ${needsComment
           ? html`<div class="required-note">${t("survey.commentRequired")}</div>`
           : nothing}
         <div class="actions">

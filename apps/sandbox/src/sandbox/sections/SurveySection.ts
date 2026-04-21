@@ -119,11 +119,12 @@ export class SurveySection extends LitElement {
 
   render() {
     const cfg = this._cfg;
-    const enabled = cfg.enabled === true;
-    const mode = cfg.mode ?? "inline";
+    const enabled = cfg.enabled !== false;
+    const mode = cfg.mode ?? "screen";
     const maxRating = cfg.maxRating ?? 5;
     const requireBelow = cfg.requireCommentBelow ?? 3;
     const kind = cfg.kind ?? 1;
+    const resetOnSubmit = cfg.resetOnSubmit !== false;
 
     return html`
       <div class="section-header" @click=${() => (this._open = !this._open)}>
@@ -215,6 +216,20 @@ export class SurveySection extends LitElement {
               />
             </div>
             <div class="hint">Numbers become numeric; strings pass through.</div>
+          </div>
+
+          <!-- Reset on submit -->
+          <div>
+            <div class="sub-label">On submit / skip</div>
+            <div class="toggle-group">
+              <button class="tg-btn ${resetOnSubmit ? "active" : ""}"
+                ?disabled=${!enabled}
+                @click=${() => this._patch({ resetOnSubmit: true })}>Full reset</button>
+              <button class="tg-btn ${!resetOnSubmit ? "active" : ""}"
+                ?disabled=${!enabled}
+                @click=${() => this._patch({ resetOnSubmit: false })}>Keep session</button>
+            </div>
+            <div class="hint">Full reset tears down the engine + connector. Keep session only closes the widget.</div>
           </div>
 
           <div class="actions">
