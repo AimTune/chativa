@@ -426,6 +426,7 @@ export class SandboxControls extends LitElement {
 
   private _resetAll() {
     chatStore.getState().setTheme(FULL_RESET);
+    chatStore.getState().resetSession();
     messageStore.getState().clear();
   }
 
