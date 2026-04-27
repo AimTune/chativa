@@ -107,6 +107,25 @@ describe("ChatStore", () => {
     expect(chatStore.getState().allowFullscreen).toBe(true);
   });
 
+  it("setTheme({ allowFullscreen }) mirrors into the top-level allowFullscreen field", () => {
+    // Regression: ChatHeader reads `themeState.allowFullscreen` (top-level
+    // store field), not `theme.allowFullscreen`. Without this mirror, calling
+    // `setTheme({ allowFullscreen: false })` (e.g. the Minimal preset) updated
+    // the theme blob but left the fullscreen toggle visible in the header.
+    chatStore.getState().setTheme({ allowFullscreen: false });
+    expect(chatStore.getState().allowFullscreen).toBe(false);
+    expect(chatStore.getState().theme.allowFullscreen).toBe(false);
+
+    chatStore.getState().setTheme({ allowFullscreen: true });
+    expect(chatStore.getState().allowFullscreen).toBe(true);
+    expect(chatStore.getState().theme.allowFullscreen).toBe(true);
+
+    // Setting unrelated fields does not touch top-level allowFullscreen.
+    chatStore.getState().setAllowFullscreen(false);
+    chatStore.getState().setTheme({ colors: { primary: "#ff0000" } });
+    expect(chatStore.getState().allowFullscreen).toBe(false);
+  });
+
   // ── unread / typing ────────────────────────────────────────────────
 
   it("incrementUnread increases unreadCount by 1 each call", () => {

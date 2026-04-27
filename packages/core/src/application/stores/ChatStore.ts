@@ -134,7 +134,18 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
         setState(() => ({ allowFullscreen: v })),
 
     setTheme: (overrides) =>
-        setState((s) => ({ theme: mergeTheme(s.theme, overrides) })),
+        setState((s) => {
+            const theme = mergeTheme(s.theme, overrides);
+            // `allowFullscreen` is duplicated as a top-level store field
+            // (the chat header reads it directly from there). Mirror the
+            // theme value into the top-level field whenever a setTheme
+            // override sets it, so the fullscreen toggle button hides
+            // immediately when callers do `setTheme({ allowFullscreen: false })`.
+            if (overrides.allowFullscreen !== undefined) {
+                return { theme, allowFullscreen: overrides.allowFullscreen };
+            }
+            return { theme };
+        }),
 
     getTheme: () => getState().theme,
 
