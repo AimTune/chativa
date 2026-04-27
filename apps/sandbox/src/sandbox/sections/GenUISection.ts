@@ -23,7 +23,7 @@ const GENUI_DEMOS: Array<{ label: string; command: string }> = [
 export class GenUISection extends LitElement {
   static override styles = [sectionStyles];
 
-  @state() private _open = false;
+  @state() private _open = true;
 
   render() {
     return html`

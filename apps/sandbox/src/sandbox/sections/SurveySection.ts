@@ -67,7 +67,7 @@ export class SurveySection extends LitElement {
     `,
   ];
 
-  @state() private _open = false;
+  @state() private _open = true;
   @state() private _theme: ThemeConfig = chatStore.getState().theme;
   private _unsub!: () => void;
 

@@ -256,7 +256,7 @@ export class ConfigSection extends LitElement {
     `,
   ];
 
-  @state() private _open = false;
+  @state() private _open = true;
   @state() private _tab: "json" | "html" | "import" = "json";
   @state() private _copied: "json" | "html" | null = null;
   @state() private _settings: ChativaSettingsLike = buildSettings();

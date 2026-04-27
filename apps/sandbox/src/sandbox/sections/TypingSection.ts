@@ -67,7 +67,7 @@ export class TypingSection extends LitElement {
     `,
   ];
 
-  @state() private _open = false;
+  @state() private _open = true;
   @state() private _durationMs = 3000;
   @state() private _untilMessage = false;
   @state() private _isTyping = chatStore.getState().isTyping;
