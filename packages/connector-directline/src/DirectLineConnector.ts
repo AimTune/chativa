@@ -417,7 +417,10 @@ export class DirectLineConnector implements IConnector {
 
     async sendMessage(message: OutgoingMessage): Promise<void> {
         this.pendingIds.push(message.id);
-        // Mark as "sent" immediately so it shows before the echo arrives
+        // Flip to "sent" (single-tick) right away — postActivity's network
+        // round-trip can take 200–500 ms and the user expects instant
+        // feedback. The bot's actual reply will flush this pending id to
+        // "read" (double-tick) via flushPendingToRead().
         this.messageStatusHandler?.(message.id, "sent");
         return new Promise<void>((resolve, reject) => {
             this.directLine
@@ -658,15 +661,17 @@ export class DirectLineConnector implements IConnector {
                     this.conversationId = activity.conversation.id;
                 }
 
-                // Skip own echoed activities
+                // Skip own echoed activities. The echo just means DirectLine
+                // routed our message back through the conversation channel —
+                // it does NOT mean the bot has read or processed it. We
+                // intentionally do **not** touch `pendingIds` here: the
+                // echo arrives over the WebSocket in ~50 ms, well before
+                // the bot's actual reply (which can take seconds). If we
+                // shifted ids off the queue on echo, the bot-message
+                // branch below would find an empty queue and never flip
+                // anything to "read". `flushPendingToRead()` clears the
+                // queue in one shot when an actual bot message lands.
                 if (activity.from.id === this.userId) {
-                    // Echoed user message → mark the original as "read"
-                    if (activity.type === "message") {
-                        const pendingId = this.pendingIds.shift();
-                        if (pendingId) {
-                            this.messageStatusHandler?.(pendingId, "read");
-                        }
-                    }
                     return;
                 }
 
@@ -714,6 +719,11 @@ export class DirectLineConnector implements IConnector {
                         this.resolveReady();
                         this.resolveReady = null;
                     }
+
+                    // The bot just replied — flip every still-pending user
+                    // message to "read" (double-tick). Only an actual incoming
+                    // message counts; typing indicators and events do not.
+                    this.flushPendingToRead();
 
                     this.messageHandler?.(result);
 
@@ -808,6 +818,21 @@ export class DirectLineConnector implements IConnector {
                 data: { ...msg.data, feedbackDisabled: true, feedbackType },
             });
         }
+    }
+
+    /**
+     * Mark every still-pending user message as "read" (double-tick).
+     * Called only when an actual bot **message** arrives — typing
+     * indicators, events, and the WebSocket echo of our own activity
+     * do not flush, because none of them are visible "the bot replied"
+     * signals from a user perspective.
+     */
+    private flushPendingToRead() {
+        if (!this.messageStatusHandler || this.pendingIds.length === 0) return;
+        for (const id of this.pendingIds) {
+            this.messageStatusHandler(id, "read");
+        }
+        this.pendingIds = [];
     }
 
     private handleTyping() {

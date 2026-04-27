@@ -379,6 +379,27 @@ describe("ChatEngine", () => {
     expect(messageStore.getState().messages).toHaveLength(1);
   });
 
+  it("defaults user messages from history to status 'read' (double-tick)", async () => {
+    // History is past — user messages were already delivered and seen.
+    // Without this default they would render as a pending single-tick
+    // ("sent") after a fresh page reload, which contradicts the user's
+    // mental model. Bot messages stay status-less (they're never ticked).
+    const connector = createMockConnector();
+    (connector as IConnector).loadHistory = vi.fn().mockResolvedValue({
+      messages: [
+        { id: "h-user", type: "text", from: "user", data: { text: "hi" }, timestamp: 0 },
+        { id: "h-bot",  type: "text", from: "bot",  data: { text: "hey" }, timestamp: 0 },
+      ],
+      hasMore: false,
+      cursor: undefined,
+    });
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    const stored = messageStore.getState().messages;
+    expect(stored.find((m) => m.id === "h-user")?.status).toBe("read");
+    expect(stored.find((m) => m.id === "h-bot")?.status).toBeUndefined();
+  });
+
   it("emits history_loaded event", async () => {
     const handler = vi.fn();
     EventBus.on("history_loaded", handler);

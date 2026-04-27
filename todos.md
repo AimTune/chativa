@@ -31,6 +31,10 @@ The current sandbox panel (`apps/sandbox/src/sandbox/SandboxControls.ts`) packs 
 - [ ] Extend `schema-drift.test.ts` to cover the connector option schemas (`*ConnectorOptions`) — currently only `ThemeConfig` is mechanically guarded.
 - [ ] Cover `IncomingMessage` / `OutgoingMessage` / `AIChunk` / `Conversation` / `SurveyPayload` similarly.
 
+## Test coverage
+
+- [ ] Stand up `connector-directline` unit tests with a `botframework-directlinejs` mock so the read-tick semantics (echo ignored, bot activity flushes pending → "read") are guarded by CI. Currently relies on manual sandbox verification.
+
 ## Docs follow-ups
 
 - [ ] Add a "common recipes" page (`docs/recipes.md`): "embed in React", "embed in Vue", "embed in Wordpress", "with a custom token endpoint".

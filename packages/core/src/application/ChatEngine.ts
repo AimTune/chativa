@@ -162,11 +162,18 @@ export class ChatEngine {
     chatStore.getState().setIsLoadingHistory(true);
     try {
       const result = await this.connector.loadHistory(historyCursor);
-      const msgs = result.messages.map((m) => ({
-        ...m,
-        from: (m.from ?? "bot") as "bot" | "user",
-        component: MessageTypeRegistry.resolve(m.type),
-      }));
+      const msgs = result.messages.map((m) => {
+        const from = (m.from ?? "bot") as "bot" | "user";
+        return {
+          ...m,
+          from,
+          component: MessageTypeRegistry.resolve(m.type),
+          // History is by definition past — user messages were already
+          // delivered and seen. Default to "read" (double-tick) so they
+          // don't render as a pending single-tick after a fresh page load.
+          ...(from === "user" ? { status: "read" as const } : {}),
+        };
+      });
       messageStore.getState().prependMessages(msgs);
       chatStore.getState().setHasMoreHistory(result.hasMore);
       chatStore.getState().setHistoryCursor(result.cursor);
