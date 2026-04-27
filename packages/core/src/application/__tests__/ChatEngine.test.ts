@@ -250,6 +250,57 @@ describe("ChatEngine", () => {
     expect(msg?.status).toBe("read");
   });
 
+  it("does not downgrade 'read' back to 'sent' when sendMessage resolves late", async () => {
+    // Race: a connector (e.g. DirectLine) that pushes "read" via onMessageStatus
+    // *before* its own sendMessage promise resolves. ChatEngine used to
+    // unconditionally set "sent" after the await — clobbering the "read"
+    // and producing a single-tick UI even though the bot had already
+    // acknowledged the message.
+    const connector = createMockConnector();
+    let resolveSend!: () => void;
+    connector.sendMessage = vi.fn(
+      () => new Promise<void>((r) => (resolveSend = r)),
+    );
+
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    const sendPromise = engine.send({
+      id: "race-1",
+      type: "text",
+      data: { text: "hi" },
+      timestamp: 0,
+    });
+
+    // Connector pushes the read receipt first (echo arrives before the
+    // postActivity HTTP response).
+    connector.simulateMessageStatus("race-1", "read");
+    expect(
+      messageStore.getState().messages.find((m) => m.id === "race-1")?.status,
+    ).toBe("read");
+
+    // Now sendMessage resolves. ChatEngine must NOT clobber the "read".
+    resolveSend();
+    await sendPromise;
+
+    const after = messageStore.getState().messages.find((m) => m.id === "race-1");
+    expect(after?.status).toBe("read");
+  });
+
+  it("escalates 'sending' → 'sent' when sendMessage resolves and the connector did not push a status", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    await engine.send({
+      id: "noop-1",
+      type: "text",
+      data: { text: "hi" },
+      timestamp: 0,
+    });
+    const msg = messageStore.getState().messages.find((m) => m.id === "noop-1");
+    expect(msg?.status).toBe("sent");
+  });
+
   // ── sendFeedback ───────────────────────────────────────────────────
 
   it("delegates sendFeedback to connector", async () => {

@@ -134,7 +134,16 @@ export class ChatEngine {
     EventBus.emit("message_sent", transformed);
 
     if (this.connector.addSentToHistory !== false) {
-      messageStore.getState().updateById(transformed.id, { status: "sent" });
+      // Only escalate from "sending" → "sent". A connector with
+      // onMessageStatus may have already pushed "sent" or even "read"
+      // (e.g. DirectLine echoes back faster than postActivity resolves);
+      // we must never downgrade those.
+      const current = messageStore
+        .getState()
+        .messages.find((m) => m.id === transformed.id);
+      if (!current || current.status === "sending") {
+        messageStore.getState().updateById(transformed.id, { status: "sent" });
+      }
     }
   }
 

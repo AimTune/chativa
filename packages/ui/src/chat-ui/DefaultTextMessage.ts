@@ -148,6 +148,15 @@ export class DefaultTextMessage extends LitElement {
       height: 14px;
     }
 
+    .status-icon.sending svg {
+      animation: chativa-status-spin 0.9s linear infinite;
+      transform-origin: 50% 50%;
+    }
+
+    @keyframes chativa-status-spin {
+      to { transform: rotate(360deg); }
+    }
+
     .feedback {
       display: flex;
       gap: 2px;
@@ -296,9 +305,20 @@ export class DefaultTextMessage extends LitElement {
   }
 
   private _renderStatusIcon() {
-    const color = this.status === "sending" ? "#94a3b8" : "var(--chativa-primary-color, #4f46e5)";
+    if (this.status === "sending") {
+      // Loading spinner — message is in flight
+      return html`
+        <span class="status-icon sending" aria-label="${t("message.statusSending")}">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="7" cy="7" r="5" stroke="#cbd5e1" stroke-width="2" opacity="0.4"/>
+            <path d="M12 7a5 5 0 0 0-5-5" stroke="#94a3b8" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+      `;
+    }
+    const color = "var(--chativa-primary-color, #4f46e5)";
     if (this.status === "read") {
-      // Double tick
+      // Double tick — bot acknowledged the message
       return html`
         <span class="status-icon" aria-label="${t("message.statusRead")}">
           <svg viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -308,9 +328,9 @@ export class DefaultTextMessage extends LitElement {
         </span>
       `;
     }
-    // Single tick (sending = gray, sent = primary)
+    // Single tick — sent
     return html`
-      <span class="status-icon" aria-label="${this.status === "sending" ? t("message.statusSending") : t("message.statusSent")}">
+      <span class="status-icon" aria-label="${t("message.statusSent")}">
         <svg viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
           <path d="M1 5l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>

@@ -138,6 +138,9 @@ export class DummyConnector implements IConnector {
     this.typingHandler?.(true);
     setTimeout(() => {
       this.typingHandler?.(false);
+      // Mark the user's message as read at the moment the bot's reply arrives
+      // (double-tick) — paired with ChatEngine's "sent" flip on send (single-tick).
+      this.statusHandler?.(message.id, "read" as MessageStatus);
       const replyId = `dummy-reply-${Date.now()}`;
       this.messageHandler?.({
         id: replyId,
@@ -145,12 +148,6 @@ export class DummyConnector implements IConnector {
         data: { text: `Echo: ${text}` },
         timestamp: Date.now(),
       });
-      // Simulate "read" status for the sent message after a short delay
-      if (this.statusHandler) {
-        setTimeout(() => {
-          this.statusHandler?.(message.id, "read" as MessageStatus);
-        }, 1500);
-      }
     }, this.replyDelay);
   }
 

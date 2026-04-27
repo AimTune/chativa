@@ -41,6 +41,31 @@ describe("DummyConnector", () => {
     expect(reply.data.text).toContain("ping");
   });
 
+  it("emits 'read' status for the user message at the same tick as the bot reply", async () => {
+    await connector.connect();
+    const messageHandler = vi.fn();
+    const statusHandler = vi.fn();
+    connector.onMessage(messageHandler);
+    connector.onMessageStatus(statusHandler);
+
+    await connector.sendMessage({
+      id: "tick-test",
+      type: "text",
+      data: { text: "hello" },
+      timestamp: Date.now(),
+    });
+
+    // Reply + read receipt must arrive together — no extra delay between them.
+    await vi.waitFor(() => expect(messageHandler).toHaveBeenCalledOnce());
+
+    expect(statusHandler).toHaveBeenCalledWith("tick-test", "read");
+    // Ordering rule: status arrives before (or at the same tick as) the reply
+    // so the UI flips to double-tick simultaneously with the new bubble.
+    expect(statusHandler.mock.invocationCallOrder[0]).toBeLessThanOrEqual(
+      messageHandler.mock.invocationCallOrder[0],
+    );
+  });
+
   it("does not reply after disconnect", async () => {
     await connector.connect();
     const handler = vi.fn();
