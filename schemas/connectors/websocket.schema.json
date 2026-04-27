@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/connectors/websocket.schema.json",
+  "title": "WebSocketConnectorOptions",
+  "description": "Constructor options for WebSocketConnector — native browser WebSocket adapter. Source: packages/connector-websocket/src/WebSocketConnector.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url"],
+  "properties": {
+    "url":                  { "type": "string", "format": "uri", "description": "WebSocket endpoint URL (ws:// or wss://).", "examples": ["wss://my-server.example.com/chat"] },
+    "protocols":            { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }], "default": [], "description": "Sub-protocol(s) passed to the WebSocket constructor." },
+    "reconnect":            { "type": "boolean", "default": true,  "description": "Auto-reconnect when the socket closes." },
+    "reconnectDelay":       { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait between reconnect attempts." },
+    "maxReconnectAttempts": { "type": "integer", "minimum": 0, "default": 5,    "description": "Stop reconnecting after this many failed attempts." }
+  }
+}

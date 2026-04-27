@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/messages/message-action.schema.json",
+  "title": "MessageAction",
+  "description": "A tappable chip/button attached to a message (quick replies, card buttons, etc.). Source: packages/core/src/domain/entities/Message.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["label"],
+  "properties": {
+    "label": { "type": "string", "description": "Visible text on the chip/button." },
+    "value": { "type": "string", "description": "Text sent when tapped. Falls back to label if omitted." },
+    "url":   { "type": "string", "format": "uri", "description": "If set, the action opens this URL instead of sending a message." }
+  }
+}

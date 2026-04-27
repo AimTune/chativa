@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/chativa-settings.schema.json",
+  "title": "ChativaSettings",
+  "description": "Top-level configuration object read from window.chativaSettings before <chat-iva> connects. Source of truth: packages/core/src/application/ChativaSettings.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+
+    "connector": {
+      "description": "Either a registered connector name (string) or an IConnector instance (auto-registered). When passed via JSON it MUST be a string — instances cannot be serialised.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": ["dummy", "websocket", "signalr", "directline", "sse", "http"],
+          "description": "Name of a built-in registered connector."
+        },
+        {
+          "type": "string",
+          "description": "Name of a custom connector you registered via ConnectorRegistry.register()."
+        }
+      ]
+    },
+
+    "theme": {
+      "$ref": "./theme.schema.json",
+      "description": "Theme overrides — deep-merged over DEFAULT_THEME."
+    },
+
+    "locale": {
+      "type": "string",
+      "description": "BCP-47 language tag — forces this language on init. Skips browser detection.",
+      "examples": ["en", "tr", "de", "fr", "es", "pt-BR"]
+    },
+
+    "i18n": {
+      "type": "object",
+      "description": "Translation overrides. Two formats are supported:\n\n• Per-language: keys are locale codes (or the special key 'all' which applies to every language).\n  e.g. { all: { header: { title: 'Bot' } }, tr: { header: { title: 'Botum' } } }\n\n• Flat: namespaces directly — applied to every registered language.\n  e.g. { header: { title: 'Bot' } }",
+      "additionalProperties": true
+    }
+
+  },
+  "examples": [
+    {
+      "connector": "directline",
+      "theme": {
+        "colors": { "primary": "#1B1464" },
+        "windowMode": "popup",
+        "allowFullscreen": false
+      },
+      "locale": "tr",
+      "i18n": {
+        "all": { "header": { "title": "Sanal Asistan" } },
+        "tr":  { "input": { "placeholder": "Bir şey yaz..." } }
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/theme.schema.json",
+  "title": "ThemeConfig",
+  "description": "Chativa widget theme — visual + behavioural flags. Pass any subset (deep partial) to chatStore.getState().setTheme(); only the fields you provide are overridden. Source of truth: packages/core/src/domain/value-objects/Theme.ts (ThemeConfig + DEFAULT_THEME).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+
+    "colors": {
+      "type": "object",
+      "description": "Brand color palette. All values are CSS color strings (hex, rgb, hsl, etc.).",
+      "additionalProperties": false,
+      "properties": {
+        "primary":    { "type": "string", "default": "#4f46e5", "description": "Launcher button, user message bubbles, header gradient start, focus rings." },
+        "secondary":  { "type": "string", "default": "#6c757d", "description": "Header gradient end, hover states." },
+        "background": { "type": "string", "default": "#ffffff", "description": "Widget panel background." },
+        "text":       { "type": "string", "default": "#212529", "description": "Primary text color." },
+        "border":     { "type": "string", "default": "#dee2e6", "description": "Borders and dividers." }
+      }
+    },
+
+    "position": {
+      "type": "string",
+      "description": "Corner of the screen where the launcher button appears.",
+      "enum": ["bottom-right", "bottom-left", "top-right", "top-left"],
+      "default": "bottom-right"
+    },
+
+    "positionMargin": {
+      "type": "string",
+      "description": "Edge margin level (1 = ~0.5rem, 5 = ~2.5rem).",
+      "enum": ["1", "2", "3", "4", "5"],
+      "default": "2"
+    },
+
+    "size": {
+      "type": "string",
+      "description": "Launcher button diameter.",
+      "enum": ["small", "medium", "large"],
+      "default": "medium",
+      "x-size-map": { "small": "44px", "medium": "56px", "large": "68px" }
+    },
+
+    "layout": {
+      "type": "object",
+      "description": "Chat panel dimensions.",
+      "additionalProperties": false,
+      "properties": {
+        "width":           { "type": "string", "default": "360px" },
+        "height":          { "type": "string", "default": "520px" },
+        "maxWidth":        { "type": "string", "default": "100%" },
+        "maxHeight":       { "type": "string", "default": "100%" },
+        "horizontalSpace": { "type": "string", "enum": ["1", "2", "3", "4", "5"], "default": "2", "description": "Horizontal gap between the panel edge and the viewport edge." },
+        "verticalSpace":   { "type": "string", "enum": ["1", "2", "3", "4", "5"], "default": "2", "description": "Vertical gap between the panel and the launcher button." }
+      }
+    },
+
+    "avatar": {
+      "type": "object",
+      "description": "Avatar configuration for bot, user, and header.",
+      "additionalProperties": false,
+      "properties": {
+        "bot":      { "type": "string", "format": "uri", "description": "Bot avatar URL. Omit for default robot SVG." },
+        "user":     { "type": "string", "format": "uri", "description": "User avatar URL. Omit for default person SVG." },
+        "header":   { "type": "string", "format": "uri", "description": "Header avatar URL. Omit for default robot SVG." },
+        "showBot":  { "type": "boolean", "default": true,  "description": "Render the bot avatar next to bot messages." },
+        "showUser": { "type": "boolean", "default": true,  "description": "Render the user avatar next to user messages." }
+      }
+    },
+
+    "allowFullscreen":         { "type": "boolean", "default": true,  "description": "Show the fullscreen toggle button in the chat header." },
+    "showMessageStatus":       { "type": "boolean", "default": true,  "description": "Show delivery/read status ticks on user messages." },
+    "enableSearch":            { "type": "boolean", "default": true,  "description": "Show the search toggle in the chat header." },
+    "enableMultiConversation": { "type": "boolean", "default": false, "description": "Enable conversation list view inside the popup. Requires connector.listConversations / switchConversation." },
+    "enableFileUpload":        { "type": "boolean", "default": true,  "description": "Show the file upload button in the chat input (still requires connector.sendFile)." },
+    "hideButtonOnOpen":        { "type": "boolean", "default": false, "description": "Hide the launcher button while the chat window is open. Only applies when slotted custom content is used." },
+
+    "windowMode": {
+      "type": "string",
+      "description": "How the chat window is presented. popup = floating card, side-panel = full-height drawer, fullscreen = covers viewport, inline = static within parent container.",
+      "enum": ["popup", "side-panel", "fullscreen", "inline"],
+      "default": "popup"
+    },
+
+    "endOfConversationSurvey": {
+      "type": "object",
+      "description": "End-of-conversation survey configuration. The connector must implement sendSurvey for submissions to be delivered.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled":             { "type": "boolean", "default": true,     "description": "Enable the survey flow." },
+        "mode":                { "type": "string", "enum": ["inline", "screen"], "default": "screen", "description": "inline = appended to message list as a bot card; screen = full overlay." },
+        "trigger":             { "type": "string", "enum": ["onClose", "manual"], "default": "onClose", "description": "onClose = intercept close button; manual = only on host-dispatched show-survey event." },
+        "maxRating":           { "type": "integer", "minimum": 1, "maximum": 10, "default": 5, "description": "Maximum rating value (number of stars)." },
+        "requireCommentBelow": { "type": "integer", "minimum": 0, "default": 3, "description": "Require a comment when the rating is at or below this value. Set 0 to never require." },
+        "kind":                { "oneOf": [{ "type": "string" }, { "type": "number" }], "default": 1, "description": "Opaque identifier forwarded to the connector as SurveyPayload.kind." },
+        "resetOnSubmit":       { "type": "boolean", "default": true, "description": "Tear down the engine + connector after submit/skip so the next open starts fresh." }
+      }
+    }
+
+  },
+  "examples": [
+    {
+      "colors": { "primary": "#0ea5e9", "secondary": "#0284c7" },
+      "position": "bottom-left",
+      "positionMargin": "3",
+      "size": "large"
+    },
+    {
+      "colors": { "primary": "#10b981", "secondary": "#059669" },
+      "windowMode": "side-panel",
+      "enableSearch": true,
+      "enableMultiConversation": true,
+      "endOfConversationSurvey": {
+        "enabled": true,
+        "mode": "screen",
+        "trigger": "onClose",
+        "maxRating": 5,
+        "requireCommentBelow": 3,
+        "kind": 1,
+        "resetOnSubmit": true
+      }
+    }
+  ]
+}

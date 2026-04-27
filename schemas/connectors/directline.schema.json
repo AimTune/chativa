@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/connectors/directline.schema.json",
+  "title": "DirectLineConnectorOptions",
+  "description": "Constructor options for DirectLineConnector — Azure Bot Framework DirectLine v3 adapter. Source: packages/connector-directline/src/DirectLineConnector.ts. Provide exactly one of: token, secret (server-side only — generates a token), or tokenGeneratorUrl.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+
+    "secret":              { "type": "string", "description": "DirectLine channel secret. Server-side only — never expose this in browser code. The connector will exchange it for a token." },
+    "token":               { "type": "string", "description": "Pre-fetched DirectLine token (preferred for browser deployments)." },
+    "tokenGeneratorUrl":   { "type": "string", "format": "uri", "description": "URL of a backend endpoint that issues tokens. The connector will POST to this URL and expect { token, conversationId?, userId? } in the response." },
+
+    "userId":              { "type": "string", "description": "Override the user id. When omitted, a random per-instance id is generated (or persisted, if resumeConversation is true)." },
+    "userName":            { "type": "string", "description": "Display name attached to outgoing activities. Defaults to the resolved userId." },
+    "domain":              { "type": "string", "format": "uri", "default": "https://directline.botframework.com/v3/directline", "description": "Sovereign-cloud DirectLine endpoint (e.g. government, china)." },
+    "locale":              { "type": "string", "description": "BCP-47 locale (e.g. tr-TR) sent in the webchat/join event and outgoing activities." },
+    "joinParameters":      { "type": "object", "description": "Extra key/value pairs merged into the webchat/join event's value payload.", "additionalProperties": true },
+    "eventHandlers":       { "type": "object", "description": "Map of bot-initiated event names to handler functions. Cannot be serialised — set programmatically.", "additionalProperties": { "type": "object" } },
+    "resumeConversation":  { "type": "boolean", "default": false, "description": "Persist conversationId, token, watermark, and the auto-generated userId to localStorage so reload resumes the same conversation." },
+    "typingTimeoutMs":     { "type": "integer", "minimum": 0, "default": 3000, "description": "How long the typing indicator stays visible after a bot typing signal before auto-clearing. Each new signal resets the timer." },
+    "typingUntilMessage":  { "type": "boolean", "default": false, "description": "When true, the typing indicator stays on until the next bot message arrives (no auto-clear)." }
+
+  },
+  "anyOf": [
+    { "required": ["token"] },
+    { "required": ["secret"] },
+    { "required": ["tokenGeneratorUrl"] }
+  ]
+}

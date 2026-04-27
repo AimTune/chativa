@@ -1,15 +1,22 @@
 import { defineConfig, type Plugin } from "vite";
 import { resolve } from "path";
-import { copyFileSync, existsSync } from "fs";
+import { copyFileSync, existsSync, mkdirSync } from "fs";
 
-/** Copies manifest.json (and optional icon PNGs) into dist/ after each build. */
+/**
+ * Copies manifest.json + icon PNGs into dist/ after each build.
+ * Icons are sourced from `public/icons/icon-{size}.png` so artwork lives
+ * outside the build entry points; the manifest references `icons/icon-{size}.png`.
+ */
 function copyManifestPlugin(): Plugin {
   return {
     name: "copy-manifest",
     closeBundle() {
       copyFileSync("manifest.json", "dist/manifest.json");
-      for (const icon of ["icon16.png", "icon48.png", "icon128.png"]) {
-        if (existsSync(icon)) copyFileSync(icon, `dist/${icon}`);
+      mkdirSync("dist/icons", { recursive: true });
+      for (const size of [16, 32, 48, 128]) {
+        const file = `icon-${size}.png`;
+        const src = `public/icons/${file}`;
+        if (existsSync(src)) copyFileSync(src, `dist/icons/${file}`);
       }
     },
   };

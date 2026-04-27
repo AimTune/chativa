@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/connectors/dummy.schema.json",
+  "title": "DummyConnectorOptions",
+  "description": "Constructor options for DummyConnector — local mock connector used in dev/tests. Source: packages/connector-dummy/src/DummyConnector.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name":         { "type": "string", "default": "dummy", "description": "Override the connector identifier (lets you register multiple dummies)." },
+    "replyDelay":   { "type": "integer", "minimum": 0, "default": 500,  "description": "Milliseconds before the echo reply is returned after a message is sent." },
+    "connectDelay": { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait before connect() resolves — simulates a real handshake." }
+  }
+}

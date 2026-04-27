@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/genui/ai-chunk.schema.json",
+  "title": "AIChunk",
+  "description": "Streaming chunk emitted by IConnector.onGenUIChunk(). The engine assembles chunks (keyed by streamId) into a synthetic genui IncomingMessage. Source: packages/core/src/domain/entities/GenUI.ts.",
+  "oneOf": [
+    {
+      "title": "AIChunkText",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "content", "id"],
+      "properties": {
+        "type":    { "const": "text" },
+        "content": { "type": "string", "description": "Markdown-compatible text fragment." },
+        "id":      { "type": "integer", "description": "Unique id within this stream." }
+      }
+    },
+    {
+      "title": "AIChunkUI",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "component", "props", "id"],
+      "properties": {
+        "type":      { "const": "ui" },
+        "component": { "type": "string", "description": "Name registered in GenUIRegistry (e.g. genui-card, genui-form, weather)." },
+        "props":     { "type": "object", "description": "Props passed directly to the component instance.", "additionalProperties": true },
+        "id":        { "type": "integer", "description": "Unique id within this stream — events can target this id via `for`." }
+      }
+    },
+    {
+      "title": "AIChunkEvent",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "name", "id"],
+      "properties": {
+        "type":    { "const": "event" },
+        "name":    { "type": "string", "description": "Event name (e.g. form_success, stream_end)." },
+        "payload": { "description": "Arbitrary payload delivered to listeners." },
+        "id":      { "type": "integer", "description": "Unique id of this chunk." },
+        "for":     { "type": "integer", "description": "Optional target component id. Omit to broadcast to all listeners in the same message bubble." }
+      }
+    }
+  ],
+  "examples": [
+    { "type": "text", "content": "Here are your options:", "id": 1 },
+    { "type": "ui", "component": "genui-card", "props": { "title": "Pro", "description": "Unlimited" }, "id": 2 },
+    { "type": "event", "name": "form_success", "payload": { "code": "OK" }, "id": 3, "for": 2 }
+  ]
+}

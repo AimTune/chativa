@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/messages/incoming-message.schema.json",
+  "title": "IncomingMessage",
+  "description": "Message delivered from connector to ChatEngine. The widget renders it via MessageTypeRegistry.get(type). Source: packages/core/src/domain/entities/Message.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "data"],
+  "properties": {
+    "id":        { "type": "string", "description": "Unique id used for deduplication and event routing." },
+    "type":      { "type": "string", "description": "Registered message type. Built-in: text, image, card, buttons, quick-reply, carousel, file, video, genui.", "examples": ["text", "card", "genui"] },
+    "from":      { "type": "string", "enum": ["bot", "user"], "description": "Sender side. Defaults to bot when omitted." },
+    "data":      { "type": "object", "description": "Type-specific payload. Shape depends on `type`. See built-in schemas in schemas/messages/data/ for the canonical shapes.", "additionalProperties": true },
+    "timestamp": { "type": "integer", "description": "Unix epoch milliseconds." },
+    "actions":   { "type": "array", "description": "Optional quick-reply chips rendered below the bubble.", "items": { "$ref": "./message-action.schema.json" } }
+  },
+  "examples": [
+    { "id": "1", "type": "text", "from": "bot", "data": { "text": "Hello!" }, "timestamp": 1735689600000 },
+    {
+      "id": "2",
+      "type": "card",
+      "from": "bot",
+      "data": {
+        "title": "Pro Plan",
+        "subtitle": "Best for teams",
+        "image": "https://example.com/pro.png",
+        "buttons": [
+          { "label": "Choose Pro", "value": "select_pro" }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/connectors/signalr.schema.json",
+  "title": "SignalRConnectorOptions",
+  "description": "Constructor options for SignalRConnector. Requires @microsoft/signalr as a peer dependency. Source: packages/connector-signalr/src/SignalRConnector.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url"],
+  "properties": {
+    "url":                { "type": "string", "format": "uri", "description": "SignalR hub URL.", "examples": ["https://my-server.example.com/chathub"] },
+    "hubName":            { "type": "string", "default": "chat", "description": "Logical hub name — informational, not sent on the wire." },
+    "receiveMethod":      { "type": "string", "default": "ReceiveMessage", "description": "Hub method name the server invokes when delivering a message." },
+    "sendMethod":         { "type": "string", "default": "SendMessage",    "description": "Hub method invoked by sendMessage()." },
+    "surveyMethod":       { "type": "string", "default": "SendSurvey",     "description": "Hub method invoked by sendSurvey()." },
+    "accessTokenFactory": { "description": "Function returning a bearer token (or Promise of one). Cannot be serialised — set programmatically.", "type": ["null", "object"] }
+  }
+}

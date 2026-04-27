@@ -40,6 +40,28 @@ Tests live at `src/foo/__tests__/foo.test.ts` mirroring the source path.
 
 ---
 
+## Schema Sync Rule (CRITICAL)
+
+Several `domain/` types have a paired JSON Schema under `schemas/` (see [schemas/README.md](./schemas/README.md) for the full pairing table). Editors and downstream consumers depend on those schemas being in lock-step with the TypeScript source.
+
+**Rule.** When you change one of these TypeScript types, you MUST update its schema in the same commit. The opposite is also true: do not edit a schema without changing the source type.
+
+Enforcement is automated:
+
+1. **Compile-time** — `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` declares mapped-type contracts (`{ [K in keyof Required<T>]: true }`). Adding or removing a field on `ThemeConfig`, `ThemeColors`, `LayoutConfig`, `AvatarConfig`, or `EndOfConversationSurveyConfig` fails `pnpm typecheck` until the contract is updated.
+2. **Runtime** — the same test reads `schemas/theme.schema.json` and asserts that `properties` keys exactly match those contracts. A drift fails `pnpm test`.
+
+When you add a new schema-paired type:
+
+1. Add the type in the appropriate `domain/` file.
+2. Mirror it in a new file under `schemas/` (copy the closest sibling as a template).
+3. Add a row to [schemas/README.md](./schemas/README.md).
+4. Extend `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block.
+
+Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test only mechanically guards the high-traffic `ThemeConfig` for now; extending it to those types is welcome.
+
+---
+
 ## Architecture Rules (CRITICAL)
 
 ### Dependency Direction

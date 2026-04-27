@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/messages/outgoing-message.schema.json",
+  "title": "OutgoingMessage",
+  "description": "Message produced by the user that ChatEngine hands to the connector's sendMessage(). Source: packages/core/src/domain/entities/Message.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "type", "data"],
+  "properties": {
+    "id":        { "type": "string", "description": "Client-generated id (used to correlate sent → status updates)." },
+    "type":      { "type": "string", "description": "Message kind. Built-in chat input always emits 'text'.", "examples": ["text", "file"] },
+    "data":      { "type": "object", "description": "Type-specific payload. For text messages: { text: string }.", "additionalProperties": true },
+    "timestamp": { "type": "integer", "description": "Unix epoch milliseconds." }
+  }
+}

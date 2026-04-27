@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://aimtune.github.io/chativa/schemas/messages/survey-payload.schema.json",
+  "title": "SurveyPayload",
+  "description": "Payload submitted by IConnector.sendSurvey() at the end of a conversation. Source: packages/core/src/domain/ports/IConnector.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["rating"],
+  "properties": {
+    "rating":  { "type": "integer", "minimum": 1, "description": "User-selected rating (1 .. theme.endOfConversationSurvey.maxRating)." },
+    "comment": { "type": "string", "description": "Optional free-text comment. Required when rating <= theme.endOfConversationSurvey.requireCommentBelow." },
+    "kind":    { "oneOf": [{ "type": "string" }, { "type": "number" }], "description": "Opaque identifier propagated from theme.endOfConversationSurvey.kind. DirectLine uses this as the numeric `type` field." }
+  }
+}
