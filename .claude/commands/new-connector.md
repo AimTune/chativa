@@ -1,16 +1,44 @@
+---
+description: Scaffold a new Chativa connector as its own monorepo package under packages/connector-[name]/.
+argument-hint: <PascalCase name, e.g. MyApi>
+---
+
 # New Connector Scaffold
 
-Create a new Chativa connector. The argument is the connector name in PascalCase (e.g. `MyApi`).
+Create a new Chativa connector. The argument is the connector name in PascalCase.
 
 Usage: `/new-connector MyApi`
 
+> Mirror `packages/connector-dummy/` exactly for `package.json`, `tsconfig.json`, `vite.config.ts`, and `vitest.config.ts`. Those files are non-trivial and must match the rest of the monorepo or `pnpm -r build` will break.
+
 ---
 
-Given the connector name `$ARGUMENTS`, do the following steps **in order**:
+Given the connector name `$ARGUMENTS` (PascalCase), use the lowercase form for `[name]` and the connector's `.name` property.
 
-## Step 1 — Create the connector file
+## Step 1 — Create the package directory
 
-Create `src/infrastructure/connectors/$ARGUMENTS_Connector.ts` implementing `IConnector`:
+Create the package skeleton at `packages/connector-[name]/`. Read `packages/connector-dummy/` first and copy the structure:
+
+```
+packages/connector-[name]/
+├── package.json          # rename to @chativa/connector-[name]
+├── tsconfig.json         # extends ../../tsconfig.base.json + paths to @chativa/core
+├── vite.config.ts        # lib build, externals @chativa/core
+├── vite.config.cdn.ts    # CDN bundle (only if needed)
+├── vitest.config.ts
+└── src/
+    ├── index.ts
+    └── $ARGUMENTS_Connector.ts
+```
+
+`package.json` highlights to update from the template:
+- `"name": "@chativa/connector-[name]"`
+- `"description"` — one line
+- `"keywords"` — include `chativa`, `chat`, `connector`, plus protocol-specific terms
+
+## Step 2 — Implement the connector
+
+Create `packages/connector-[name]/src/$ARGUMENTS_Connector.ts` implementing `IConnector` from `@chativa/core`:
 
 ```ts
 import type {
@@ -18,15 +46,15 @@ import type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
-} from "../../domain/ports/IConnector";
-import type { OutgoingMessage } from "../../domain/entities/Message";
+  OutgoingMessage,
+} from "@chativa/core";
 
 export interface $ARGUMENTS_ConnectorOptions {
-  // Add your connection options here
+  // Connection options here.
 }
 
 export class $ARGUMENTS_Connector implements IConnector {
-  readonly name = "$ARGUMENTS_lowercase";
+  readonly name = "[name]";
   readonly addSentToHistory = true;
 
   private messageHandler: MessageHandler | null = null;
@@ -61,22 +89,14 @@ export class $ARGUMENTS_Connector implements IConnector {
   onDisconnect(callback: DisconnectHandler): void {
     this.disconnectHandler = callback;
   }
-
-  /** Helper: simulate an incoming message (useful for testing). */
-  simulateIncoming(text: string): void {
-    this.messageHandler?.({
-      id: `sim-${Date.now()}`,
-      type: "text",
-      data: { text },
-      timestamp: Date.now(),
-    });
-  }
 }
 ```
 
-## Step 2 — Create the test file
+Optional capabilities (`sendFile`, `loadHistory`, `onMessageStatus`, `sendFeedback`, `onGenUIChunk`, `receiveComponentEvent`) are feature-detected by `ChatEngine` — only implement what you need.
 
-Create `src/infrastructure/connectors/__tests__/$ARGUMENTS_Connector.test.ts`:
+## Step 3 — Tests
+
+Create `packages/connector-[name]/src/__tests__/$ARGUMENTS_Connector.test.ts`:
 
 ```ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -86,11 +106,11 @@ describe("$ARGUMENTS_Connector", () => {
   let connector: $ARGUMENTS_Connector;
 
   beforeEach(() => {
-    connector = new $ARGUMENTS_Connector({});
+    connector = new $ARGUMENTS_Connector({} as never);
   });
 
   it("has the correct name", () => {
-    expect(connector.name).toBe("$ARGUMENTS_lowercase");
+    expect(connector.name).toBe("[name]");
   });
 
   it("connects without throwing", async () => {
@@ -102,46 +122,31 @@ describe("$ARGUMENTS_Connector", () => {
     await expect(connector.disconnect()).resolves.toBeUndefined();
   });
 
-  it("registers a message handler and delivers messages", async () => {
-    await connector.connect();
-    const handler = vi.fn();
-    connector.onMessage(handler);
-    connector.simulateIncoming("hello");
-    await vi.waitFor(() => expect(handler).toHaveBeenCalledOnce());
-    expect(handler.mock.calls[0][0]).toMatchObject({
-      type: "text",
-      data: { text: "hello" },
-    });
-  });
-
   it("calls onConnect callback when connected", async () => {
     const cb = vi.fn();
     connector.onConnect(cb);
     await connector.connect();
     expect(cb).toHaveBeenCalledOnce();
   });
-
-  it("calls onDisconnect callback when disconnected", async () => {
-    const cb = vi.fn();
-    connector.onDisconnect(cb);
-    await connector.connect();
-    await connector.disconnect();
-    expect(cb).toHaveBeenCalledOnce();
-  });
 });
 ```
 
-## Step 3 — Register the export
+## Step 4 — Re-export
 
-Open `src/index.ts` (or create it if missing) and add:
+`packages/connector-[name]/src/index.ts`:
+
 ```ts
-export { $ARGUMENTS_Connector } from "./infrastructure/connectors/$ARGUMENTS_Connector";
+export { $ARGUMENTS_Connector } from "./$ARGUMENTS_Connector";
+export type { $ARGUMENTS_ConnectorOptions } from "./$ARGUMENTS_Connector";
 ```
 
-## Step 4 — Update README
+## Step 5 — Schema pairing
 
-Add a section under "Connectors" in `README.md` documenting the new connector.
+Mirror `$ARGUMENTS_ConnectorOptions` in `schemas/connectors/[name].schema.json` (copy `schemas/connectors/dummy.schema.json` as a template). Add a row to `schemas/README.md`. Hand off to the `chativa-schema-sync` agent if non-trivial.
 
-## Step 5 — Run tests
+## Step 6 — Document and verify
 
-Run `npm test` and make sure the new tests pass.
+1. Add the connector to the README under "Connectors".
+2. Run `pnpm install` from the repo root if this is a brand-new package (so pnpm picks up the workspace member).
+3. Run `pnpm --filter @chativa/connector-[name] typecheck` and `pnpm --filter @chativa/connector-[name] test`.
+4. Run `pnpm -r --filter './packages/**' build` to confirm the workspace builds end-to-end.

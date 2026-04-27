@@ -1,116 +1,123 @@
+---
+description: Scaffold a new Chativa extension that hooks into the message pipeline and lifecycle.
+argument-hint: <PascalCase name, e.g. Analytics>
+---
+
 # New Extension Scaffold
 
-Create a new Chativa extension. The argument is the extension name in PascalCase.
+Create a new Chativa extension. Extensions are middleware — they install once and hook into the pipeline (`onBeforeSend`, `onAfterReceive`), the widget lifecycle (`onWidgetOpen`, `onWidgetClose`), and can register slash commands.
 
 Usage: `/new-extension Analytics`
 
+> Extensions live in **user-land** — there is no dedicated `packages/extension-*`. For in-repo demos and tests, use `apps/sandbox/src/extensions/`. For real apps, the file lives wherever the consumer wants it.
+
 ---
 
-Given the extension name `$ARGUMENTS`, do the following steps **in order**:
+Given the extension name `$ARGUMENTS` (PascalCase):
 
-## Step 1 — Create the extension file
+## Step 1 — Decide the location
 
-Create `src/infrastructure/extensions/$ARGUMENTS_Extension.ts`:
+- In-repo demo / fixture: `apps/sandbox/src/extensions/$ARGUMENTS_Extension.ts`
+- Library-grade reusable extension that ships separately: a fresh `packages/extension-[name]/` package (rare — usually overkill).
+
+If unsure, ask the user. Default to the sandbox path.
+
+## Step 2 — Implement the extension
 
 ```ts
-import type { IExtension, ExtensionContext } from "../../domain/ports/IExtension";
+import type { IExtension, ExtensionContext } from "@chativa/core";
 
 export interface $ARGUMENTS_ExtensionOptions {
-  // Add your configuration options here
+  // Configuration options here.
 }
 
 export class $ARGUMENTS_Extension implements IExtension {
-  readonly name = "$ARGUMENTS_lowercase-extension";
+  readonly name = "[name]-extension";
   readonly version = "1.0.0";
 
-  private options: $ARGUMENTS_ExtensionOptions;
-  private uninstallHandlers: (() => void)[] = [];
-
-  constructor(options: $ARGUMENTS_ExtensionOptions = {}) {
-    this.options = options;
-  }
+  constructor(private readonly options: $ARGUMENTS_ExtensionOptions = {} as never) {}
 
   install(context: ExtensionContext): void {
-    // Hook into message pipeline
-    context.onAfterReceive((msg) => {
-      // Transform or react to incoming messages
-      // Return null to drop the message
+    context.onBeforeSend((msg) => {
+      // Transform or react to outgoing messages. Return null to cancel.
       return msg;
     });
 
-    context.onBeforeSend((msg) => {
-      // Transform or react to outgoing messages
-      // Return null to cancel sending
+    context.onAfterReceive((msg) => {
+      // Transform or react to incoming messages. Return null to drop.
       return msg;
     });
 
     context.onWidgetOpen(() => {
-      // Widget opened
+      // Widget opened.
     });
 
     context.onWidgetClose(() => {
-      // Widget closed
+      // Widget closed.
     });
+
+    // Optional — register a slash command:
+    // context.registerCommand({
+    //   name: "[name]",
+    //   description: () => "Run [name] action",
+    //   execute: ({ args }) => { /* ... */ },
+    // });
   }
 
   uninstall(): void {
-    this.uninstallHandlers.forEach((h) => h());
-    this.uninstallHandlers = [];
+    // Cleanup any external resources here. Hook teardown is automatic.
   }
 }
 ```
 
-Also create the `src/infrastructure/extensions/` directory if it doesn't exist.
+## Step 3 — Tests
 
-## Step 2 — Create the test file
-
-Create `src/infrastructure/extensions/__tests__/$ARGUMENTS_Extension.test.ts`:
+Create `__tests__/$ARGUMENTS_Extension.test.ts` next to the source:
 
 ```ts
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
+import { ExtensionRegistry } from "@chativa/core";
 import { $ARGUMENTS_Extension } from "../$ARGUMENTS_Extension";
-import { ExtensionRegistry } from "../../../application/registries/ExtensionRegistry";
 
 describe("$ARGUMENTS_Extension", () => {
   beforeEach(() => ExtensionRegistry.clear());
 
   it("has the correct name", () => {
-    const ext = new $ARGUMENTS_Extension({});
-    expect(ext.name).toBe("$ARGUMENTS_lowercase-extension");
+    const ext = new $ARGUMENTS_Extension();
+    expect(ext.name).toBe("[name]-extension");
   });
 
-  it("installs without throwing", () => {
-    const ext = new $ARGUMENTS_Extension({});
-    expect(() => ExtensionRegistry.install(ext)).not.toThrow();
-  });
-
-  it("is listed after installation", () => {
-    ExtensionRegistry.install(new $ARGUMENTS_Extension({}));
-    expect(ExtensionRegistry.has("$ARGUMENTS_lowercase-extension")).toBe(true);
+  it("installs into ExtensionRegistry", () => {
+    ExtensionRegistry.install(new $ARGUMENTS_Extension());
+    expect(ExtensionRegistry.has("[name]-extension")).toBe(true);
   });
 
   it("uninstalls cleanly", () => {
-    ExtensionRegistry.install(new $ARGUMENTS_Extension({}));
-    ExtensionRegistry.uninstall("$ARGUMENTS_lowercase-extension");
-    expect(ExtensionRegistry.has("$ARGUMENTS_lowercase-extension")).toBe(false);
+    ExtensionRegistry.install(new $ARGUMENTS_Extension());
+    ExtensionRegistry.uninstall("[name]-extension");
+    expect(ExtensionRegistry.has("[name]-extension")).toBe(false);
   });
 
-  it("passes messages through pipeline unmodified by default", () => {
-    ExtensionRegistry.install(new $ARGUMENTS_Extension({}));
-    const msg = { id: "1", type: "text", data: { text: "hi" } };
+  it("passes incoming messages through unchanged by default", () => {
+    ExtensionRegistry.install(new $ARGUMENTS_Extension());
+    const msg = { id: "1", type: "text", from: "bot" as const, data: { text: "hi" } };
     const result = ExtensionRegistry.runAfterReceive(msg);
     expect(result).toEqual(msg);
   });
 });
 ```
 
-## Step 3 — Export
+## Step 4 — Wire it up (sandbox only)
 
-Add to `src/index.ts`:
+If the extension lives under `apps/sandbox/src/extensions/`, install it from `apps/sandbox/src/main.ts` (or the appropriate entry):
+
 ```ts
-export { $ARGUMENTS_Extension } from "./infrastructure/extensions/$ARGUMENTS_Extension";
+import { ExtensionRegistry } from "@chativa/core";
+import { $ARGUMENTS_Extension } from "./extensions/$ARGUMENTS_Extension";
+
+ExtensionRegistry.install(new $ARGUMENTS_Extension({ /* ... */ }));
 ```
 
-## Step 4 — Run tests
+## Step 5 — Verify
 
-Run `npm test` and confirm all tests pass.
+Run `pnpm --filter <package> test` and `pnpm --filter <package> typecheck`.
