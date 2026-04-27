@@ -8,6 +8,7 @@ import "./sections/GenUISection";
 import "./sections/TypingSection";
 import "./sections/ActionsSection";
 import "./sections/SurveySection";
+import "./sections/ConfigSection";
 
 @customElement("sandbox-controls")
 export class SandboxControls extends LitElement {
@@ -177,6 +178,8 @@ export class SandboxControls extends LitElement {
           <sandbox-survey-section></sandbox-survey-section>
           <div class="divider"></div>
           <sandbox-actions-section></sandbox-actions-section>
+          <div class="divider"></div>
+          <sandbox-config-section></sandbox-config-section>
           <div class="divider"></div>
           <a href="/agent-panel.html" class="agent-panel-link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

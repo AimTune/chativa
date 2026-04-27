@@ -10,12 +10,6 @@ The current sandbox panel (`apps/sandbox/src/sandbox/SandboxControls.ts`) packs 
 
 - [ ] Convert `SandboxControls` from single-scroll to sidebar + tabs (one tab per section: Theme, Layout, Connector, Messages, GenUI, Survey, Typing, Actions, Extensions).
 - [ ] Add a right-hand live preview area with viewport-resize controls (so the same widget can be tested at desktop / tablet / mobile widths).
-- [ ] Generated-config drawer at the bottom:
-  - [ ] Computes the full `ChativaSettings` JSON from the live store + connector + extension state.
-  - [ ] **Copy as JSON** button.
-  - [ ] **Copy as `<chat-iva>` HTML snippet** button.
-  - [ ] **Download `chativa.config.json`** button.
-- [ ] **Paste-to-apply**: a `<textarea>` accepts a JSON blob; on apply, validate against `chativa-settings.schema.json` and call `chatStore.setTheme()` + `setConnector()` accordingly. (User ruled out URL-hash sharing — JSON paste is the only import path.)
 - [ ] Capability badges per connector — when a connector is selected, show which optional capabilities (`sendFile`, `loadHistory`, `onMessageStatus`, `sendSurvey`, `onGenUIChunk`, `listConversations`, …) are available, dimmed for unsupported.
 - [ ] Preset selector with at least: Default, Dark, Compact, Minimal — each preset writes a partial `ThemeConfig`.
 - [ ] Per-tab "Reset section" + global "Reset all".
