@@ -2,6 +2,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import {
   chatStore,
+  DEFAULT_THEME,
   type ThemeConfig,
   type ButtonPosition,
   type ButtonSize,
@@ -10,6 +11,61 @@ import {
   type WindowMode,
 } from "@chativa/core";
 import { sectionStyles } from "../sandboxShared";
+
+/**
+ * Theme presets exposed in the Appearance tab. Each entry is a
+ * `DeepPartial<ThemeConfig>` merged into the active theme via
+ * `chatStore.setTheme`. The "Default" preset explicitly lists every
+ * boolean / window-mode field so it actually resets toggles the user
+ * has flipped — `mergeTheme` is a deep-merge, not a replace.
+ */
+const PRESETS: { id: string; label: string; theme: DeepPartial<ThemeConfig> }[] = [
+  {
+    id: "default",
+    label: "Default",
+    theme: {
+      ...DEFAULT_THEME,
+      allowFullscreen: true,
+      enableSearch: true,
+      enableMultiConversation: false,
+      enableFileUpload: true,
+      hideButtonOnOpen: false,
+      windowMode: "popup",
+    },
+  },
+  {
+    id: "dark",
+    label: "Dark",
+    theme: {
+      colors: {
+        primary: "#7c3aed",
+        secondary: "#5b21b6",
+        background: "#1e1e2e",
+        text: "#f8fafc",
+        border: "#334155",
+      },
+    },
+  },
+  {
+    id: "compact",
+    label: "Compact",
+    theme: {
+      size: "small",
+      positionMargin: "1",
+      layout: { width: "320px", height: "440px" },
+    },
+  },
+  {
+    id: "minimal",
+    label: "Minimal",
+    theme: {
+      allowFullscreen: false,
+      enableSearch: false,
+      enableFileUpload: false,
+      endOfConversationSurvey: { enabled: false },
+    },
+  },
+];
 
 const COLOR_PRESETS = [
   { label: "Indigo", value: "#4f46e5" },
@@ -62,6 +118,31 @@ export class AppearanceSection extends LitElement {
         background: #4f46e5; border-color: #4f46e5; color: white;
         box-shadow: 0 2px 8px rgba(79,70,229,0.3);
       }
+
+      .preset-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+      }
+      .preset-chip {
+        appearance: none;
+        border: 1.5px solid #e2e8f0;
+        background: white;
+        color: #475569;
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 7px 4px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.12s, border-color 0.12s, color 0.12s, transform 0.12s;
+      }
+      .preset-chip:hover {
+        background: #f1f5f9;
+        border-color: #cbd5e1;
+        color: #0f172a;
+      }
+      .preset-chip:active { transform: scale(0.96); }
 
       .colors { display: grid; grid-template-columns: repeat(8,1fr); gap: 6px; margin-bottom: 10px; }
       .color-swatch {
@@ -129,6 +210,20 @@ export class AppearanceSection extends LitElement {
       </div>
       ${this._open ? html`
         <div class="section-body stack">
+
+          <!-- Presets -->
+          <div>
+            <div class="sub-label">Presets</div>
+            <div class="preset-row">
+              ${PRESETS.map((p) => html`
+                <button
+                  class="preset-chip"
+                  title="Apply ${p.label} preset"
+                  @click=${() => this._set(p.theme)}
+                >${p.label}</button>
+              `)}
+            </div>
+          </div>
 
           <!-- Position -->
           <div>
