@@ -9,7 +9,6 @@ Backlog for things we deliberately deferred. Not a full issue tracker — this f
 The current sandbox panel (`apps/sandbox/src/sandbox/SandboxControls.ts`) packs every section into a 272 px scroll. We agreed to re-do it with a sidebar + per-feature tabs + a generated-config drawer in a follow-up PR.
 
 - [ ] Add a right-hand live preview area with viewport-resize controls (so the same widget can be tested at desktop / tablet / mobile widths).
-- [ ] Capability badges per connector — when a connector is selected, show which optional capabilities (`sendFile`, `loadHistory`, `onMessageStatus`, `sendSurvey`, `onGenUIChunk`, `listConversations`, …) are available, dimmed for unsupported.
 - [ ] Preset selector with at least: Default, Dark, Compact, Minimal — each preset writes a partial `ThemeConfig`.
 - [ ] Per-tab "Reset section" + global "Reset all".
 - [ ] Mobile responsive: collapse sidebar into a top tab bar under 768 px.

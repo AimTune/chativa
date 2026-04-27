@@ -2,6 +2,7 @@ import { LitElement, html, css, svg, type SVGTemplateResult } from "lit";
 import { customElement, state } from "lit/decorators.js";
 
 import "./sections/AppearanceSection";
+import "./sections/ConnectorSection";
 import "./sections/FeaturesSection";
 import "./sections/MessagesSection";
 import "./sections/GenUISection";
@@ -12,6 +13,7 @@ import "./sections/ConfigSection";
 
 type TabId =
   | "appearance"
+  | "connector"
   | "features"
   | "messages"
   | "genui"
@@ -31,6 +33,11 @@ const TABS: TabDef[] = [
     id: "appearance",
     label: "Appearance",
     icon: svg`<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18" opacity=".4"/>`,
+  },
+  {
+    id: "connector",
+    label: "Connector",
+    icon: svg`<path d="M9 2v6m6-6v6"/><rect x="6" y="8" width="12" height="6" rx="1"/><path d="M12 14v8"/>`,
   },
   {
     id: "features",
@@ -299,6 +306,9 @@ export class SandboxControls extends LitElement {
           <div class="tab-content">
             <div class="tab-pane ${this._activeTab === "appearance" ? "active" : ""}">
               <sandbox-appearance-section></sandbox-appearance-section>
+            </div>
+            <div class="tab-pane ${this._activeTab === "connector" ? "active" : ""}">
+              <sandbox-connector-section></sandbox-connector-section>
             </div>
             <div class="tab-pane ${this._activeTab === "features" ? "active" : ""}">
               <sandbox-features-section></sandbox-features-section>
