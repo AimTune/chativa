@@ -269,6 +269,81 @@ describe("ChatStore", () => {
     EventBus.off("search_query_changed", handler);
   });
 
+  // ── resetSession ───────────────────────────────────────────────────
+
+  it("resetSession() clears history pagination fields", () => {
+    chatStore.getState().setHasMoreHistory(true);
+    chatStore.getState().setIsLoadingHistory(true);
+    chatStore.getState().setHistoryCursor("page2");
+
+    chatStore.getState().resetSession();
+
+    const s = chatStore.getState();
+    expect(s.hasMoreHistory).toBe(false);
+    expect(s.isLoadingHistory).toBe(false);
+    expect(s.historyCursor).toBeUndefined();
+  });
+
+  it("resetSession() clears typing, unread, reconnect, and search", () => {
+    chatStore.getState().setTyping(true);
+    chatStore.getState().incrementUnread();
+    chatStore.getState().setReconnectAttempt(3);
+    chatStore.getState().setSearchQuery("foo");
+
+    chatStore.getState().resetSession();
+
+    const s = chatStore.getState();
+    expect(s.isTyping).toBe(false);
+    expect(s.unreadCount).toBe(0);
+    expect(s.reconnectAttempt).toBe(0);
+    expect(s.searchQuery).toBe("");
+  });
+
+  it("resetSession() preserves theme, connector, and shell state", () => {
+    chatStore.getState().setTheme({ colors: { primary: "#abcdef" } });
+    chatStore.getState().setConnector("websocket");
+    chatStore.getState().setConnectorStatus("connected");
+    chatStore.getState().open();
+    chatStore.getState().setFullscreen(true);
+
+    chatStore.getState().resetSession();
+
+    const s = chatStore.getState();
+    expect(s.theme.colors.primary).toBe("#abcdef");
+    expect(s.activeConnector).toBe("websocket");
+    expect(s.connectorStatus).toBe("connected");
+    expect(s.isOpened).toBe(true);
+    expect(s.isFullscreen).toBe(true);
+  });
+
+  it("resetSession() cancels a running typing timer", () => {
+    vi.useFakeTimers();
+    chatStore.getState().setTyping(true, { durationMs: 500 });
+    chatStore.getState().resetSession();
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.advanceTimersByTime(1000);
+    // Stale timer must not flip isTyping again.
+    expect(chatStore.getState().isTyping).toBe(false);
+    vi.useRealTimers();
+  });
+
+  it("resetSession() emits search_query_changed only when search was active", () => {
+    const handler = vi.fn();
+    EventBus.on("search_query_changed", handler);
+
+    // No active search → no emit.
+    chatStore.getState().resetSession();
+    expect(handler).not.toHaveBeenCalled();
+
+    // Active search → emit with empty query.
+    chatStore.getState().setSearchQuery("hello");
+    handler.mockClear();
+    chatStore.getState().resetSession();
+    expect(handler).toHaveBeenCalledWith({ query: "" });
+
+    EventBus.off("search_query_changed", handler);
+  });
+
   // ── EventBus integration ───────────────────────────────────────────
 
   it("open() emits widget_opened event", () => {

@@ -77,6 +77,13 @@ export interface ChatStoreState {
     setHistoryCursor: (cursor: string | undefined) => void;
     setSearchQuery: (q: string) => void;
     clearSearch: () => void;
+    /**
+     * Reset all per-session runtime fields (history pagination, typing,
+     * unread, reconnect attempts) back to their initial values. Preserves
+     * UI shell state (open/fullscreen), theme, and connector identity, so
+     * the widget keeps the user's customizations but starts a clean session.
+     */
+    resetSession: () => void;
     subscribe: (cb: () => void) => () => void;
 }
 
@@ -188,6 +195,26 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     clearSearch: () => {
         setState(() => ({ searchQuery: "" }));
         EventBus.emit("search_query_changed", { query: "" });
+    },
+
+    resetSession: () => {
+        if (_typingTimer !== null) {
+            clearTimeout(_typingTimer);
+            _typingTimer = null;
+        }
+        const hadSearch = getState().searchQuery !== "";
+        setState(() => ({
+            isTyping: false,
+            unreadCount: 0,
+            reconnectAttempt: 0,
+            hasMoreHistory: false,
+            isLoadingHistory: false,
+            historyCursor: undefined,
+            searchQuery: "",
+        }));
+        if (hadSearch) {
+            EventBus.emit("search_query_changed", { query: "" });
+        }
     },
 
     subscribe: (cb: () => void): (() => void) => store.subscribe(() => cb()),
