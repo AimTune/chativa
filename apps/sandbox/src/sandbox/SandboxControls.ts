@@ -484,14 +484,14 @@ export class SandboxControls extends LitElement {
               <span>Reset all</span>
             </button>
             <div class="rail-divider"></div>
-            <a class="tab" href="/agent-panel.html" title="Agent Panel Demo">
+            <a class="tab" href="${import.meta.env.BASE_URL}agent-panel.html" title="Agent Panel Demo">
               <svg viewBox="0 0 24 24">
                 <rect x="3" y="3" width="18" height="18" rx="2"/>
                 <line x1="9" y1="3" x2="9" y2="21"/>
               </svg>
               <span>Agent</span>
             </a>
-            <a class="tab" href="/theme-editor.html" title="Visual Theme Editor">
+            <a class="tab" href="${import.meta.env.BASE_URL}theme-editor.html" title="Visual Theme Editor">
               <svg viewBox="0 0 24 24">
                 <circle cx="13.5" cy="6.5" r="2.5"/>
                 <circle cx="17.5" cy="10.5" r="2.5"/>

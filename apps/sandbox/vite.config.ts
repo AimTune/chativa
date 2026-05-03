@@ -93,9 +93,18 @@ function copyTree(src: string, dest: string): number {
 
 export default defineConfig({
   root: ".",
-  // VITE_BASE is set by the GitHub Pages workflow to "/chativa/"
+  // VITE_BASE is set by the GitHub Pages workflow to "/sandbox/"
   base: process.env.VITE_BASE ?? "/",
   server: { port: 5173 },
+  build: {
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, "index.html"),
+        agentPanel: resolve(__dirname, "agent-panel.html"),
+        themeEditor: resolve(__dirname, "theme-editor.html"),
+      },
+    },
+  },
   plugins: [publishSchemasPlugin()],
   resolve: {
     alias: {
