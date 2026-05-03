@@ -7,8 +7,8 @@
 
 **Chativa** is an open-source, framework-agnostic chat widget built on Web Components. Drop one `<script>` tag into any page — React, Vue, Angular, plain HTML — and you have a fully functional, themeable chat interface. Connect to any backend via pluggable connectors, render rich message types, stream Generative UI inline, and extend the pipeline with middleware.
 
-![Chativa hero — closed and open](docs/assets/screenshots/hero/hero-closed-open.png)
-> _Live demo:_ **<https://aimtune.github.io/chativa/>**
+![Chativa chat widget](docs/assets/screenshots/hero/widget-component.png)
+> _Docs:_ **<https://chativa.aimtune.dev>** · _Live demo:_ **<https://chativa.aimtune.dev/sandbox/>**
 
 ## Quick start
 
@@ -91,7 +91,7 @@ packages/
   connector-http/        @chativa/connector-http
 
 apps/
-  sandbox/               Live demo (https://aimtune.github.io/chativa/)
+  sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)
   chrome-extension/      Theme-preview Chrome extension
 
 docs/                    Documentation hub (you are here)

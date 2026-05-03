@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/chativa-settings.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/chativa-settings.schema.json",
   "title": "ChativaSettings",
   "description": "Top-level configuration object read from window.chativaSettings before <chat-iva> connects. Source of truth: packages/core/src/application/ChativaSettings.ts.",
   "type": "object",

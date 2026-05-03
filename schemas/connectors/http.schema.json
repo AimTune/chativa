@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/http.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/http.schema.json",
   "title": "HttpConnectorOptions",
   "description": "Constructor options for HttpConnector — REST polling adapter. Source: packages/connector-http/src/HttpConnector.ts.\n\nProtocol:\n• GET  {url}/messages?cursor=...  — { messages: IncomingMessage[], cursor?: string }\n• POST {url}/messages             — Body: OutgoingMessage. Response body ignored.\n• POST {url}/survey               — Body: SurveyPayload. Response body ignored.\n• GET  {url}/history?cursor=...   — Optional. { messages, hasMore, cursor? }",
   "type": "object",

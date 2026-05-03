@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/genui/ai-chunk.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/genui/ai-chunk.schema.json",
   "title": "AIChunk",
   "description": "Streaming chunk emitted by IConnector.onGenUIChunk(). The engine assembles chunks (keyed by streamId) into a synthetic genui IncomingMessage. Source: packages/core/src/domain/entities/GenUI.ts.",
   "oneOf": [

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/messages/outgoing-message.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/messages/outgoing-message.schema.json",
   "title": "OutgoingMessage",
   "description": "Message produced by the user that ChatEngine hands to the connector's sendMessage(). Source: packages/core/src/domain/entities/Message.ts.",
   "type": "object",

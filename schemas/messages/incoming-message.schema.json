@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/messages/incoming-message.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/messages/incoming-message.schema.json",
   "title": "IncomingMessage",
   "description": "Message delivered from connector to ChatEngine. The widget renders it via MessageTypeRegistry.get(type). Source: packages/core/src/domain/entities/Message.ts.",
   "type": "object",

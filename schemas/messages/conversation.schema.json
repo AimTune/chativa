@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/messages/conversation.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/messages/conversation.schema.json",
   "title": "Conversation",
   "description": "A single conversation listed by IConnector.listConversations() (multi-conversation / agent-panel mode). Source: packages/core/src/domain/entities/Conversation.ts.",
   "type": "object",

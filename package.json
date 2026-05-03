@@ -15,11 +15,11 @@
   },
   "scripts": {
     "dev": "pnpm -F sandbox dev",
-    "build": "pnpm -r --filter './packages/**' build",
-    "test": "pnpm -r --filter './packages/**' test",
-    "test:watch": "pnpm -r --filter './packages/**' exec vitest",
+    "build": "pnpm -r --filter @chativa/* build",
+    "test": "pnpm -r --filter @chativa/* test",
+    "test:watch": "pnpm -r --filter @chativa/* exec vitest",
     "test:coverage": "pnpm --filter '@chativa/core' run test -- --coverage && pnpm --filter '@chativa/connector-dummy' run test -- --coverage && pnpm --filter '@chativa/genui' run test -- --coverage",
-    "typecheck": "pnpm -r --filter './packages/**' typecheck"
+    "typecheck": "pnpm -r --filter @chativa/* typecheck"
   },
   "devDependencies": {
     "jsdom":      "^28.1.0",

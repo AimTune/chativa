@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/websocket.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/websocket.schema.json",
   "title": "WebSocketConnectorOptions",
   "description": "Constructor options for WebSocketConnector — native browser WebSocket adapter. Source: packages/connector-websocket/src/WebSocketConnector.ts.",
   "type": "object",

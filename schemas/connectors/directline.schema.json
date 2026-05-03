@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/directline.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/directline.schema.json",
   "title": "DirectLineConnectorOptions",
   "description": "Constructor options for DirectLineConnector — Azure Bot Framework DirectLine v3 adapter. Source: packages/connector-directline/src/DirectLineConnector.ts. Provide exactly one of: token, secret (server-side only — generates a token), or tokenGeneratorUrl.",
   "type": "object",

@@ -1,0 +1,43 @@
+/**
+ * Global Infima overrides for Chativa docs.
+ * Brand color is #1B1464 (deep indigo) — same as the chat widget's default.
+ */
+
+:root {
+  --ifm-color-primary: #1b1464;
+  --ifm-color-primary-dark: #18125a;
+  --ifm-color-primary-darker: #171155;
+  --ifm-color-primary-darkest: #130e46;
+  --ifm-color-primary-light: #1f176f;
+  --ifm-color-primary-lighter: #211874;
+  --ifm-color-primary-lightest: #271c89;
+  --ifm-code-font-size: 92%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.08);
+
+  --chativa-hero-gradient-start: #1b1464;
+  --chativa-hero-gradient-end: #4338ca;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #818cf8;
+  --ifm-color-primary-dark: #6675f5;
+  --ifm-color-primary-darker: #586bf4;
+  --ifm-color-primary-darkest: #2f47ef;
+  --ifm-color-primary-light: #9ca3fb;
+  --ifm-color-primary-lighter: #aaaffc;
+  --ifm-color-primary-lightest: #d3d6fd;
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.08);
+
+  --chativa-hero-gradient-start: #1b1464;
+  --chativa-hero-gradient-end: #312e81;
+}
+
+/* Tighter table styling for capability matrices */
+table {
+  display: table;
+  width: 100%;
+}
+
+article header h1 {
+  font-size: 2.4rem;
+}

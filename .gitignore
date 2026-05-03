@@ -12,6 +12,10 @@ dist
 dist-ssr
 *.local
 
+# Docusaurus
+website/build
+website/.docusaurus
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

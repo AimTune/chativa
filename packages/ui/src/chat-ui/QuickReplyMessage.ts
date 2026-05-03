@@ -106,6 +106,24 @@ export class QuickReplyMessage extends LitElement {
     }
 
     .chip:active { opacity: 0.8; }
+
+    .chip.selected {
+      background: var(--chativa-primary-color, #4f46e5);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .chip.selected::before {
+      content: "✓ ";
+    }
+
+    .chip[disabled] {
+      cursor: default;
+    }
+
+    .chip.dimmed {
+      opacity: 0.5;
+    }
   `;
 
   @property({ type: Object }) messageData: Record<string, unknown> = {};
@@ -116,6 +134,9 @@ export class QuickReplyMessage extends LitElement {
   /** True once a chip has been tapped — chips disappear (one-time use). */
   @state() private _used = false;
 
+  /** The value (or label) of the chip the user tapped, when keepActions is true. */
+  @state() private _selectedValue: string | null = null;
+
   private get _time(): string {
     if (!this.timestamp) return "";
     return new Date(this.timestamp).toLocaleTimeString([], {
@@ -125,6 +146,9 @@ export class QuickReplyMessage extends LitElement {
   }
 
   private _onChipClick(action: MessageAction) {
+    const keepActions = Boolean(this.messageData?.keepActions);
+
+    // After first selection: ignore further taps (single-choice).
     if (this._used) return;
 
     if (action.url) {
@@ -133,6 +157,14 @@ export class QuickReplyMessage extends LitElement {
     }
 
     this._used = true;
+    this._selectedValue = action.value ?? action.label;
+
+    // When keepActions is true, the chips stay rendered (with the tapped one
+    // marked as selected, the rest dimmed and disabled). Otherwise they vanish.
+    if (!keepActions) {
+      this._selectedValue = null; // legacy behaviour — chips go away entirely
+    }
+
     this.dispatchEvent(
       new CustomEvent<string>("chat-action", {
         detail: action.value ?? action.label,
@@ -145,6 +177,9 @@ export class QuickReplyMessage extends LitElement {
   render() {
     const isUser = this.sender === "user";
     const actions = this.messageData?.actions as MessageAction[] | undefined;
+    const keepActions = Boolean(this.messageData?.keepActions);
+    const showChips =
+      actions && actions.length > 0 && (!this._used || (keepActions && this._selectedValue !== null));
 
     return html`
       <div class="message ${isUser ? "user" : "bot"}">
@@ -167,18 +202,25 @@ export class QuickReplyMessage extends LitElement {
             `
           : nothing}
         <div class="content">
-          <div class="bubble">${this.messageData?.text as string}</div>
-          ${!this._used && actions && actions.length > 0 ? html`
+          ${this.messageData?.text
+            ? html`<div class="bubble">${this.messageData.text as string}</div>`
+            : nothing}
+          ${showChips ? html`
             <div class="chips">
-              ${actions.map(
-                (action) => html`
+              ${actions!.map((action) => {
+                const value = action.value ?? action.label;
+                const isSelected = this._selectedValue === value;
+                const isDimmed = this._selectedValue !== null && !isSelected;
+                return html`
                   <button
-                    class="chip"
+                    class="chip ${isSelected ? "selected" : ""} ${isDimmed ? "dimmed" : ""}"
                     type="button"
+                    ?disabled=${this._used}
+                    aria-pressed=${isSelected ? "true" : "false"}
                     @click=${() => this._onChipClick(action)}
                   >${action.label}</button>
-                `
-              )}
+                `;
+              })}
             </div>
           ` : nothing}
           ${this._time && !this.hideAvatar

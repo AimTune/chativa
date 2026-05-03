@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/dummy.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/dummy.schema.json",
   "title": "DummyConnectorOptions",
   "description": "Constructor options for DummyConnector — local mock connector used in dev/tests. Source: packages/connector-dummy/src/DummyConnector.ts.",
   "type": "object",

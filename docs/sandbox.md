@@ -1,6 +1,6 @@
 # Sandbox
 
-The interactive playground for every Chativa feature. Hosted at **<https://aimtune.github.io/chativa/>**.
+The interactive playground for every Chativa feature. Hosted at **<https://chativa.aimtune.dev/sandbox/>**.
 
 ![Sandbox overview](./assets/screenshots/sandbox/overview.png)
 > _Screenshot placeholder._

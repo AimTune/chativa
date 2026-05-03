@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/theme.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/theme.schema.json",
   "title": "ThemeConfig",
   "description": "Chativa widget theme — visual + behavioural flags. Pass any subset (deep partial) to chatStore.getState().setTheme(); only the fields you provide are overridden. Source of truth: packages/core/src/domain/value-objects/Theme.ts (ThemeConfig + DEFAULT_THEME).",
   "type": "object",

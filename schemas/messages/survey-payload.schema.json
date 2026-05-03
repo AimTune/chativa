@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/messages/survey-payload.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/messages/survey-payload.schema.json",
   "title": "SurveyPayload",
   "description": "Payload submitted by IConnector.sendSurvey() at the end of a conversation. Source: packages/core/src/domain/ports/IConnector.ts.",
   "type": "object",

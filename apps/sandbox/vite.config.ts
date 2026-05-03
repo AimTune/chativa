@@ -15,7 +15,7 @@ const SCHEMAS_SRC = resolve(__dirname, "../../schemas");
 
 /**
  * Publishes the workspace `schemas/` folder under `/schemas/*` so the
- * `$id` URLs in every JSON Schema (https://aimtune.github.io/chativa/schemas/...)
+ * `$id` URLs in every JSON Schema (https://chativa.aimtune.dev/schemas/...)
  * actually resolve when the sandbox is hosted on GitHub Pages.
  *
  * - In `vite dev`, registers a middleware that serves files straight from

@@ -1,4 +1,4 @@
-name: Deploy Sandbox to GitHub Pages
+name: Deploy site (docs + sandbox) to GitHub Pages
 
 on:
   push:
@@ -30,20 +30,33 @@ jobs:
           node-version: "20"
           cache: "pnpm"
 
-      - name: Install dependencies
+      - name: Install monorepo dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
+      - name: Build packages (core, ui, genui, connectors)
         run: pnpm build
 
-      - name: Build sandbox
+      - name: Build sandbox at /sandbox
         run: pnpm --filter sandbox build
         env:
-          VITE_BASE: /chativa/
+          VITE_BASE: /sandbox/
+
+      - name: Build Docusaurus site
+        run: pnpm --filter website build
+
+      - name: Combine sandbox + schemas into docs build
+        run: |
+          mkdir -p website/build/sandbox
+          cp -R apps/sandbox/dist/. website/build/sandbox/
+          # Publish JSON schemas at /schemas/* so the $id URLs resolve.
+          mkdir -p website/build/schemas
+          cp -R schemas/. website/build/schemas/
+          # Ensure GitHub Pages does not strip the _next-style underscore-prefixed directories.
+          touch website/build/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: apps/sandbox/dist
+          path: website/build
 
   deploy:
     needs: build

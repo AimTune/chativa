@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/signalr.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/signalr.schema.json",
   "title": "SignalRConnectorOptions",
   "description": "Constructor options for SignalRConnector. Requires @microsoft/signalr as a peer dependency. Source: packages/connector-signalr/src/SignalRConnector.ts.",
   "type": "object",

@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://aimtune.github.io/chativa/schemas/connectors/sse.schema.json",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/sse.schema.json",
   "title": "SseConnectorOptions",
   "description": "Constructor options for SseConnector — Server-Sent Events adapter. Source: packages/connector-sse/src/SseConnector.ts.\n\nProtocol:\n• GET  {url}        — SSE stream of events. Each event payload is JSON: { type: 'message' | 'typing' | 'connected', ... }\n• POST {sendUrl}    — Outgoing message body (defaults to {url}).\n• GET  {url}/history?cursor=... — Optional pagination endpoint.",
   "type": "object",

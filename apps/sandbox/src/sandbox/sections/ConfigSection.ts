@@ -11,7 +11,7 @@ import {
 import { sectionStyles } from "../sandboxShared";
 
 const SETTINGS_SCHEMA_URL =
-  "https://aimtune.github.io/chativa/schemas/chativa-settings.schema.json";
+  "https://chativa.aimtune.dev/schemas/chativa-settings.schema.json";
 
 interface ChativaSettingsLike {
   $schema?: string;

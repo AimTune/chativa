@@ -70,7 +70,7 @@ The full schema for that object is at [`schemas/chativa-settings.schema.json`](.
 
 Every feature in the widget is wired up in the dev sandbox, hosted on GitHub Pages:
 
-➡ **<https://aimtune.github.io/chativa/>**
+➡ **<https://chativa.aimtune.dev/sandbox/>**
 
 See [docs/sandbox.md](./sandbox.md) for the tour.
 

@@ -108,4 +108,4 @@ The Chrome extension ([chrome-extension.md](./chrome-extension.md)) generates th
 
 ## Live preview
 
-The sandbox lets you tweak every field and see the result instantly: <https://aimtune.github.io/chativa/>.
+The sandbox lets you tweak every field and see the result instantly: <https://chativa.aimtune.dev/sandbox/>.
