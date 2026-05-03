@@ -1,6 +1,7 @@
 ---
 sidebar_position: 1
 title: Sandbox
+slug: /sandbox-guide
 description: The interactive playground — every theme knob, connector, message type, and GenUI demo in one place.
 ---
 
