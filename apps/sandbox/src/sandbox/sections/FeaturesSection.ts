@@ -1,8 +1,16 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { chatStore, type ThemeConfig, type DeepPartial } from "@chativa/core";
-import { i18n } from "@chativa/ui";
+import i18next from "i18next";
 import { sectionStyles } from "../sandboxShared";
+
+// Import i18next directly (the singleton) instead of from "@chativa/ui".
+// The @chativa/ui index has side-effect imports that call
+// customElements.define("chat-iva", ...). Pulling that into the static
+// graph here would upgrade the existing <chat-iva> element before
+// main.ts has registered the connector, causing
+// `ConnectorRegistry: connector "dummy" not found` at boot.
+// @chativa/ui's i18n.ts initializes the same i18next singleton at runtime.
 
 @customElement("sandbox-features-section")
 export class FeaturesSection extends LitElement {
@@ -10,19 +18,19 @@ export class FeaturesSection extends LitElement {
 
   @state() private _open = true;
   @state() private _theme: ThemeConfig = chatStore.getState().theme;
-  @state() private _lang = i18n.language;
+  @state() private _lang = i18next.language ?? "en";
   private _unsub!: () => void;
   private _onLang = (lng: string) => { this._lang = lng; };
 
   connectedCallback() {
     super.connectedCallback();
     this._unsub = chatStore.subscribe(() => { this._theme = chatStore.getState().theme; });
-    i18n.on("languageChanged", this._onLang);
+    i18next.on("languageChanged", this._onLang);
   }
 
   disconnectedCallback() {
     this._unsub?.();
-    i18n.off("languageChanged", this._onLang);
+    i18next.off("languageChanged", this._onLang);
     super.disconnectedCallback();
   }
 
@@ -67,7 +75,7 @@ export class FeaturesSection extends LitElement {
             <div class="toggle-group">
               ${([{ label: "English", value: "en" }, { label: "Türkçe", value: "tr" }]).map((l) => html`
                 <button class="tg-btn ${this._lang.startsWith(l.value) ? "active" : ""}"
-                  @click=${() => i18n.changeLanguage(l.value)}>${l.label}</button>
+                  @click=${() => i18next.changeLanguage(l.value)}>${l.label}</button>
               `)}
             </div>
           </div>

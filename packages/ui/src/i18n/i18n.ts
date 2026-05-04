@@ -8,6 +8,7 @@ i18next
     .init({
         fallbackLng: 'en',
         debug: false,
+        showSupportNotice: false,
         resources: {
             en: { translation: en },
             tr: { translation: tr },
