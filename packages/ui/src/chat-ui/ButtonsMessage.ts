@@ -172,8 +172,8 @@ export class ButtonsMessage extends LitElement {
     }
 
     this.dispatchEvent(
-      new CustomEvent<string>("chat-action", {
-        detail: action.value ?? action.label,
+      new CustomEvent<{ text: string; markdown?: boolean }>("chat-action", {
+        detail: { text: action.value ?? action.label, markdown: true },
         bubbles: true,
         composed: true,
       })
@@ -211,7 +211,7 @@ export class ButtonsMessage extends LitElement {
 
           ${!persistent && this._selected !== null
             /* One-time mode: replace buttons with confirmation label */
-            ? html`<span class="selected-label">✓ ${this._selected}</span>`
+            ? html`<span class="selected-label">✓ ${renderInlineMarkdown(this._selected!)}</span>`
             /* Persistent mode or pre-selection: show full button list */
             : html`
                 <div class="btn-list">
