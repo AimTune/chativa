@@ -1,6 +1,14 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
+import { unsafeHTML } from "lit/directives/unsafe-html.js";
+import { marked } from "marked";
 import { MessageTypeRegistry, type MessageSender, type MessageAction } from "@chativa/core";
+
+/** Strip the wrapping <p>…</p> that marked adds for inline content. */
+function renderInlineMarkdown(text: string): ReturnType<typeof unsafeHTML> {
+  const html = (marked.parse(text, { async: false }) as string).replace(/^<p>(.*)<\/p>\n?$/s, "$1");
+  return unsafeHTML(html);
+}
 
 /**
  * Buttons message component.
@@ -216,7 +224,7 @@ export class ButtonsMessage extends LitElement {
                         type="button"
                         ?disabled=${isOther}
                         @click=${() => this._onButtonClick(btn)}
-                      >${btn.label}</button>
+                      >${renderInlineMarkdown(btn.label)}</button>
                     `;
                   })}
                 </div>

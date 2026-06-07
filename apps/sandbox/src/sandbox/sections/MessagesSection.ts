@@ -37,7 +37,7 @@ const DEMO_MESSAGES: Array<{ label: string; msg: Record<string, unknown> }> = [
     label: "🔘 Buttons",
     msg: {
       type: "buttons",
-      data: { text: "How can I help you?", buttons: [{ label: "Track order" }, { label: "Return" }, { label: "Agent" }] },
+      data: { text: "How can I help you?", buttons: [{ label: "Track **order**" }, { label: "Return" }, { label: "Agent" }] },
     },
   },
   {
