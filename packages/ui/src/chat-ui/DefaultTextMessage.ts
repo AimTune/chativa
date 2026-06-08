@@ -90,6 +90,21 @@ export class DefaultTextMessage extends LitElement {
     .message.bot .bubble strong { font-weight: 600; }
     .message.bot .bubble em { font-style: italic; }
 
+    .message.user .bubble p { margin: 0 0 6px; }
+    .message.user .bubble p:last-child { margin: 0; }
+    .message.user .bubble strong { font-weight: 600; }
+    .message.user .bubble em { font-style: italic; }
+    .message.user .bubble code {
+      background: rgba(255,255,255,0.2);
+      border-radius: 3px;
+      padding: 1px 5px;
+      font-size: 0.82em;
+      font-family: monospace;
+    }
+    .message.user .bubble a { color: #ffffff; text-decoration: underline; }
+    .message.user .bubble ul,
+    .message.user .bubble ol { margin: 4px 0; padding-left: 18px; }
+
     .content {
       display: flex;
       flex-direction: column;
@@ -341,7 +356,7 @@ export class DefaultTextMessage extends LitElement {
   render() {
     const isUser = this.sender === "user";
     const raw = String(this.messageData?.text ?? "");
-    const bubbleContent = isUser
+    const bubbleContent = isUser && !this.messageData?._markdown
       ? raw
       : unsafeHTML(marked.parse(raw, { async: false }) as string);
 

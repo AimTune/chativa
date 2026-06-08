@@ -425,10 +425,14 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   }
 
   private _onChatAction = (e: Event) => {
-    const text = (e as CustomEvent<string>).detail?.trim();
+    const raw = (e as CustomEvent<string | { text: string; markdown?: boolean }>).detail;
+    const text = (typeof raw === "string" ? raw : raw?.text)?.trim();
+    const markdown = typeof raw === "object" && raw?.markdown === true;
     if (!text) return;
+    const msg = createOutgoingMessage(text);
+    if (markdown) msg.data._markdown = true;
     this._engine
-      .send(createOutgoingMessage(text))
+      .send(msg)
       .catch((err: unknown) => console.error("[ChatWidget] Action send failed:", err));
   };
 
