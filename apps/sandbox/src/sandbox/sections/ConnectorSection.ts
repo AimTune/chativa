@@ -9,13 +9,19 @@ import {
 } from "@chativa/core";
 import { DummyConnector } from "@chativa/connector-dummy";
 import { DirectLineConnector } from "@chativa/connector-directline";
+import { LineConnector } from "@chativa/connector-line";
 import { sectionStyles } from "../sandboxShared";
 
-type ConnectorKind = "dummy" | "directline";
+type ConnectorKind = "dummy" | "directline" | "line";
 
 interface DummyForm {
   replyDelay: number;
   connectDelay: number;
+}
+
+interface LineForm {
+  url: string;
+  reconnect: boolean;
 }
 
 interface DirectLineForm {
@@ -213,6 +219,10 @@ export class ConnectorSection extends LitElement {
     locale: "",
     resumeConversation: false,
   };
+  @state() private _line: LineForm = {
+    url: "ws://localhost:8790/chat",
+    reconnect: true,
+  };
 
   private _unsub!: () => void;
 
@@ -302,6 +312,16 @@ export class ConnectorSection extends LitElement {
         resumeConversation: f.resumeConversation,
       });
     }
+    if (this._kind === "line") {
+      const f = this._line;
+      if (!f.url.trim()) {
+        throw new Error("chativa-line: WebSocket URL is required.");
+      }
+      return new LineConnector({
+        url: f.url.trim(),
+        reconnect: f.reconnect,
+      });
+    }
     throw new Error(`Unknown connector kind: ${this._kind}`);
   }
 
@@ -357,6 +377,26 @@ export class ConnectorSection extends LitElement {
     `;
   }
 
+  private _renderLineOptions() {
+    return html`
+      <div class="field-grid">
+        <label for="line-url">WS URL</label>
+        <input id="line-url" type="text" placeholder="ws://localhost:8790/chat"
+          .value=${this._line.url}
+          @input=${(e: Event) => {
+            this._line = { ...this._line, url: (e.target as HTMLInputElement).value };
+          }} />
+      </div>
+      <div class="checkbox-row">
+        <input id="line-reconnect" type="checkbox" .checked=${this._line.reconnect}
+          @change=${(e: Event) => {
+            this._line = { ...this._line, reconnect: (e.target as HTMLInputElement).checked };
+          }} />
+        <label for="line-reconnect">Auto-reconnect (queues messages while down)</label>
+      </div>
+    `;
+  }
+
   private _renderCapabilities() {
     return html`
       <div class="cap-grid">
@@ -399,11 +439,13 @@ export class ConnectorSection extends LitElement {
                   }}>
                   <option value="dummy">Dummy (local mock)</option>
                   <option value="directline">DirectLine (Azure Bot Framework)</option>
+                  <option value="line">chativa-line (agent bridge)</option>
                 </select>
               </div>
 
               ${this._kind === "dummy"      ? this._renderDummyOptions()      : nothing}
               ${this._kind === "directline" ? this._renderDirectLineOptions() : nothing}
+              ${this._kind === "line"       ? this._renderLineOptions()       : nothing}
 
               <button class="connect-btn" @click=${() => this._connect()}>
                 Connect
