@@ -747,11 +747,16 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     const isOpened = this.themeState.isOpened;
 
     if (isOpened && !this._wasOpened) {
-      // Lazy-connect: initialise the engine on first open
+      // Lazy-connect: initialise the engine on first open.
+      // Deferred past this update cycle — init() synchronously sets the
+      // connector status in chatStore, which would re-schedule an update
+      // while this one is still in progress (Lit change-in-update warning).
       if (!this._engineInitialised) {
         this._engineInitialised = true;
-        this._multiEngine?.init().catch((err: unknown) => {
-          console.error("[ChatWidget] Engine init failed:", err);
+        this.updateComplete.then(() => {
+          this._multiEngine?.init().catch((err: unknown) => {
+            console.error("[ChatWidget] Engine init failed:", err);
+          });
         });
       }
       // Store previously focused element so we can restore it on close
