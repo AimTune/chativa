@@ -7,6 +7,8 @@ import type {
   SurveyPayload,
   ToolCall,
   ToolCallHandler,
+  GenUIChunkHandler,
+  AIChunk,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -34,6 +36,9 @@ export interface LineConnectorOptions {
  *   upserted as running → completed/error) → `onToolCall`.
  * - `{ type: "run", data: { status } }` → run lifecycle; mapped to the typing
  *   indicator (`started` → typing on, `finished`/`error` → typing off).
+ * - `{ type: "genui", streamId, chunk, done }` → Generative UI chunk; mounts a
+ *   GenUIRegistry component inline (e.g. weather card, PDF download card) via
+ *   `onGenUIChunk`.
  *
  * Extras over the plain WebSocket connector: typing from run lifecycle and an
  * offline outbound queue flushed on reconnect.
@@ -50,6 +55,7 @@ export class LineConnector implements IConnector {
   private disconnectHandler: DisconnectHandler | null = null;
   private typingHandler: TypingHandler | null = null;
   private toolCallHandler: ToolCallHandler | null = null;
+  private genUIChunkHandler: GenUIChunkHandler | null = null;
 
   private reconnectAttempts = 0;
   private queue: string[] = [];
@@ -134,6 +140,10 @@ export class LineConnector implements IConnector {
     this.toolCallHandler = callback;
   }
 
+  onGenUIChunk(callback: GenUIChunkHandler): void {
+    this.genUIChunkHandler = callback;
+  }
+
   // ── internals ────────────────────────────────────────────────────────
 
   private routeFrame(raw: string): void {
@@ -156,6 +166,16 @@ export class LineConnector implements IConnector {
       const payload = ((data.data ?? data) as unknown) as ToolCall;
       if (payload.id && payload.name && payload.status) {
         this.toolCallHandler?.(payload);
+      }
+      return;
+    }
+
+    // Generative UI frame: { type: "genui", streamId, chunk, done }.
+    if (data?.type === "genui") {
+      const streamId = String(data.streamId ?? "");
+      const chunk = data.chunk as AIChunk | undefined;
+      if (streamId && chunk && typeof chunk === "object") {
+        this.genUIChunkHandler?.(streamId, chunk, data.done === true);
       }
       return;
     }
