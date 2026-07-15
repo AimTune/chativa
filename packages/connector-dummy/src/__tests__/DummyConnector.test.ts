@@ -124,6 +124,94 @@ describe("DummyConnector", () => {
     expect(named.name).toBe("my-connector");
   });
 
+  // ── Tool calls ────────────────────────────────────────────────────
+
+  describe("tool calls", () => {
+    it("triggerToolCalls('success') emits running→completed per tool, then a reply", () => {
+      vi.useFakeTimers();
+      try {
+        const toolHandler = vi.fn();
+        const messageHandler = vi.fn();
+        connector.onToolCall(toolHandler);
+        connector.onMessage(messageHandler);
+
+        connector.triggerToolCalls("success");
+        vi.runAllTimers();
+
+        // 2 demo tools × (running + completed)
+        expect(toolHandler).toHaveBeenCalledTimes(4);
+        const events = toolHandler.mock.calls.map((c) => c[0]);
+        expect(events[0]).toMatchObject({ name: "get_weather", status: "running" });
+        expect(events[1]).toMatchObject({ name: "get_weather", status: "completed" });
+        expect(events[1].result).toBeDefined();
+        expect(events[3]).toMatchObject({ name: "get_forecast", status: "completed" });
+        // running/completed pairs share the same id
+        expect(events[0].id).toBe(events[1].id);
+
+        expect(messageHandler).toHaveBeenCalledOnce();
+        expect(messageHandler.mock.calls[0][0].type).toBe("text");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("triggerToolCalls('error') settles the tool with status error", () => {
+      vi.useFakeTimers();
+      try {
+        const toolHandler = vi.fn();
+        const messageHandler = vi.fn();
+        connector.onToolCall(toolHandler);
+        connector.onMessage(messageHandler);
+
+        connector.triggerToolCalls("error");
+        vi.runAllTimers();
+
+        const events = toolHandler.mock.calls.map((c) => c[0]);
+        expect(events.at(-1)).toMatchObject({ status: "error", error: "fetch failed" });
+        expect(messageHandler).toHaveBeenCalledOnce();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("'/tools' chat command triggers the demo instead of an echo", async () => {
+      await connector.connect();
+      vi.useFakeTimers();
+      try {
+        const toolHandler = vi.fn();
+        connector.onToolCall(toolHandler);
+        connector.onMessage(vi.fn());
+
+        await connector.sendMessage({ id: "1", type: "text", data: { text: "/tools" }, timestamp: Date.now() });
+        vi.runAllTimers();
+        expect(toolHandler).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("triggerToolCalls('genui') finishes with a GenUI stream instead of text", () => {
+      vi.useFakeTimers();
+      try {
+        const toolHandler = vi.fn();
+        const messageHandler = vi.fn();
+        const genUIHandler = vi.fn();
+        connector.onToolCall(toolHandler);
+        connector.onMessage(messageHandler);
+        connector.onGenUIChunk(genUIHandler);
+
+        connector.triggerToolCalls("genui");
+        vi.runAllTimers();
+
+        expect(toolHandler).toHaveBeenCalledTimes(2); // running + completed
+        expect(messageHandler).not.toHaveBeenCalled();
+        expect(genUIHandler).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   // ── Multi-conversation ────────────────────────────────────────────
 
   describe("multi-conversation", () => {

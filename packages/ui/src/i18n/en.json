@@ -1,85 +1,95 @@
 {
-    "greeting": "Hello",
-    "welcome": "Welcome, {{name}}!",
-    "header": {
-        "title": "Chativa Chatbot",
-        "status": {
-            "connecting": "Connecting…",
-            "connected": "Online",
-            "error": "Connection error",
-            "disconnected": "Disconnected",
-            "offline": "Offline"
-        },
-        "fullscreen": {
-            "enter": "Enter fullscreen",
-            "exit": "Exit fullscreen"
-        },
-        "close": "Close",
-        "minimize": "Minimize",
-        "search": {
-            "toggle": "Search",
-            "placeholder": "Search messages…",
-            "clear": "Clear search"
-        }
+  "greeting": "Hello",
+  "welcome": "Welcome, {{name}}!",
+  "header": {
+    "title": "Chativa Chatbot",
+    "status": {
+      "connecting": "Connecting…",
+      "connected": "Online",
+      "error": "Connection error",
+      "disconnected": "Disconnected",
+      "offline": "Offline"
     },
-    "input": {
-        "placeholder": "Type a message…",
-        "send": "Send message",
-        "emoji": "Emoji",
-        "attachFile": "Attach file",
-        "removeFile": "Remove {{name}}",
-        "dropHere": "Drop files here",
-        "dropHereSubtitle": "Release to attach"
+    "fullscreen": {
+      "enter": "Enter fullscreen",
+      "exit": "Exit fullscreen"
     },
-    "messageList": {
-        "connecting": "Connecting…",
-        "emptyTitle": "How can I help you?",
-        "emptySubtitle": "Send a message to get started.",
-        "newMessage": "New message",
-        "loadMore": "Load previous messages",
-        "errorTitle": "Connection lost",
-        "errorSubtitle": "We could not reconnect. Please try again.",
-        "retry": "Try again",
-        "reconnecting": "Reconnecting… (attempt {{attempt}})",
-        "searchEmpty": "No messages match your search.",
-        "searchResult": "{{count}} result(s) found",
-        "loadingHistory": "Loading previous messages…",
-        "ariaLabel": "Chat messages",
-        "typingIndicator": "Assistant is typing"
-    },
-    "message": {
-        "from": {
-            "bot": "Assistant",
-            "user": "You"
-        },
-        "likeButton": "Like this message",
-        "dislikeButton": "Dislike this message",
-        "statusSending": "Sending",
-        "statusSent": "Sent",
-        "statusRead": "Read"
-    },
-    "emojiPicker": {
-        "searchPlaceholder": "Search emoji…",
-        "noResults": "No results"
-    },
-    "chatButton": {
-        "open": "Open chat",
-        "close": "Close chat"
-    },
-    "widget": {
-        "title": "Chat"
-    },
-    "survey": {
-        "title": "How did we do?",
-        "ratingLabel": "Rate your experience",
-        "commentPlaceholder": "What could we do better?",
-        "commentRequired": "Please tell us what went wrong",
-        "submit": "Submit",
-        "skip": "Skip",
-        "thankYouTitle": "We received your feedback!",
-        "thankYouBody": "Thank you for your valuable thoughts and comments.",
-        "close": "Close",
-        "starLabel_one": "{{count}} star",
-        "starLabel_other": "{{count}} stars"
+    "close": "Close",
+    "minimize": "Minimize",
+    "search": {
+      "toggle": "Search",
+      "placeholder": "Search messages…",
+      "clear": "Clear search"
     }
+  },
+  "input": {
+    "placeholder": "Type a message…",
+    "send": "Send message",
+    "emoji": "Emoji",
+    "attachFile": "Attach file",
+    "removeFile": "Remove {{name}}",
+    "dropHere": "Drop files here",
+    "dropHereSubtitle": "Release to attach"
+  },
+  "messageList": {
+    "connecting": "Connecting…",
+    "emptyTitle": "How can I help you?",
+    "emptySubtitle": "Send a message to get started.",
+    "newMessage": "New message",
+    "loadMore": "Load previous messages",
+    "errorTitle": "Connection lost",
+    "errorSubtitle": "We could not reconnect. Please try again.",
+    "retry": "Try again",
+    "reconnecting": "Reconnecting… (attempt {{attempt}})",
+    "searchEmpty": "No messages match your search.",
+    "searchResult": "{{count}} result(s) found",
+    "loadingHistory": "Loading previous messages…",
+    "ariaLabel": "Chat messages",
+    "typingIndicator": "Assistant is typing"
+  },
+  "message": {
+    "from": {
+      "bot": "Assistant",
+      "user": "You"
+    },
+    "likeButton": "Like this message",
+    "dislikeButton": "Dislike this message",
+    "statusSending": "Sending",
+    "statusSent": "Sent",
+    "statusRead": "Read"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Search emoji…",
+    "noResults": "No results"
+  },
+  "chatButton": {
+    "open": "Open chat",
+    "close": "Close chat"
+  },
+  "widget": {
+    "title": "Chat"
+  },
+  "survey": {
+    "title": "How did we do?",
+    "ratingLabel": "Rate your experience",
+    "commentPlaceholder": "What could we do better?",
+    "commentRequired": "Please tell us what went wrong",
+    "submit": "Submit",
+    "skip": "Skip",
+    "thankYouTitle": "We received your feedback!",
+    "thankYouBody": "Thank you for your valuable thoughts and comments.",
+    "close": "Close",
+    "starLabel_one": "{{count}} star",
+    "starLabel_other": "{{count}} stars"
+  },
+  "toolCalls": {
+    "running": "Running",
+    "completed": "Completed",
+    "error": "Error",
+    "parameters": "Parameters",
+    "result": "Result",
+    "summary": "{{count}} operation(s) performed",
+    "failed": "{{count}} failed",
+    "ariaToggle": "Toggle tool call details"
+  }
 }

@@ -4,6 +4,8 @@ import type {
   ConnectHandler,
   DisconnectHandler,
   SurveyPayload,
+  ToolCall,
+  ToolCallHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -28,6 +30,7 @@ export class WebSocketConnector implements IConnector {
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
+  private toolCallHandler: ToolCallHandler | null = null;
 
   private reconnectAttempts = 0;
 
@@ -58,6 +61,15 @@ export class WebSocketConnector implements IConnector {
       this.ws.onmessage = (event: MessageEvent) => {
         try {
           const data = JSON.parse(event.data as string);
+          // Tool-call lifecycle frame: { type: "tool_call", data: {...ToolCall} }
+          // (the payload may also be flattened onto the frame itself).
+          if (data?.type === "tool_call") {
+            const payload = (data.data ?? data) as ToolCall;
+            if (payload.id && payload.name && payload.status) {
+              this.toolCallHandler?.(payload);
+            }
+            return;
+          }
           this.messageHandler?.(data);
         } catch {
           this.messageHandler?.({
@@ -112,5 +124,9 @@ export class WebSocketConnector implements IConnector {
 
   onDisconnect(callback: DisconnectHandler): void {
     this.disconnectHandler = callback;
+  }
+
+  onToolCall(callback: ToolCallHandler): void {
+    this.toolCallHandler = callback;
   }
 }

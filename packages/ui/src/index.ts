@@ -33,12 +33,16 @@ import "./chat-ui/ConversationList";
 import "./chat-ui/AgentPanel";
 import "./chat-ui/EndOfConversationSurvey";
 import "./chat-ui/LinkPreviewCard";
+import "./chat-ui/ToolCallCard";
+import "./chat-ui/ToolCallActivity";
 
 import { MessageTypeRegistry } from "@chativa/core";
 import { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
 export { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
 export { LinkPreviewCard } from "./chat-ui/LinkPreviewCard";
 export type { LinkMetadata, LinkMetadataFetcher } from "./chat-ui/LinkPreviewCard";
+export { ToolCallCard } from "./chat-ui/ToolCallCard";
+export { ToolCallActivity } from "./chat-ui/ToolCallActivity";
 MessageTypeRegistry.register(
   "end-of-conversation-survey",
   EndOfConversationSurvey as unknown as typeof HTMLElement,

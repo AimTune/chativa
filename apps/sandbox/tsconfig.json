@@ -4,6 +4,7 @@
     "paths": {
       "@chativa/core":                ["../../packages/core/src/index.ts"],
       "@chativa/ui":                  ["../../packages/ui/src/index.ts"],
+      "@chativa/genui":               ["../../packages/genui/src/index.ts"],
       "@chativa/connector-dummy":     ["../../packages/connector-dummy/src/index.ts"],
       "@chativa/connector-websocket": ["../../packages/connector-websocket/src/index.ts"],
       "@chativa/connector-signalr":   ["../../packages/connector-signalr/src/index.ts"],

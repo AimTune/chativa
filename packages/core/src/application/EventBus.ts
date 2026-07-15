@@ -15,6 +15,7 @@
  * ```
  */
 import type { OutgoingMessage, IncomingMessage } from "../domain/entities/Message";
+import type { ToolCall } from "../domain/entities/ToolCall";
 import type { ConnectorStatus } from "./stores/ChatStore";
 import type { SurveyPayload } from "../domain/ports/IConnector";
 
@@ -43,6 +44,8 @@ export interface EventBusPayloadMap {
   search_query_changed: { query: string };
   /** User submitted an end-of-conversation survey. */
   survey_submitted: SurveyPayload;
+  /** A connector tool call started or changed state (upsert by `id`). */
+  tool_call_updated: ToolCall;
 }
 
 export type EventBusEventName = keyof EventBusPayloadMap;

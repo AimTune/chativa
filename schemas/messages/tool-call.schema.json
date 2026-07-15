@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chativa.aimtune.dev/schemas/messages/tool-call.schema.json",
+  "title": "ToolCall",
+  "description": "A single tool invocation reported by a connector via IConnector.onToolCall(). Connectors emit the same `id` multiple times as the call progresses (running -> completed/error); consumers upsert by `id`. Over WebSocket this travels as a `{ \"type\": \"tool_call\", \"data\": { ...ToolCall } }` frame. Source: packages/core/src/domain/entities/ToolCall.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "status"],
+  "properties": {
+    "id":          { "type": "string", "description": "Unique id for this invocation (e.g. an Anthropic `tool_use` id)." },
+    "name":        { "type": "string", "description": "Tool name, e.g. \"get_weather\"." },
+    "description": { "type": "string", "description": "Human-readable description of what the tool is doing, shown in the activity line." },
+    "status":      { "type": "string", "enum": ["running", "completed", "error"], "description": "Lifecycle state of the invocation." },
+    "params":      { "type": "object", "description": "Input parameters the tool was invoked with." },
+    "result":      { "description": "Result payload — present once status is \"completed\". Any JSON value." },
+    "error":       { "type": "string", "description": "Error message — present once status is \"error\"." },
+    "startedAt":   { "type": "number", "description": "Epoch ms when the call started." },
+    "endedAt":     { "type": "number", "description": "Epoch ms when the call settled (completed or error)." }
+  }
+}
