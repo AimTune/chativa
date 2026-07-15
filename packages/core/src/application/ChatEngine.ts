@@ -1,5 +1,6 @@
 import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
+import type { ToolCall } from "../domain/entities/ToolCall";
 import type { AIChunk, GenUIStreamState } from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
@@ -83,7 +84,15 @@ export class ChatEngine {
 
     // Tool-call lifecycle events accumulate in the store until the reply
     // arrives; upsertToolCall also emits "tool_call_updated" on the EventBus.
+    // A call whose trace is already attached to a delivered message (its
+    // start and settle straddled a reply — e.g. a tool that pushed a GenUI
+    // card mid-run) is patched in place instead; buffering it again would
+    // leave the attached panel stuck on "running" and open a second trace.
     this.connector.onToolCall?.((toolCall) => {
+      const inBuffer = chatStore
+        .getState()
+        .activeToolCalls.some((tc) => tc.id === toolCall.id);
+      if (!inBuffer && this._patchAttachedToolCall(toolCall)) return;
       chatStore.getState().upsertToolCall(toolCall);
     });
 
@@ -201,6 +210,31 @@ export class ChatEngine {
     } finally {
       chatStore.getState().setIsLoadingHistory(false);
     }
+  }
+
+  /**
+   * Merge a tool-call update into the newest message whose attached
+   * `data.toolCalls` trace contains the same call. Returns false when no
+   * message holds it (the normal case — the call is still in the live buffer).
+   */
+  private _patchAttachedToolCall(toolCall: ToolCall): boolean {
+    const { messages, updateById } = messageStore.getState();
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      const trace = msg.data?.toolCalls as ToolCall[] | undefined;
+      if (!Array.isArray(trace) || !trace.some((tc) => tc.id === toolCall.id)) continue;
+      updateById(msg.id, {
+        data: {
+          ...msg.data,
+          toolCalls: trace.map((tc) =>
+            tc.id === toolCall.id ? { ...tc, ...toolCall } : tc,
+          ),
+        },
+      });
+      EventBus.emit("tool_call_updated", toolCall);
+      return true;
+    }
+    return false;
   }
 
   private _handleGenUIChunk(streamId: string, chunk: AIChunk, done: boolean): void {

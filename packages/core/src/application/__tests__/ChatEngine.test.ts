@@ -711,4 +711,31 @@ describe("ChatEngine", () => {
     expect((data.toolCalls as unknown[])).toHaveLength(1);
     expect((data.chunks as unknown[])).toHaveLength(2);
   });
+
+  it("patches a trace already attached to a message when the call settles late", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    // The tool starts, then pushes a GenUI card mid-run — the running trace
+    // is attached to the card message and the buffer is cleared…
+    connector.simulateToolCall({ id: "t1", name: "generate_report_pdf", status: "running" });
+    connector.simulateGenUIChunk("s-pdf", { type: "ui", component: "genui-card", props: {}, id: 1 }, true);
+
+    const cardTrace = () =>
+      (messageStore.getState().messages[0].data as Record<string, unknown>).toolCalls as ToolCall[];
+    expect(cardTrace()[0].status).toBe("running");
+
+    // …and only settles afterwards. The attached trace must flip to
+    // completed in place instead of opening a second one in the buffer.
+    connector.simulateToolCall({ id: "t1", name: "generate_report_pdf", status: "completed", result: "ok" });
+    expect(cardTrace()[0].status).toBe("completed");
+    expect(cardTrace()[0].result).toBe("ok");
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+
+    // The closing bot text therefore carries no duplicate trace.
+    connector.simulateIncoming("Report is ready", "reply-final");
+    const final = messageStore.getState().messages.find((m) => m.id === "reply-final");
+    expect(final?.data?.toolCalls).toBeUndefined();
+  });
 });
