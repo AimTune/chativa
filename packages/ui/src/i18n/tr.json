@@ -1,85 +1,95 @@
 {
-    "greeting": "Merhaba",
-    "welcome": "Hoş geldin, {{name}}!",
-    "header": {
-        "title": "Chativa Sohbet Botu",
-        "status": {
-            "connecting": "Bağlanıyor…",
-            "connected": "Çevrimiçi",
-            "error": "Bağlantı hatası",
-            "disconnected": "Bağlantı kesildi",
-            "offline": "Çevrimdışı"
-        },
-        "fullscreen": {
-            "enter": "Tam ekrana geç",
-            "exit": "Tam ekrandan çık"
-        },
-        "close": "Kapat",
-        "minimize": "Küçült",
-        "search": {
-            "toggle": "Ara",
-            "placeholder": "Mesaj ara…",
-            "clear": "Aramayı temizle"
-        }
+  "greeting": "Merhaba",
+  "welcome": "Hoş geldin, {{name}}!",
+  "header": {
+    "title": "Chativa Sohbet Botu",
+    "status": {
+      "connecting": "Bağlanıyor…",
+      "connected": "Çevrimiçi",
+      "error": "Bağlantı hatası",
+      "disconnected": "Bağlantı kesildi",
+      "offline": "Çevrimdışı"
     },
-    "input": {
-        "placeholder": "Bir mesaj yazın…",
-        "send": "Mesaj gönder",
-        "emoji": "Emoji",
-        "attachFile": "Dosya ekle",
-        "removeFile": "{{name}} kaldır",
-        "dropHere": "Dosyaları buraya bırakın",
-        "dropHereSubtitle": "Eklemek için bırakın"
+    "fullscreen": {
+      "enter": "Tam ekrana geç",
+      "exit": "Tam ekrandan çık"
     },
-    "messageList": {
-        "connecting": "Bağlanıyor…",
-        "emptyTitle": "Size nasıl yardımcı olabilirim?",
-        "emptySubtitle": "Başlamak için bir mesaj gönderin.",
-        "newMessage": "Yeni mesaj",
-        "loadMore": "Önceki mesajları yükle",
-        "errorTitle": "Bağlantı kesildi",
-        "errorSubtitle": "Yeniden bağlanılamadı. Lütfen tekrar deneyin.",
-        "retry": "Tekrar dene",
-        "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})",
-        "searchEmpty": "Aramanızla eşleşen mesaj yok.",
-        "searchResult": "{{count}} sonuç bulundu",
-        "loadingHistory": "Önceki mesajlar yükleniyor…",
-        "ariaLabel": "Sohbet mesajları",
-        "typingIndicator": "Asistan yazıyor"
-    },
-    "message": {
-        "from": {
-            "bot": "Asistan",
-            "user": "Siz"
-        },
-        "likeButton": "Bu mesajı beğen",
-        "dislikeButton": "Bu mesajı beğenme",
-        "statusSending": "Gönderiliyor",
-        "statusSent": "Gönderildi",
-        "statusRead": "Okundu"
-    },
-    "emojiPicker": {
-        "searchPlaceholder": "Emoji ara…",
-        "noResults": "Sonuç yok"
-    },
-    "chatButton": {
-        "open": "Sohbeti aç",
-        "close": "Sohbeti kapat"
-    },
-    "widget": {
-        "title": "Sohbet"
-    },
-    "survey": {
-        "title": "Görüşmemizi değerlendirir misiniz?",
-        "ratingLabel": "Deneyiminizi puanlayın",
-        "commentPlaceholder": "Neyi daha iyi yapabiliriz?",
-        "commentRequired": "Lütfen neyin yanlış gittiğini yazın",
-        "submit": "Gönder",
-        "skip": "Atla",
-        "thankYouTitle": "Değerlendirmeni Aldık!",
-        "thankYouBody": "Değerli görüş ve yorumların için teşekkür ederiz.",
-        "close": "Kapat",
-        "starLabel_one": "{{count}} yıldız",
-        "starLabel_other": "{{count}} yıldız"
+    "close": "Kapat",
+    "minimize": "Küçült",
+    "search": {
+      "toggle": "Ara",
+      "placeholder": "Mesaj ara…",
+      "clear": "Aramayı temizle"
     }
+  },
+  "input": {
+    "placeholder": "Bir mesaj yazın…",
+    "send": "Mesaj gönder",
+    "emoji": "Emoji",
+    "attachFile": "Dosya ekle",
+    "removeFile": "{{name}} kaldır",
+    "dropHere": "Dosyaları buraya bırakın",
+    "dropHereSubtitle": "Eklemek için bırakın"
+  },
+  "messageList": {
+    "connecting": "Bağlanıyor…",
+    "emptyTitle": "Size nasıl yardımcı olabilirim?",
+    "emptySubtitle": "Başlamak için bir mesaj gönderin.",
+    "newMessage": "Yeni mesaj",
+    "loadMore": "Önceki mesajları yükle",
+    "errorTitle": "Bağlantı kesildi",
+    "errorSubtitle": "Yeniden bağlanılamadı. Lütfen tekrar deneyin.",
+    "retry": "Tekrar dene",
+    "reconnecting": "Yeniden bağlanıyor… (deneme {{attempt}})",
+    "searchEmpty": "Aramanızla eşleşen mesaj yok.",
+    "searchResult": "{{count}} sonuç bulundu",
+    "loadingHistory": "Önceki mesajlar yükleniyor…",
+    "ariaLabel": "Sohbet mesajları",
+    "typingIndicator": "Asistan yazıyor"
+  },
+  "message": {
+    "from": {
+      "bot": "Asistan",
+      "user": "Siz"
+    },
+    "likeButton": "Bu mesajı beğen",
+    "dislikeButton": "Bu mesajı beğenme",
+    "statusSending": "Gönderiliyor",
+    "statusSent": "Gönderildi",
+    "statusRead": "Okundu"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Emoji ara…",
+    "noResults": "Sonuç yok"
+  },
+  "chatButton": {
+    "open": "Sohbeti aç",
+    "close": "Sohbeti kapat"
+  },
+  "widget": {
+    "title": "Sohbet"
+  },
+  "survey": {
+    "title": "Görüşmemizi değerlendirir misiniz?",
+    "ratingLabel": "Deneyiminizi puanlayın",
+    "commentPlaceholder": "Neyi daha iyi yapabiliriz?",
+    "commentRequired": "Lütfen neyin yanlış gittiğini yazın",
+    "submit": "Gönder",
+    "skip": "Atla",
+    "thankYouTitle": "Değerlendirmeni Aldık!",
+    "thankYouBody": "Değerli görüş ve yorumların için teşekkür ederiz.",
+    "close": "Kapat",
+    "starLabel_one": "{{count}} yıldız",
+    "starLabel_other": "{{count}} yıldız"
+  },
+  "toolCalls": {
+    "running": "Çalışıyor",
+    "completed": "Tamamlandı",
+    "error": "Hata",
+    "parameters": "Parametreler",
+    "result": "Sonuç",
+    "summary": "{{count}} işlem yapıldı",
+    "failed": "{{count}} hatalı",
+    "ariaToggle": "İşlem detaylarını aç/kapat"
+  }
 }

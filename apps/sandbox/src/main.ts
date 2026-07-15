@@ -80,5 +80,9 @@ const metadataFetcher = async (url: string): Promise<LinkMetadata> => {
 // Expose metadata fetcher for link preview cards
 (window as unknown as Record<string, unknown>).chativaMetadataFetcher = metadataFetcher;
 
+// Expose tool-call demo trigger for sandbox demo buttons
+(window as unknown as Record<string, unknown>).chativaToolDemo = (scenario: "success" | "error" | "multi" | "genui") =>
+  connector.triggerToolCalls(scenario);
+
 // Dynamic import ensures custom elements are defined after registration
 import("@chativa/ui");

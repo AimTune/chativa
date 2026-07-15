@@ -13,6 +13,8 @@ import type {
   AIChunk,
   Conversation,
   ConversationHandler,
+  ToolCall,
+  ToolCallHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 
@@ -32,6 +34,7 @@ export class DummyConnector implements IConnector {
   private statusHandler: MessageStatusHandler | null = null;
   private genUIChunkHandler: GenUIChunkHandler | null = null;
   private conversationHandler: ConversationHandler | null = null;
+  private toolCallHandler: ToolCallHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
 
@@ -122,6 +125,14 @@ export class DummyConnector implements IConnector {
 
     // Trigger demo GenUI streams by command prefix (most-specific first)
     const trimmed = text.trim();
+    if (trimmed.startsWith("/tools-error") && this.toolCallHandler) {
+      this.triggerToolCalls("error");
+      return;
+    }
+    if (trimmed.startsWith("/tools") && this.toolCallHandler) {
+      this.triggerToolCalls("success");
+      return;
+    }
     if (trimmed.startsWith("/genui-weather") && this.genUIChunkHandler) {
       this._streamWeatherDemo(message.id);
       return;
@@ -835,6 +846,153 @@ export class DummyConnector implements IConnector {
     }
   }
 
+  /**
+   * Directly trigger a tool-call demo sequence — used by the sandbox demo
+   * buttons and the `/tools` / `/tools-error` chat commands. Emits lifecycle
+   * events (running → completed/error) followed by a final bot reply.
+   * The "genui" scenario finishes with a GenUI weather widget stream instead
+   * of a text message, demonstrating traces on custom components.
+   */
+  triggerToolCalls(scenario: "success" | "error" | "multi" | "genui" = "success"): void {
+    const emit = (tc: ToolCall) => this.toolCallHandler?.(tc);
+    const runId = `tool-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
+    interface DemoStep {
+      name: string;
+      description: string;
+      params: Record<string, unknown>;
+      /** How long the tool "runs" before settling. */
+      duration: number;
+      result?: unknown;
+      error?: string;
+    }
+
+    const steps: DemoStep[] =
+      scenario === "error"
+        ? [
+            {
+              name: "get_weather",
+              description: "Fetching current weather",
+              params: { city: "San Francisco" },
+              duration: 900,
+              error: "fetch failed",
+            },
+          ]
+        : scenario === "genui"
+          ? [
+              {
+                name: "get_weather",
+                description: "Fetching current weather",
+                params: { city: "San Francisco", days: 3 },
+                duration: 1000,
+                result: { tempC: 18, condition: "partly cloudy" },
+              },
+            ]
+        : scenario === "multi"
+          ? [
+              {
+                name: "lookup_customer",
+                description: "Looking up customer account",
+                params: { email: "jane@example.com" },
+                duration: 700,
+                result: { customerId: "cus_481", name: "Jane Doe" },
+              },
+              {
+                name: "list_orders",
+                description: "Listing recent orders",
+                params: { customerId: "cus_481", limit: 5 },
+                duration: 800,
+                result: { orders: [{ id: "ord_1042", total: 79.9 }, { id: "ord_1017", total: 24.5 }] },
+              },
+              {
+                name: "get_shipment_status",
+                description: "Checking shipment status",
+                params: { orderId: "ord_1042" },
+                duration: 1200,
+                result: { status: "in_transit", carrier: "DHL", eta: "2 days" },
+              },
+            ]
+          : [
+              {
+                name: "get_weather",
+                description: "Fetching current weather",
+                params: { city: "San Francisco" },
+                duration: 900,
+                result: { tempC: 18, condition: "partly cloudy" },
+              },
+              {
+                name: "get_forecast",
+                description: "Fetching 3-day forecast",
+                params: { city: "San Francisco", days: 3 },
+                duration: 1100,
+                result: [
+                  { day: "Tue", tempC: 19 },
+                  { day: "Wed", tempC: 17 },
+                  { day: "Thu", tempC: 21 },
+                ],
+              },
+            ];
+
+    this.typingHandler?.(true);
+
+    let at = 300;
+    steps.forEach((step, i) => {
+      const id = `${runId}-${i}`;
+      const startAt = at;
+      setTimeout(() => {
+        emit({
+          id,
+          name: step.name,
+          description: step.description,
+          status: "running",
+          params: step.params,
+          startedAt: Date.now(),
+        });
+      }, startAt);
+
+      at += step.duration;
+      const endAt = at;
+      setTimeout(() => {
+        emit({
+          id,
+          name: step.name,
+          description: step.description,
+          status: step.error ? "error" : "completed",
+          params: step.params,
+          result: step.result,
+          error: step.error,
+          endedAt: Date.now(),
+        });
+      }, endAt);
+
+      at += 150; // small gap before the next tool starts
+    });
+
+    setTimeout(() => {
+      this.typingHandler?.(false);
+
+      // GenUI finale: the reply is a streamed weather widget, not text
+      if (scenario === "genui") {
+        this._streamWeatherDemo(`${runId}-genui`);
+        return;
+      }
+
+      const failed = steps.some((s) => s.error);
+      this.messageHandler?.({
+        id: `dummy-tools-${Date.now()}`,
+        type: "text",
+        data: {
+          text: failed
+            ? "I tried to fetch the weather but the service is unreachable right now. Please try again later."
+            : scenario === "multi"
+              ? "Your latest order **#ord_1042** ($79.90) is **in transit** with DHL — estimated delivery in **2 days**."
+              : "It's **18°C** and partly cloudy in San Francisco. The next days look similar: 19° / 17° / 21°.",
+        },
+        timestamp: Date.now(),
+      });
+    }, at + 300);
+  }
+
   receiveComponentEvent(streamId: string, eventType: string, _payload: unknown): void {
     if (eventType === "form_submit") {
       // Simulate server processing then respond with success
@@ -872,6 +1030,10 @@ export class DummyConnector implements IConnector {
 
   onGenUIChunk(callback: GenUIChunkHandler): void {
     this.genUIChunkHandler = callback;
+  }
+
+  onToolCall(callback: ToolCallHandler): void {
+    this.toolCallHandler = callback;
   }
 
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {

@@ -34,8 +34,22 @@ export class ChatEngine {
     this.connector.onMessage((msg) => {
       chatStore.getState().setTyping(false);
 
-      const transformed = ExtensionRegistry.runAfterReceive(msg);
+      let transformed = ExtensionRegistry.runAfterReceive(msg);
       if (transformed === null) return; // extension blocked it
+
+      // Attach the tool-call trace collected for this reply, then reset the
+      // buffer so the next turn starts clean. A connector that already put
+      // `toolCalls` in the message data wins over the collected buffer.
+      const toolCalls = chatStore.getState().activeToolCalls;
+      if (toolCalls.length > 0) {
+        if (transformed.data?.toolCalls === undefined) {
+          transformed = {
+            ...transformed,
+            data: { ...transformed.data, toolCalls: [...toolCalls] },
+          };
+        }
+        chatStore.getState().clearToolCalls();
+      }
 
       // Increment unread count when chat is closed
       if (!chatStore.getState().isOpened) {
@@ -65,6 +79,12 @@ export class ChatEngine {
 
     this.connector.onGenUIChunk?.((streamId, chunk, done) => {
       this._handleGenUIChunk(streamId, chunk, done);
+    });
+
+    // Tool-call lifecycle events accumulate in the store until the reply
+    // arrives; upsertToolCall also emits "tool_call_updated" on the EventBus.
+    this.connector.onToolCall?.((toolCall) => {
+      chatStore.getState().upsertToolCall(toolCall);
     });
 
     // Inject Chativa context so connector event handlers can interact with the UI
@@ -193,11 +213,19 @@ export class ChatEngine {
       this._genUIStreams.set(streamId, msgId);
       this._msgToStream.set(msgId, streamId);
       const data: GenUIStreamState = { chunks: [chunk], streamingComplete: done };
+      const record = data as unknown as Record<string, unknown>;
+      // A GenUI reply can follow tool calls just like a text reply — attach
+      // the collected trace to the stream's message and reset the buffer.
+      const toolCalls = chatStore.getState().activeToolCalls;
+      if (toolCalls.length > 0) {
+        record.toolCalls = [...toolCalls];
+        chatStore.getState().clearToolCalls();
+      }
       messageStore.getState().addMessage({
         id: msgId,
         type: "genui",
         from: "bot",
-        data: data as unknown as Record<string, unknown>,
+        data: record,
         timestamp: Date.now(),
         component: Component,
       });
@@ -219,8 +247,10 @@ export class ChatEngine {
       if (chunk.type === "event") {
         updated.chunks = [...prevState.chunks, chunk];
       }
+      // Spread the previous data first so extra fields attached at creation
+      // time (e.g. toolCalls) survive chunk updates.
       messageStore.getState().updateById(msgId, {
-        data: updated as unknown as Record<string, unknown>,
+        data: { ...current?.data, ...(updated as unknown as Record<string, unknown>) },
       });
     }
 

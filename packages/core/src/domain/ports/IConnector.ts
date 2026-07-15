@@ -9,6 +9,7 @@
 
 import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
 import type { GenUIChunkHandler } from "../entities/GenUI";
+import type { ToolCallHandler } from "../entities/ToolCall";
 import type { Conversation } from "../entities/Conversation";
 import type { ChativaContext } from "../../application/ChativaContext";
 
@@ -92,6 +93,14 @@ export interface IConnector {
 
   /** Optional: register a callback for Generative UI streaming chunks. */
   onGenUIChunk?(callback: GenUIChunkHandler): void;
+
+  /**
+   * Optional: register a callback for tool-call lifecycle events.
+   * Connectors report each invocation as it progresses by emitting the same
+   * ToolCall `id` with updated fields (running → completed/error).
+   * ChatEngine collects them and attaches the trace to the next bot message.
+   */
+  onToolCall?(callback: ToolCallHandler): void;
 
   /**
    * Optional: called by ChatEngine when a GenUI component fires `sendEvent`.

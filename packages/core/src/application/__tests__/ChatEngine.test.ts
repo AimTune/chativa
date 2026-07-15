@@ -13,21 +13,25 @@ import type {
   MessageStatusHandler,
 } from "../../domain/ports/IConnector";
 import type { AIChunk, GenUIChunkHandler } from "../../domain/entities/GenUI";
+import type { ToolCall, ToolCallHandler } from "../../domain/entities/ToolCall";
 import { DEFAULT_THEME } from "../../domain/value-objects/Theme";
 
 /** Create a controllable mock connector. */
 function createMockConnector(): IConnector & {
   simulateIncoming: (text: string, id?: string) => void;
+  simulateIncomingRaw: (msg: Parameters<MessageHandler>[0]) => void;
   simulateDisconnect: (reason?: string) => void;
   simulateTyping: (v: boolean) => void;
   simulateMessageStatus: (msgId: string, status: "sending" | "sent" | "read") => void;
   simulateGenUIChunk: (streamId: string, chunk: AIChunk, done: boolean) => void;
+  simulateToolCall: (toolCall: ToolCall) => void;
 } {
   let msgHandler: MessageHandler | null = null;
   let disconnectHandler: DisconnectHandler | null = null;
   let typingHandler: TypingHandler | null = null;
   let statusHandler: MessageStatusHandler | null = null;
   let genUIHandler: GenUIChunkHandler | null = null;
+  let toolCallHandler: ToolCallHandler | null = null;
 
   return {
     name: "mock",
@@ -44,13 +48,16 @@ function createMockConnector(): IConnector & {
     onTyping(cb) { typingHandler = cb; },
     onMessageStatus(cb) { statusHandler = cb; },
     onGenUIChunk(cb) { genUIHandler = cb; },
+    onToolCall(cb) { toolCallHandler = cb; },
     simulateIncoming(text: string, id = `sim-${Date.now()}`) {
       msgHandler?.({ id, type: "text", data: { text }, timestamp: Date.now() });
     },
+    simulateIncomingRaw(msg) { msgHandler?.(msg); },
     simulateDisconnect(reason?: string) { disconnectHandler?.(reason); },
     simulateTyping(v: boolean) { typingHandler?.(v); },
     simulateMessageStatus(msgId: string, status: "sending" | "sent" | "read") { statusHandler?.(msgId, status); },
     simulateGenUIChunk(streamId, chunk, done) { genUIHandler?.(streamId, chunk, done); },
+    simulateToolCall(toolCall) { toolCallHandler?.(toolCall); },
   };
 }
 
@@ -78,6 +85,7 @@ describe("ChatEngine", () => {
       isLoadingHistory: false,
       historyCursor: undefined,
       searchQuery: "",
+      activeToolCalls: [],
     });
   });
 
@@ -620,5 +628,87 @@ describe("ChatEngine", () => {
     await engine.init();
     engine.receiveComponentEvent("unknown-id", "click", {});
     expect(connector.receiveComponentEvent).not.toHaveBeenCalled();
+  });
+
+  // ── tool calls ─────────────────────────────────────────────────────
+
+  it("collects connector tool-call events into chatStore.activeToolCalls", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "running", params: { city: "SF" } });
+    expect(chatStore.getState().activeToolCalls).toHaveLength(1);
+    expect(chatStore.getState().activeToolCalls[0].status).toBe("running");
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "completed", result: { tempC: 18 } });
+    const calls = chatStore.getState().activeToolCalls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0].status).toBe("completed");
+    expect(calls[0].params).toEqual({ city: "SF" });
+  });
+
+  it("attaches the collected trace to the next bot message and clears the buffer", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "completed" });
+    connector.simulateToolCall({ id: "t2", name: "get_forecast", status: "error", error: "fetch failed" });
+    connector.simulateIncoming("Here is the weather", "reply-1");
+
+    const msg = messageStore.getState().messages.find((m) => m.id === "reply-1");
+    const toolCalls = msg?.data?.toolCalls as Array<{ id: string; status: string }>;
+    expect(toolCalls).toHaveLength(2);
+    expect(toolCalls.map((tc) => tc.id)).toEqual(["t1", "t2"]);
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
+
+  it("does not attach toolCalls when no tool events were collected", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateIncoming("plain reply", "reply-plain");
+    const msg = messageStore.getState().messages.find((m) => m.id === "reply-plain");
+    expect(msg?.data?.toolCalls).toBeUndefined();
+  });
+
+  it("keeps connector-supplied data.toolCalls but still clears the buffer", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "buffered", name: "a", status: "completed" });
+    connector.simulateIncomingRaw({
+      id: "reply-own",
+      type: "text",
+      data: { text: "hi", toolCalls: [{ id: "own", name: "b", status: "completed" }] },
+      timestamp: Date.now(),
+    });
+
+    const msg = messageStore.getState().messages.find((m) => m.id === "reply-own");
+    const toolCalls = msg?.data?.toolCalls as Array<{ id: string }>;
+    expect(toolCalls.map((tc) => tc.id)).toEqual(["own"]);
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
+
+  it("attaches the trace to a GenUI stream message and keeps it across chunks", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "completed" });
+    connector.simulateGenUIChunk("s-tools", { type: "text", content: "Weather:", id: 1 }, false);
+
+    let data = messageStore.getState().messages[0].data as Record<string, unknown>;
+    expect((data.toolCalls as unknown[])).toHaveLength(1);
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+
+    // Subsequent chunks must not wipe the attached trace
+    connector.simulateGenUIChunk("s-tools", { type: "ui", component: "weather", props: {}, id: 2 }, true);
+    data = messageStore.getState().messages[0].data as Record<string, unknown>;
+    expect((data.toolCalls as unknown[])).toHaveLength(1);
+    expect((data.chunks as unknown[])).toHaveLength(2);
   });
 });

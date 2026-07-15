@@ -615,6 +615,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
         isLoadingHistory: false,
         historyCursor: undefined,
         searchQuery: "",
+        activeToolCalls: [],
         isFullscreen: false,
         isRendered: false,
       });

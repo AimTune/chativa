@@ -5,6 +5,7 @@ import {
     type ThemeConfig,
 } from "../../domain/value-objects/Theme";
 import type { DeepPartial } from "../../domain/value-objects/Theme";
+import type { ToolCall } from "../../domain/entities/ToolCall";
 import { EventBus } from "../EventBus";
 
 // Re-export for backwards compatibility
@@ -56,6 +57,12 @@ export interface ChatStoreState {
     historyCursor?: string;
     /** Current search query; empty string means no active search. */
     searchQuery: string;
+    /**
+     * Tool calls collected for the reply currently being produced.
+     * Upserted by ChatEngine as the connector reports progress; cleared when
+     * the next bot message arrives (the snapshot moves onto that message).
+     */
+    activeToolCalls: ToolCall[];
 
     toggle: () => void;
     open: () => void;
@@ -77,6 +84,10 @@ export interface ChatStoreState {
     setHistoryCursor: (cursor: string | undefined) => void;
     setSearchQuery: (q: string) => void;
     clearSearch: () => void;
+    /** Insert or merge a tool call by `id` (later events win field-by-field). */
+    upsertToolCall: (toolCall: ToolCall) => void;
+    /** Drop all collected tool calls (e.g. after attaching them to a message). */
+    clearToolCalls: () => void;
     /**
      * Reset all per-session runtime fields (history pagination, typing,
      * unread, reconnect attempts) back to their initial values. Preserves
@@ -109,6 +120,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     historyCursor: undefined,
     showMessageStatus: true,
     searchQuery: "",
+    activeToolCalls: [],
 
     toggle: () => {
         setState((s) => ({
@@ -197,6 +209,21 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
         EventBus.emit("search_query_changed", { query: "" });
     },
 
+    upsertToolCall: (toolCall: ToolCall) => {
+        setState((s) => {
+            const idx = s.activeToolCalls.findIndex((tc) => tc.id === toolCall.id);
+            if (idx === -1) {
+                return { activeToolCalls: [...s.activeToolCalls, toolCall] };
+            }
+            const merged = [...s.activeToolCalls];
+            merged[idx] = { ...merged[idx], ...toolCall };
+            return { activeToolCalls: merged };
+        });
+        EventBus.emit("tool_call_updated", toolCall);
+    },
+
+    clearToolCalls: () => setState(() => ({ activeToolCalls: [] })),
+
     resetSession: () => {
         if (_typingTimer !== null) {
             clearTimeout(_typingTimer);
@@ -211,6 +238,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
             isLoadingHistory: false,
             historyCursor: undefined,
             searchQuery: "",
+            activeToolCalls: [],
         }));
         if (hadSearch) {
             EventBus.emit("search_query_changed", { query: "" });

@@ -14,6 +14,7 @@ describe("ChatStore", () => {
       activeConnector: "dummy",
       connectorStatus: "idle",
       theme: DEFAULT_THEME,
+      activeToolCalls: [],
     });
   });
 
@@ -360,6 +361,64 @@ describe("ChatStore", () => {
     chatStore.getState().close();
     expect(handler).toHaveBeenCalledOnce();
     EventBus.off("widget_closed", handler);
+  });
+
+  // ── tool calls ─────────────────────────────────────────────────────
+
+  it("upsertToolCall() appends a new tool call", () => {
+    chatStore.getState().upsertToolCall({ id: "t1", name: "get_weather", status: "running" });
+    expect(chatStore.getState().activeToolCalls).toEqual([
+      { id: "t1", name: "get_weather", status: "running" },
+    ]);
+  });
+
+  it("upsertToolCall() merges updates into an existing call by id", () => {
+    chatStore.getState().upsertToolCall({
+      id: "t1",
+      name: "get_weather",
+      status: "running",
+      params: { city: "SF" },
+    });
+    chatStore.getState().upsertToolCall({
+      id: "t1",
+      name: "get_weather",
+      status: "completed",
+      result: { tempC: 18 },
+    });
+
+    const calls = chatStore.getState().activeToolCalls;
+    expect(calls).toHaveLength(1);
+    expect(calls[0].status).toBe("completed");
+    expect(calls[0].result).toEqual({ tempC: 18 });
+    // Fields from the earlier event survive the merge
+    expect(calls[0].params).toEqual({ city: "SF" });
+  });
+
+  it("upsertToolCall() keeps insertion order for distinct ids", () => {
+    chatStore.getState().upsertToolCall({ id: "t1", name: "a", status: "running" });
+    chatStore.getState().upsertToolCall({ id: "t2", name: "b", status: "running" });
+    chatStore.getState().upsertToolCall({ id: "t1", name: "a", status: "completed" });
+    expect(chatStore.getState().activeToolCalls.map((tc) => tc.id)).toEqual(["t1", "t2"]);
+  });
+
+  it("upsertToolCall() emits tool_call_updated on the EventBus", () => {
+    const handler = vi.fn();
+    EventBus.on("tool_call_updated", handler);
+    chatStore.getState().upsertToolCall({ id: "t1", name: "get_weather", status: "running" });
+    expect(handler).toHaveBeenCalledWith({ id: "t1", name: "get_weather", status: "running" });
+    EventBus.off("tool_call_updated", handler);
+  });
+
+  it("clearToolCalls() empties the buffer", () => {
+    chatStore.getState().upsertToolCall({ id: "t1", name: "a", status: "running" });
+    chatStore.getState().clearToolCalls();
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
+
+  it("resetSession() clears activeToolCalls", () => {
+    chatStore.getState().upsertToolCall({ id: "t1", name: "a", status: "running" });
+    chatStore.getState().resetSession();
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
   });
 
   // ── subscribe ──────────────────────────────────────────────────────

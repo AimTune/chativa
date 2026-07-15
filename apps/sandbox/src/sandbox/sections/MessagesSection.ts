@@ -86,6 +86,19 @@ const DEMO_MESSAGES: Array<{ label: string; msg: Record<string, unknown> }> = [
   },
 ];
 
+/** Connector-driven tool-call demos (lifecycle events, not injected messages). */
+const TOOL_DEMOS: Array<{ label: string; scenario: string }> = [
+  { label: "🔧 Tool Calls", scenario: "success" },
+  { label: "🔧 Tool Call Error", scenario: "error" },
+  { label: "🔧 Multi-step Tools", scenario: "multi" },
+  { label: "🔧 Tools → Weather", scenario: "genui" },
+];
+
+function triggerToolDemo(scenario: string): void {
+  const fn = (window as unknown as Record<string, unknown>).chativaToolDemo;
+  if (typeof fn === "function") fn(scenario);
+}
+
 @customElement("sandbox-messages-section")
 export class MessagesSection extends LitElement {
   static override styles = [sectionStyles];
@@ -105,6 +118,9 @@ export class MessagesSection extends LitElement {
           <div class="msg-grid">
             ${DEMO_MESSAGES.map(({ label, msg }) => html`
               <button class="msg-btn" type="button" @click=${() => injectMessage(msg)}>${label}</button>
+            `)}
+            ${TOOL_DEMOS.map(({ label, scenario }) => html`
+              <button class="msg-btn" type="button" @click=${() => triggerToolDemo(scenario)}>${label}</button>
             `)}
           </div>
         </div>

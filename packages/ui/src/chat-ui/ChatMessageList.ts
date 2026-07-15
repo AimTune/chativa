@@ -5,7 +5,8 @@ import { html as staticHtml } from "lit/static-html.js";
 import { t } from "i18next";
 import i18next from "../i18n/i18n";
 
-import { messageStore, chatStore, type StoredMessage } from "@chativa/core";
+import { messageStore, chatStore, type StoredMessage, type ToolCall } from "@chativa/core";
+import "./ToolCallActivity";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);
@@ -170,6 +171,25 @@ class ChatMessageList extends LitElement {
       margin: 0;
     }
 
+    /* Live tool-call activity strip (bot is working) */
+    .tool-activity-live {
+      margin-top: 4px;
+      width: fit-content;
+      max-width: 85%;
+    }
+
+    /* Trace attached above a delivered bot message */
+    .tool-activity-attached {
+      margin: 6px 0 2px;
+      width: fit-content;
+      max-width: 85%;
+    }
+
+    /* Align with the bubble, past the 28px avatar + 8px gap */
+    .tool-activity-attached.avatar-offset {
+      margin-left: 36px;
+    }
+
     /* Typing indicator */
     .typing-bubble {
       display: flex;
@@ -304,6 +324,7 @@ class ChatMessageList extends LitElement {
   private _prevMessageCount = 0;
   private _prevVersion = 0;
   private _prevIsTyping = false;
+  private _prevToolCallCount = 0;
   /** Set to true while a history load is in-flight; cleared in updated(). */
   private _prevIsLoadingHistory = false;
   /** scrollHeight captured just before history load starts. */
@@ -351,10 +372,14 @@ class ChatMessageList extends LitElement {
   updated() {
     const { messages, version } = messageStore.getState();
     const currentCount = messages.length;
-    const { isTyping, isLoadingHistory } = chatStore.getState();
+    const { isTyping, isLoadingHistory, activeToolCalls } = chatStore.getState();
 
     const typingChanged = isTyping !== this._prevIsTyping;
     this._prevIsTyping = isTyping;
+
+    // The live tool-activity strip appearing/growing changes list height
+    const toolCallsChanged = activeToolCalls.length !== this._prevToolCallCount;
+    this._prevToolCallCount = activeToolCalls.length;
 
     // Detect when history loading just finished (true → false transition)
     const historyJustLoaded = this._prevIsLoadingHistory && !isLoadingHistory;
@@ -406,7 +431,7 @@ class ChatMessageList extends LitElement {
       // GenUI update while user is scrolled up — show pill
       this._hasNewMessages = true;
       this.requestUpdate();
-    } else if (typingChanged && this._isAtBottom) {
+    } else if ((typingChanged || toolCallsChanged) && this._isAtBottom) {
       this._pinToBottom();
     }
   }
@@ -448,7 +473,7 @@ class ChatMessageList extends LitElement {
       : "default-text-message";
     const next = messages[i + 1];
     const isLastInGroup = !next || next.from !== msg.from;
-    return staticHtml`<${unsafeStatic(tag)}
+    const rendered = staticHtml`<${unsafeStatic(tag)}
       .messageData=${msg.data}
       .sender=${msg.from ?? "bot"}
       .messageId=${msg.id}
@@ -456,11 +481,26 @@ class ChatMessageList extends LitElement {
       .hideAvatar=${!isLastInGroup}
       .status=${msg.status ?? "sent"}
     ></${unsafeStatic(tag)}>`;
+
+    // Tool-call trace attaches at list level so every message type — built-in
+    // or custom (e.g. a GenUI weather widget) — gets the activity line above it.
+    const toolCalls = msg.from !== "user"
+      ? (msg.data?.toolCalls as ToolCall[] | undefined)
+      : undefined;
+    if (!toolCalls || toolCalls.length === 0) return rendered;
+
+    const showBotAvatar = chatStore.getState().theme.avatar?.showBot !== false;
+    return html`
+      <div class="tool-activity-attached ${showBotAvatar ? "avatar-offset" : ""}">
+        <tool-call-activity .toolCalls=${toolCalls}></tool-call-activity>
+      </div>
+      ${rendered}
+    `;
   }
 
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery } = chatStore.getState();
+    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls } = chatStore.getState();
 
     const displayMessages = searchQuery
       ? messages.filter((msg) => {
@@ -552,6 +592,12 @@ class ChatMessageList extends LitElement {
               </div>
             `
           : displayMessages.map((msg, i) => this._renderMessage(msg, i, displayMessages))}
+
+        ${activeToolCalls.length > 0 ? html`
+          <div class="tool-activity-live" role="status">
+            <tool-call-activity live .toolCalls=${activeToolCalls}></tool-call-activity>
+          </div>
+        ` : null}
 
         ${isTyping ? html`
           <div
