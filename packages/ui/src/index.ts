@@ -32,10 +32,13 @@ import "./chat-ui/EmojiPicker";
 import "./chat-ui/ConversationList";
 import "./chat-ui/AgentPanel";
 import "./chat-ui/EndOfConversationSurvey";
+import "./chat-ui/LinkPreviewCard";
 
 import { MessageTypeRegistry } from "@chativa/core";
 import { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
 export { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
+export { LinkPreviewCard } from "./chat-ui/LinkPreviewCard";
+export type { LinkMetadata, LinkMetadataFetcher } from "./chat-ui/LinkPreviewCard";
 MessageTypeRegistry.register(
   "end-of-conversation-survey",
   EndOfConversationSurvey as unknown as typeof HTMLElement,

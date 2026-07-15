@@ -5,6 +5,8 @@ import { marked } from "marked";
 import { t } from "i18next";
 import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
+import type { LinkMetadataFetcher } from "./LinkPreviewCard";
+import "./LinkPreviewCard";
 
 
 @customElement("default-text-message")
@@ -219,6 +221,13 @@ export class DefaultTextMessage extends LitElement {
       cursor: default;
       opacity: 0.7;
     }
+
+    .link-previews {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 4px;
+    }
   `;
 
   @property({ type: Object }) messageData: Record<string, unknown> = {};
@@ -228,6 +237,7 @@ export class DefaultTextMessage extends LitElement {
   /** When true the avatar is invisible (still occupies space for alignment). */
   @property({ type: Boolean }) hideAvatar = false;
   @property({ type: String }) status: MessageStatus = "sent";
+  @property({ type: Function }) metadataFetcher: LinkMetadataFetcher | null = null;
 
   @state() private _feedback: "like" | "dislike" | null = null;
 
@@ -353,6 +363,26 @@ export class DefaultTextMessage extends LitElement {
     `;
   }
 
+  private _renderLinkPreviews() {
+    const urls = this.messageData?.urls as string[] | undefined;
+    if (!urls || urls.length === 0) return nothing;
+
+    const previewVariant = (this.messageData?.previewVariant as string) ?? "compact";
+    const fetcher = this.metadataFetcher ?? (window as unknown as Record<string, unknown>).chativaMetadataFetcher as LinkMetadataFetcher | undefined;
+
+    return html`
+      <div class="link-previews">
+        ${urls.map((url) => html`
+          <link-preview-card
+            .url=${url}
+            variant=${previewVariant}
+            .metadataFetcher=${fetcher ?? null}
+          ></link-preview-card>
+        `)}
+      </div>
+    `;
+  }
+
   render() {
     const isUser = this.sender === "user";
     const raw = String(this.messageData?.text ?? "");
@@ -375,6 +405,7 @@ export class DefaultTextMessage extends LitElement {
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
           <div class="bubble">${bubbleContent}</div>
+          ${this._renderLinkPreviews()}
           ${!isUser ? html`
             <div class="feedback ${this._effectiveFeedback ? "active" : ""}">
               <button

@@ -8,6 +8,22 @@ const DEMO_MESSAGES: Array<{ label: string; msg: Record<string, unknown> }> = [
     msg: { type: "text", data: { text: "Hello! This is a **text** message with _markdown_ support." } },
   },
   {
+    label: "🔗 Link Preview",
+    msg: { type: "text", data: { text: "Check out this link: https://github.com" } },
+  },
+  {
+    label: "🔗 Expanded Preview",
+    msg: { type: "text", data: { text: "Watch this: https://www.youtube.com/watch?v=dQw4w9WgXcQ", preview: "expanded" } },
+  },
+  {
+    label: "🔗 Multiple Links",
+    msg: { type: "text", data: { text: "Here are some useful resources:\n- https://lit.dev\n- https://developer.mozilla.org" } },
+  },
+  {
+    label: "🔗 No Preview",
+    msg: { type: "text", data: { text: "Hidden preview: https://github.com", preview: false } },
+  },
+  {
     label: "⚡ Quick Reply",
     msg: {
       type: "quick-reply",
