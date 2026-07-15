@@ -21,4 +21,4 @@ try {
 } catch { /* already registered */ }
 
 // Expose for popup's executeScript(world:"MAIN") calls
-(window as Record<string, unknown>).__chativa = { chatStore };
+(window as unknown as Record<string, unknown>).__chativa = { chatStore };
