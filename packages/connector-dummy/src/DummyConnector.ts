@@ -142,10 +142,17 @@ export class DummyConnector implements IConnector {
       // (double-tick) — paired with ChatEngine's "sent" flip on send (single-tick).
       this.statusHandler?.(message.id, "read" as MessageStatus);
       const replyId = `dummy-reply-${Date.now()}`;
+      
+      // If user sent a URL, include a link in the reply for preview demo
+      const hasUrl = /https?:\/\//i.test(text);
+      const replyText = hasUrl
+        ? `Echo: ${text}\n\nHere's a related resource: https://example.com`
+        : `Echo: ${text}`;
+      
       this.messageHandler?.({
         id: replyId,
         type: "text",
-        data: { text: `Echo: ${text}` },
+        data: { text: replyText },
         timestamp: Date.now(),
       });
     }, this.replyDelay);

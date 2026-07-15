@@ -17,3 +17,5 @@ export type { ChativaContext } from "./ChativaContext";
 export { createChativaContext } from "./createChativaContext";
 export { applyGlobalSettings } from "./ChativaSettings";
 export type { ChativaSettings } from "./ChativaSettings";
+export { LinkPreviewExtension } from "./extensions/LinkPreviewExtension";
+export type { LinkPreviewExtensionOptions, PreviewVariant } from "./extensions/LinkPreviewExtension";
