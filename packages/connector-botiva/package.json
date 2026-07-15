@@ -1,20 +1,20 @@
 {
-  "name": "@chativa/connector-line",
+  "name": "@chativa/connector-botiva",
   "version": "0.0.1",
-  "description": "Chativa connector for chativa-line bridges — WebSocket adapter with tool-call, typing (run lifecycle) and offline queue support.",
+  "description": "Chativa connector for botiva servers (Botiva Wire Protocol v1) — identity handshake, watermark resume, tool-call, typing (run lifecycle), GenUI and offline queue support.",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "jsdelivr": "./dist/chativa-line.global.js",
+  "jsdelivr": "./dist/chativa-botiva.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "default": "./dist/chativa-line.global.js"
+      "default": "./dist/chativa-botiva.global.js"
     }
   },
   "files": [
@@ -24,7 +24,7 @@
     "chativa",
     "chat",
     "connector",
-    "chativa-line",
+    "botiva",
     "websocket",
     "tool-call",
     "human-in-the-loop"

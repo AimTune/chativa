@@ -68,6 +68,27 @@ importers:
         specifier: ^7.0.3
         version: 7.3.1(jiti@1.21.7)(lightningcss@1.32.0)(terser@5.46.0)
 
+  packages/connector-botiva:
+    devDependencies:
+      '@chativa/core':
+        specifier: workspace:*
+        version: link:../core
+      terser:
+        specifier: ^5.46.0
+        version: 5.46.0
+      typescript:
+        specifier: ~5.8.3
+        version: 5.8.3
+      vite:
+        specifier: ^7.0.3
+        version: 7.3.1(jiti@1.21.7)(lightningcss@1.32.0)(terser@5.46.0)
+      vite-plugin-dts:
+        specifier: ^4.5.4
+        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(jiti@1.21.7)(lightningcss@1.32.0)(terser@5.46.0))
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)
+
   packages/connector-directline:
     dependencies:
       botframework-directlinejs:
@@ -121,27 +142,6 @@ importers:
         version: 4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)
 
   packages/connector-http:
-    devDependencies:
-      '@chativa/core':
-        specifier: workspace:*
-        version: link:../core
-      terser:
-        specifier: ^5.46.0
-        version: 5.46.0
-      typescript:
-        specifier: ~5.8.3
-        version: 5.8.3
-      vite:
-        specifier: ^7.0.3
-        version: 7.3.1(jiti@1.21.7)(lightningcss@1.32.0)(terser@5.46.0)
-      vite-plugin-dts:
-        specifier: ^4.5.4
-        version: 4.5.4(rollup@4.59.0)(typescript@5.8.3)(vite@7.3.1(jiti@1.21.7)(lightningcss@1.32.0)(terser@5.46.0))
-      vitest:
-        specifier: ^4.0.18
-        version: 4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)
-
-  packages/connector-line:
     devDependencies:
       '@chativa/core':
         specifier: workspace:*
