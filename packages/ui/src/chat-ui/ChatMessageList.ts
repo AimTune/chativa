@@ -487,7 +487,9 @@ class ChatMessageList extends LitElement {
     const toolCalls = msg.from !== "user"
       ? (msg.data?.toolCalls as ToolCall[] | undefined)
       : undefined;
-    if (!toolCalls || toolCalls.length === 0) return rendered;
+    // Array.isArray also shields against connector-supplied non-array values
+    // (data.toolCalls passes through core with only an undefined check).
+    if (!Array.isArray(toolCalls) || toolCalls.length === 0) return rendered;
 
     const showBotAvatar = chatStore.getState().theme.avatar?.showBot !== false;
     return html`

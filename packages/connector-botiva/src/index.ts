@@ -63,6 +63,8 @@ interface PersistedSession {
  *   indicator (`started` → typing on, `finished` → typing off).
  * - `{ type: "genui", streamId, chunk, done }` → Generative UI chunk; mounts a
  *   GenUIRegistry component inline via `onGenUIChunk`.
+ * - `{ type: "genui_event", streamId, eventType, payload }` ← sent by us when
+ *   a mounted GenUI component fires an event (form submit, card action, …).
  *
  * Persistent frames carry `seq`; we track the highest one as our watermark and
  * hand it back on reconnect, so the server replays only what we missed —
@@ -86,7 +88,10 @@ export class BotivaConnector implements IConnector {
   private genUIChunkHandler: GenUIChunkHandler | null = null;
 
   private reconnectAttempts = 0;
-  private queue: string[] = [];
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Set by disconnect(); suppresses auto-reconnect without mutating options. */
+  private closedByUser = false;
+  private queue: Array<{ payload: string; resolve: () => void }> = [];
   private watermark = 0;
   private _identity: BotivaIdentity | null = null;
 
@@ -115,12 +120,24 @@ export class BotivaConnector implements IConnector {
 
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this.options.url, this.options.protocols);
+      // Re-entrant safe: ChatEngine's auto-reconnect and our own onclose timer
+      // can both call connect() after the same drop — tear down whichever
+      // socket exists (detached first so its close event can't re-schedule)
+      // so only one live socket ever routes frames.
+      if (this.reconnectTimer !== null) {
+        clearTimeout(this.reconnectTimer);
+        this.reconnectTimer = null;
+      }
+      this.detachSocket();
+      this.closedByUser = false;
 
-      this.ws.onopen = () => {
+      const ws = new WebSocket(this.options.url, this.options.protocols);
+      this.ws = ws;
+
+      ws.onopen = () => {
         this.reconnectAttempts = 0;
         // botiva/1 handshake — all fields optional, server fills the gaps.
-        this.ws?.send(
+        ws.send(
           JSON.stringify({
             type: "hello",
             userId: this.options.userId,
@@ -133,42 +150,64 @@ export class BotivaConnector implements IConnector {
         resolve();
       };
 
-      this.ws.onerror = (event) => {
+      ws.onerror = (event) => {
         reject(new Error(`BotivaConnector WebSocket error: ${JSON.stringify(event)}`));
       };
 
-      this.ws.onmessage = (event: MessageEvent) => {
+      ws.onmessage = (event: MessageEvent) => {
         this.routeFrame(event.data as string);
       };
 
-      this.ws.onclose = (event) => {
+      ws.onclose = (event) => {
         // The run may have died with the socket — don't leave typing stuck on.
         this.typingHandler?.(false);
         this.disconnectHandler?.(event.reason);
         if (
+          !this.closedByUser &&
           this.options.reconnect &&
           this.reconnectAttempts < this.options.maxReconnectAttempts
         ) {
           this.reconnectAttempts++;
-          setTimeout(() => this.connect().catch(() => {}), this.options.reconnectDelay);
+          this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            if (this.closedByUser) return;
+            this.connect().catch(() => {});
+          }, this.options.reconnectDelay);
         }
       };
     });
   }
 
   async disconnect(): Promise<void> {
-    this.options.reconnect = false;
-    this.ws?.close();
+    this.closedByUser = true;
+    if (this.reconnectTimer !== null) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+    this.detachSocket();
+  }
+
+  /** Detach all handlers and close the current socket (if any) without side effects. */
+  private detachSocket(): void {
+    const ws = this.ws;
     this.ws = null;
+    if (!ws) return;
+    ws.onopen = null;
+    ws.onerror = null;
+    ws.onmessage = null;
+    ws.onclose = null;
+    if (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING) {
+      ws.close();
+    }
   }
 
   async sendMessage(message: OutgoingMessage): Promise<void> {
-    this.sendOrQueue(JSON.stringify(message));
+    await this.sendOrQueue(JSON.stringify(message));
   }
 
   /** Send the survey as a JSON frame with discriminator `{ type: "survey", ... }`. */
   async sendSurvey(payload: SurveyPayload): Promise<void> {
-    this.sendOrQueue(JSON.stringify({ type: "survey", ...payload }));
+    await this.sendOrQueue(JSON.stringify({ type: "survey", ...payload }));
   }
 
   onMessage(callback: MessageHandler): void {
@@ -195,6 +234,17 @@ export class BotivaConnector implements IConnector {
     this.genUIChunkHandler = callback;
   }
 
+  /**
+   * Forward a GenUI component event (form submit, card action, …) to the
+   * server as `{ type: "genui_event", streamId, eventType, payload }` —
+   * the outbound counterpart of the inbound `genui` frame.
+   */
+  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+    void this.sendOrQueue(
+      JSON.stringify({ type: "genui_event", streamId, eventType, payload }),
+    );
+  }
+
   // ── internals ────────────────────────────────────────────────────────
 
   private routeFrame(raw: string): void {
@@ -219,17 +269,32 @@ export class BotivaConnector implements IConnector {
     }
 
     // Handshake response: identity + current watermark. Not a chat message.
+    // (Like tool_call, the payload may also be flattened onto the frame.)
     if (data?.type === "welcome") {
-      const d = (data.data ?? {}) as Partial<BotivaIdentity>;
+      const d = (data.data ?? data) as Partial<BotivaIdentity>;
+      const prevConversationId = this.options.conversationId;
       this._identity = {
-        conversationId: String(d.conversationId ?? ""),
-        userId: String(d.userId ?? ""),
+        conversationId: String(d.conversationId ?? this.options.conversationId ?? ""),
+        userId: String(d.userId ?? this.options.userId ?? ""),
         connectionId: String(d.connectionId ?? ""),
-        watermark: Number(d.watermark ?? 0),
+        watermark: Number(d.watermark ?? this.watermark),
       };
-      // Adopt server-minted ids so the next reconnect resumes this session.
-      this.options.userId = this._identity.userId;
-      this.options.conversationId = this._identity.conversationId;
+      // Adopt server-minted ids so the next reconnect resumes this session —
+      // but never clobber a configured id with an empty value from a partial
+      // welcome payload.
+      if (this._identity.userId) this.options.userId = this._identity.userId;
+      if (this._identity.conversationId) {
+        this.options.conversationId = this._identity.conversationId;
+      }
+      // A different conversation than the one we tried to resume (e.g. the old
+      // one expired) means our watermark belongs to the old transcript —
+      // restart the new conversation's replay window from zero.
+      if (
+        this._identity.conversationId &&
+        this._identity.conversationId !== prevConversationId
+      ) {
+        this.watermark = 0;
+      }
       if (this.options.resumeConversation) this.saveSession();
       return;
     }
@@ -287,21 +352,28 @@ export class BotivaConnector implements IConnector {
     this.messageHandler?.(data as never);
   }
 
-  private sendOrQueue(payload: string): void {
+  /**
+   * Send now, or queue until the next (re)connect. A queued payload's promise
+   * resolves only when it is actually flushed onto the wire, so ChatEngine
+   * keeps the bubble on "sending" instead of stamping "sent" for a message
+   * the server never received.
+   */
+  private sendOrQueue(payload: string): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(payload);
-      return;
+      return Promise.resolve();
     }
     if (this.options.queueOfflineMessages) {
-      this.queue.push(payload);
-    } else {
-      throw new Error("BotivaConnector: not connected.");
+      return new Promise((resolve) => this.queue.push({ payload, resolve }));
     }
+    return Promise.reject(new Error("BotivaConnector: not connected."));
   }
 
   private flushQueue(): void {
     while (this.queue.length && this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(this.queue.shift()!);
+      const entry = this.queue.shift()!;
+      this.ws.send(entry.payload);
+      entry.resolve();
     }
   }
 

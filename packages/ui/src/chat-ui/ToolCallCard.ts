@@ -211,7 +211,12 @@ export class ToolCallCard extends LitElement {
     const tc = this.toolCall;
     if (!tc) return nothing;
 
-    const hasParams = tc.params !== undefined && Object.keys(tc.params).length > 0;
+    // `params` comes straight off the wire — guard against null and
+    // non-object values, not just undefined (Object.keys(null) throws).
+    const hasParams =
+      tc.params != null &&
+      typeof tc.params === "object" &&
+      Object.keys(tc.params).length > 0;
     const hasResult = tc.status === "completed" && tc.result !== undefined;
     const hasError = tc.status === "error" && !!tc.error;
 

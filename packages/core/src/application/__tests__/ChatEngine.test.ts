@@ -738,4 +738,63 @@ describe("ChatEngine", () => {
     const final = messageStore.getState().messages.find((m) => m.id === "reply-final");
     expect(final?.data?.toolCalls).toBeUndefined();
   });
+
+  it("preserves from:'user' on replayed/fan-out frames — no bot stamp, unread, or trace steal", async () => {
+    chatStore.setState({ isOpened: false });
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "running" });
+    connector.simulateIncomingRaw({
+      id: "echo-1",
+      type: "text",
+      from: "user",
+      data: { text: "hi from the other tab" },
+      timestamp: 1,
+    });
+
+    const msg = messageStore.getState().messages.find((m) => m.id === "echo-1");
+    expect(msg?.from).toBe("user");
+    expect(chatStore.getState().unreadCount).toBe(0);
+    // The running trace stays buffered for the actual bot reply.
+    expect(msg?.data?.toolCalls).toBeUndefined();
+    expect(chatStore.getState().activeToolCalls).toHaveLength(1);
+
+    connector.simulateIncoming("weather is sunny", "reply-1");
+    const reply = messageStore.getState().messages.find((m) => m.id === "reply-1");
+    expect(reply?.from).toBe("bot");
+    expect((reply?.data?.toolCalls as ToolCall[])).toHaveLength(1);
+  });
+
+  it("clears the live tool-call buffer on disconnect", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "running" });
+    expect(chatStore.getState().activeToolCalls).toHaveLength(1);
+
+    connector.simulateDisconnect("user");
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
+
+  it("drains tool calls that started mid-stream into the GenUI message on done", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateGenUIChunk("s-late", { type: "text", content: "Working…", id: 1 }, false);
+    // Tool starts (and settles) after the first chunk — previously stranded
+    // in the buffer forever once the stream completed.
+    connector.simulateToolCall({ id: "t-late", name: "lookup", status: "running" });
+    connector.simulateToolCall({ id: "t-late", name: "lookup", status: "completed" });
+    connector.simulateGenUIChunk("s-late", { type: "text", content: "Done.", id: 2 }, true);
+
+    const data = messageStore.getState().messages[0].data as Record<string, unknown>;
+    const trace = data.toolCalls as ToolCall[];
+    expect(trace).toHaveLength(1);
+    expect(trace[0]).toMatchObject({ id: "t-late", status: "completed" });
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
 });

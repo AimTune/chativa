@@ -302,6 +302,10 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   disconnectedCallback() {
     this._unsubscribeMessages?.();
     this._multiEngine?.destroy().catch(() => {});
+    // connectedCallback builds a fresh engine on re-attach — drop the dead
+    // reference and re-arm lazy init so the new engine actually connects.
+    this._multiEngine = null;
+    this._engineInitialised = false;
     window.visualViewport?.removeEventListener("resize", this._onVisualViewport);
     window.visualViewport?.removeEventListener("scroll", this._onVisualViewport);
     if (this._vvRafId !== null) cancelAnimationFrame(this._vvRafId);
@@ -751,9 +755,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       // Deferred past this update cycle — init() synchronously sets the
       // connector status in chatStore, which would re-schedule an update
       // while this one is still in progress (Lit change-in-update warning).
+      // The isConnected check keeps a deferred init from resurrecting an
+      // engine that disconnectedCallback already destroyed.
       if (!this._engineInitialised) {
         this._engineInitialised = true;
         this.updateComplete.then(() => {
+          if (!this.isConnected) return;
           this._multiEngine?.init().catch((err: unknown) => {
             console.error("[ChatWidget] Engine init failed:", err);
           });
