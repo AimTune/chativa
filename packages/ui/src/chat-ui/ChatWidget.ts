@@ -72,7 +72,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       overflow: hidden;
       animation: slideUp 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
       z-index: 9999;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: var(--chativa-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
       transition: border-radius 0.25s ease, box-shadow 0.25s ease;
     }
 
