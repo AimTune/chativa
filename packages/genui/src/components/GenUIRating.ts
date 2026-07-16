@@ -42,18 +42,22 @@ export class GenUIRating extends ChativaElement {
     .stars {
       display: flex;
       justify-content: center;
-      gap: 6px;
-      margin-bottom: 14px;
+      flex-wrap: wrap;
+      gap: 4px;
+      /* Breathing room so the hover scale-up never clips or spills
+         past the card edge. */
+      padding: 4px 6px;
+      margin-bottom: 10px;
     }
 
     .star {
-      font-size: 2rem;
+      font-size: 1.75rem;
       cursor: pointer;
       transition: transform 0.1s ease, opacity 0.1s;
-      line-height: 1;
+      line-height: 1.2;
       border: none;
       background: none;
-      padding: 0;
+      padding: 2px 3px;
       opacity: 0.3;
       user-select: none;
     }

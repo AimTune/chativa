@@ -1,29 +1,27 @@
 import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { ChativaElement } from "@chativa/core";
+import { bubbleStyles } from "../styles/bubble";
 
 /**
- * `<genui-text-block>` — built-in plain-text/markdown chunk renderer.
- * Used automatically by GenUIMessage for `{ type: "text" }` chunks.
+ * `<genui-text-block>` — built-in plain-text chunk renderer, drawn as a
+ * regular bot bubble. Available to connectors as `genui-text` and to
+ * custom components for composing text into their own templates.
  */
 @customElement("genui-text-block")
 export class GenUITextBlock extends ChativaElement {
-  static override styles = css`
-    :host {
-      display: block;
-    }
-    .content {
-      font-size: 0.875rem;
-      line-height: 1.65;
-      color: #0f172a;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-  `;
+  static override styles = [
+    bubbleStyles,
+    css`
+      :host {
+        display: block;
+      }
+    `,
+  ];
 
   @property({ type: String }) content = "";
 
   override render() {
-    return html`<div class="content">${this.content}</div>`;
+    return html`<div class="chativa-bubble">${this.content}</div>`;
   }
 }
