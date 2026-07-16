@@ -1,0 +1,56 @@
+{
+  "name": "@chativa/connector-botiva",
+  "version": "0.0.1",
+  "description": "Chativa connector for botiva servers (Botiva Wire Protocol v1) — identity handshake, watermark resume, tool-call, typing (run lifecycle), GenUI and offline queue support.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "jsdelivr": "./dist/chativa-botiva.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/chativa-botiva.global.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "connector",
+    "botiva",
+    "websocket",
+    "tool-call",
+    "human-in-the-loop"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "vite build && vite build --config vite.config.cdn.ts",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1"
+  },
+  "devDependencies": {
+    "@chativa/core": "workspace:*",
+    "terser": "^5.46.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18"
+  }
+}

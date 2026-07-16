@@ -711,4 +711,90 @@ describe("ChatEngine", () => {
     expect((data.toolCalls as unknown[])).toHaveLength(1);
     expect((data.chunks as unknown[])).toHaveLength(2);
   });
+
+  it("patches a trace already attached to a message when the call settles late", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    // The tool starts, then pushes a GenUI card mid-run — the running trace
+    // is attached to the card message and the buffer is cleared…
+    connector.simulateToolCall({ id: "t1", name: "generate_report_pdf", status: "running" });
+    connector.simulateGenUIChunk("s-pdf", { type: "ui", component: "genui-card", props: {}, id: 1 }, true);
+
+    const cardTrace = () =>
+      (messageStore.getState().messages[0].data as Record<string, unknown>).toolCalls as ToolCall[];
+    expect(cardTrace()[0].status).toBe("running");
+
+    // …and only settles afterwards. The attached trace must flip to
+    // completed in place instead of opening a second one in the buffer.
+    connector.simulateToolCall({ id: "t1", name: "generate_report_pdf", status: "completed", result: "ok" });
+    expect(cardTrace()[0].status).toBe("completed");
+    expect(cardTrace()[0].result).toBe("ok");
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+
+    // The closing bot text therefore carries no duplicate trace.
+    connector.simulateIncoming("Report is ready", "reply-final");
+    const final = messageStore.getState().messages.find((m) => m.id === "reply-final");
+    expect(final?.data?.toolCalls).toBeUndefined();
+  });
+
+  it("preserves from:'user' on replayed/fan-out frames — no bot stamp, unread, or trace steal", async () => {
+    chatStore.setState({ isOpened: false });
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "running" });
+    connector.simulateIncomingRaw({
+      id: "echo-1",
+      type: "text",
+      from: "user",
+      data: { text: "hi from the other tab" },
+      timestamp: 1,
+    });
+
+    const msg = messageStore.getState().messages.find((m) => m.id === "echo-1");
+    expect(msg?.from).toBe("user");
+    expect(chatStore.getState().unreadCount).toBe(0);
+    // The running trace stays buffered for the actual bot reply.
+    expect(msg?.data?.toolCalls).toBeUndefined();
+    expect(chatStore.getState().activeToolCalls).toHaveLength(1);
+
+    connector.simulateIncoming("weather is sunny", "reply-1");
+    const reply = messageStore.getState().messages.find((m) => m.id === "reply-1");
+    expect(reply?.from).toBe("bot");
+    expect((reply?.data?.toolCalls as ToolCall[])).toHaveLength(1);
+  });
+
+  it("clears the live tool-call buffer on disconnect", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateToolCall({ id: "t1", name: "get_weather", status: "running" });
+    expect(chatStore.getState().activeToolCalls).toHaveLength(1);
+
+    connector.simulateDisconnect("user");
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
+
+  it("drains tool calls that started mid-stream into the GenUI message on done", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+
+    connector.simulateGenUIChunk("s-late", { type: "text", content: "Working…", id: 1 }, false);
+    // Tool starts (and settles) after the first chunk — previously stranded
+    // in the buffer forever once the stream completed.
+    connector.simulateToolCall({ id: "t-late", name: "lookup", status: "running" });
+    connector.simulateToolCall({ id: "t-late", name: "lookup", status: "completed" });
+    connector.simulateGenUIChunk("s-late", { type: "text", content: "Done.", id: 2 }, true);
+
+    const data = messageStore.getState().messages[0].data as Record<string, unknown>;
+    const trace = data.toolCalls as ToolCall[];
+    expect(trace).toHaveLength(1);
+    expect(trace[0]).toMatchObject({ id: "t-late", status: "completed" });
+    expect(chatStore.getState().activeToolCalls).toEqual([]);
+  });
 });

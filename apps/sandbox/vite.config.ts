@@ -115,6 +115,7 @@ export default defineConfig({
       "@chativa/connector-websocket": resolve(__dirname, "../../packages/connector-websocket/src/index.ts"),
       "@chativa/connector-signalr": resolve(__dirname, "../../packages/connector-signalr/src/index.ts"),
       "@chativa/connector-directline": resolve(__dirname, "../../packages/connector-directline/src/index.ts"),
+      "@chativa/connector-botiva": resolve(__dirname, "../../packages/connector-botiva/src/index.ts"),
     },
   },
 });

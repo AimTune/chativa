@@ -1,5 +1,6 @@
 import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
+import type { ToolCall } from "../domain/entities/ToolCall";
 import type { AIChunk, GenUIStreamState } from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
@@ -37,32 +38,44 @@ export class ChatEngine {
       let transformed = ExtensionRegistry.runAfterReceive(msg);
       if (transformed === null) return; // extension blocked it
 
+      // A connector may deliver the user's own messages back through this
+      // path (transcript replay, other-tab fan-out). Preserve their sender —
+      // they must not render as bot bubbles, bump the unread badge, or absorb
+      // the pending tool-call trace.
+      const from: "bot" | "user" = transformed.from === "user" ? "user" : "bot";
+
       // Attach the tool-call trace collected for this reply, then reset the
       // buffer so the next turn starts clean. A connector that already put
       // `toolCalls` in the message data wins over the collected buffer.
-      const toolCalls = chatStore.getState().activeToolCalls;
-      if (toolCalls.length > 0) {
-        if (transformed.data?.toolCalls === undefined) {
-          transformed = {
-            ...transformed,
-            data: { ...transformed.data, toolCalls: [...toolCalls] },
-          };
+      if (from === "bot") {
+        const toolCalls = chatStore.getState().activeToolCalls;
+        if (toolCalls.length > 0) {
+          if (transformed.data?.toolCalls === undefined) {
+            transformed = {
+              ...transformed,
+              data: { ...transformed.data, toolCalls: [...toolCalls] },
+            };
+          }
+          chatStore.getState().clearToolCalls();
         }
-        chatStore.getState().clearToolCalls();
       }
 
       // Increment unread count when chat is closed
-      if (!chatStore.getState().isOpened) {
+      if (from === "bot" && !chatStore.getState().isOpened) {
         chatStore.getState().incrementUnread();
       }
 
       const Component = MessageTypeRegistry.resolve(transformed.type);
-      messageStore.getState().addMessage({ ...transformed, from: "bot", component: Component });
+      messageStore.getState().addMessage({ ...transformed, from, component: Component });
       EventBus.emit("message_received", transformed);
     });
 
     this.connector.onDisconnect?.((reason) => {
       this._setStatus("disconnected");
+      // The run died with the socket — like the typing indicator, the live
+      // tool-call strip must not stay stuck on "running". A resuming
+      // connector replays the lifecycle frames after reconnect.
+      chatStore.getState().clearToolCalls();
       // Auto-reconnect unless destroyed or user-initiated disconnect
       if (!this._destroyed && reason !== "user") {
         this._scheduleReconnect(1);
@@ -83,7 +96,15 @@ export class ChatEngine {
 
     // Tool-call lifecycle events accumulate in the store until the reply
     // arrives; upsertToolCall also emits "tool_call_updated" on the EventBus.
+    // A call whose trace is already attached to a delivered message (its
+    // start and settle straddled a reply — e.g. a tool that pushed a GenUI
+    // card mid-run) is patched in place instead; buffering it again would
+    // leave the attached panel stuck on "running" and open a second trace.
     this.connector.onToolCall?.((toolCall) => {
+      const inBuffer = chatStore
+        .getState()
+        .activeToolCalls.some((tc) => tc.id === toolCall.id);
+      if (!inBuffer && this._patchAttachedToolCall(toolCall)) return;
       chatStore.getState().upsertToolCall(toolCall);
     });
 
@@ -203,6 +224,31 @@ export class ChatEngine {
     }
   }
 
+  /**
+   * Merge a tool-call update into the newest message whose attached
+   * `data.toolCalls` trace contains the same call. Returns false when no
+   * message holds it (the normal case — the call is still in the live buffer).
+   */
+  private _patchAttachedToolCall(toolCall: ToolCall): boolean {
+    const { messages, updateById } = messageStore.getState();
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i];
+      const trace = msg.data?.toolCalls as ToolCall[] | undefined;
+      if (!Array.isArray(trace) || !trace.some((tc) => tc.id === toolCall.id)) continue;
+      updateById(msg.id, {
+        data: {
+          ...msg.data,
+          toolCalls: trace.map((tc) =>
+            tc.id === toolCall.id ? { ...tc, ...toolCall } : tc,
+          ),
+        },
+      });
+      EventBus.emit("tool_call_updated", toolCall);
+      return true;
+    }
+    return false;
+  }
+
   private _handleGenUIChunk(streamId: string, chunk: AIChunk, done: boolean): void {
     const Component = MessageTypeRegistry.resolve("genui");
     let msgId = this._genUIStreams.get(streamId);
@@ -255,6 +301,27 @@ export class ChatEngine {
     }
 
     if (done) {
+      // Drain calls that started after the first chunk — without this they
+      // would sit in the live buffer after the run ends (stuck activity
+      // strip) and attach to the next unrelated turn's reply.
+      const remaining = chatStore.getState().activeToolCalls;
+      if (remaining.length > 0) {
+        const current = messageStore.getState().messages.find((m) => m.id === msgId);
+        const trace = Array.isArray(current?.data?.toolCalls)
+          ? (current!.data!.toolCalls as ToolCall[])
+          : [];
+        const merged = [
+          ...trace.map((tc) => {
+            const update = remaining.find((r) => r.id === tc.id);
+            return update ? { ...tc, ...update } : tc;
+          }),
+          ...remaining.filter((r) => !trace.some((tc) => tc.id === r.id)),
+        ];
+        messageStore.getState().updateById(msgId, {
+          data: { ...current?.data, toolCalls: merged },
+        });
+        chatStore.getState().clearToolCalls();
+      }
       EventBus.emit("genui_stream_completed", { streamId });
       this._genUIStreams.delete(streamId);
       this._msgToStream.delete(msgId);

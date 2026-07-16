@@ -9,13 +9,19 @@ import {
 } from "@chativa/core";
 import { DummyConnector } from "@chativa/connector-dummy";
 import { DirectLineConnector } from "@chativa/connector-directline";
+import { BotivaConnector } from "@chativa/connector-botiva";
 import { sectionStyles } from "../sandboxShared";
 
-type ConnectorKind = "dummy" | "directline";
+type ConnectorKind = "dummy" | "directline" | "botiva";
 
 interface DummyForm {
   replyDelay: number;
   connectDelay: number;
+}
+
+interface BotivaForm {
+  url: string;
+  reconnect: boolean;
 }
 
 interface DirectLineForm {
@@ -213,6 +219,10 @@ export class ConnectorSection extends LitElement {
     locale: "",
     resumeConversation: false,
   };
+  @state() private _botiva: BotivaForm = {
+    url: "ws://localhost:8790/chat",
+    reconnect: true,
+  };
 
   private _unsub!: () => void;
 
@@ -259,6 +269,7 @@ export class ConnectorSection extends LitElement {
         historyCursor: undefined,
         searchQuery: "",
         isRendered: false,
+        activeToolCalls: [],
       });
 
       // Replace the <chat-iva> element so its connectedCallback re-binds
@@ -300,6 +311,16 @@ export class ConnectorSection extends LitElement {
         userId: f.userId.trim() || undefined,
         locale: f.locale.trim() || undefined,
         resumeConversation: f.resumeConversation,
+      });
+    }
+    if (this._kind === "botiva") {
+      const f = this._botiva;
+      if (!f.url.trim()) {
+        throw new Error("botiva: WebSocket URL is required.");
+      }
+      return new BotivaConnector({
+        url: f.url.trim(),
+        reconnect: f.reconnect,
       });
     }
     throw new Error(`Unknown connector kind: ${this._kind}`);
@@ -357,6 +378,26 @@ export class ConnectorSection extends LitElement {
     `;
   }
 
+  private _renderBotivaOptions() {
+    return html`
+      <div class="field-grid">
+        <label for="botiva-url">WS URL</label>
+        <input id="botiva-url" type="text" placeholder="ws://localhost:8790/chat"
+          .value=${this._botiva.url}
+          @input=${(e: Event) => {
+            this._botiva = { ...this._botiva, url: (e.target as HTMLInputElement).value };
+          }} />
+      </div>
+      <div class="checkbox-row">
+        <input id="botiva-reconnect" type="checkbox" .checked=${this._botiva.reconnect}
+          @change=${(e: Event) => {
+            this._botiva = { ...this._botiva, reconnect: (e.target as HTMLInputElement).checked };
+          }} />
+        <label for="botiva-reconnect">Auto-reconnect (queues messages while down)</label>
+      </div>
+    `;
+  }
+
   private _renderCapabilities() {
     return html`
       <div class="cap-grid">
@@ -399,11 +440,13 @@ export class ConnectorSection extends LitElement {
                   }}>
                   <option value="dummy">Dummy (local mock)</option>
                   <option value="directline">DirectLine (Azure Bot Framework)</option>
+                  <option value="botiva">botiva (agent bridge)</option>
                 </select>
               </div>
 
               ${this._kind === "dummy"      ? this._renderDummyOptions()      : nothing}
               ${this._kind === "directline" ? this._renderDirectLineOptions() : nothing}
+              ${this._kind === "botiva"     ? this._renderBotivaOptions()     : nothing}
 
               <button class="connect-btn" @click=${() => this._connect()}>
                 Connect

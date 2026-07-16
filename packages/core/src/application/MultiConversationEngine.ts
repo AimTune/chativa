@@ -3,6 +3,7 @@ import type { Conversation } from "../domain/entities/Conversation";
 import { ChatEngine } from "./ChatEngine";
 import conversationStore from "./stores/ConversationStore";
 import messageStore from "./stores/MessageStore";
+import chatStore from "./stores/ChatStore";
 
 /**
  * MultiConversationEngine — orchestrates multiple conversations on a single connector.
@@ -66,6 +67,11 @@ export class MultiConversationEngine {
     if (currentId !== null) {
       state.cacheMessages(currentId, [...messageStore.getState().messages]);
     }
+
+    // The live tool-call buffer belongs to the conversation we're leaving —
+    // without this, its activity strip stays visible in the target
+    // conversation and the next reply there absorbs the foreign trace.
+    chatStore.getState().clearToolCalls();
 
     // Inform the connector (optional — lets it route subsequent messages correctly)
     await this._connector.switchConversation?.(conversationId);

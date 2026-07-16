@@ -61,6 +61,12 @@ export class ToolCallActivity extends LitElement {
       min-width: 0;
     }
 
+    .names {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-weight: 600;
+      color: #334155;
+    }
+
     .count-error {
       color: #b91c1c;
       font-weight: 600;
@@ -112,6 +118,11 @@ export class ToolCallActivity extends LitElement {
     this._expanded = !this._expanded;
   }
 
+  /** Unique tool names, in invocation order — tells the user *which* tools ran. */
+  private get _toolNames(): string {
+    return [...new Set(this.toolCalls.map((tc) => tc.name))].join(", ");
+  }
+
   private _lineContent() {
     const calls = this.toolCalls;
     const running = [...calls].reverse().find((tc) => tc.status === "running");
@@ -120,7 +131,10 @@ export class ToolCallActivity extends LitElement {
     if (this.live && running) {
       return html`
         <span class="spinner" aria-hidden="true"></span>
-        <span class="label">${running.description ?? running.name}</span>
+        <span class="label">
+          <span class="names">${running.name}</span>
+          ${running.description ? html` · ${running.description}` : nothing}
+        </span>
       `;
     }
 
@@ -128,7 +142,10 @@ export class ToolCallActivity extends LitElement {
       <svg class="line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
       </svg>
-      <span class="label">${t("toolCalls.summary", { count: calls.length })}</span>
+      <span class="label" title="${this._toolNames}">
+        <span class="names">${this._toolNames}</span>
+        · ${t("toolCalls.summary", { count: calls.length })}
+      </span>
       ${errorCount > 0
         ? html`<span class="count-error">${t("toolCalls.failed", { count: errorCount })}</span>`
         : nothing}
