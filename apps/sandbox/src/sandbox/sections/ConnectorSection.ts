@@ -269,6 +269,7 @@ export class ConnectorSection extends LitElement {
         historyCursor: undefined,
         searchQuery: "",
         isRendered: false,
+        activeToolCalls: [],
       });
 
       // Replace the <chat-iva> element so its connectedCallback re-binds
