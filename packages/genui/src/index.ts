@@ -39,6 +39,11 @@ export { GenUITypewriter } from "./components/GenUITypewriter";
 // ── Utilities ─────────────────────────────────────────────────────────────────
 export { streamFromFetch } from "./utils/streamFromFetch";
 
+// ── Shared styles ─────────────────────────────────────────────────────────────
+// Chat-bubble look for text content — custom components compose it via
+// `static styles = [bubbleStyles, ...]` + class="chativa-bubble".
+export { bubbleStyles } from "./styles/bubble";
+
 // ── Re-export core GenUI types for convenience ────────────────────────────────
 export type {
   AIChunk,

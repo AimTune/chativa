@@ -1,6 +1,7 @@
 import { html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { ChativaElement } from "@chativa/core";
+import { bubbleStyles } from "../styles/bubble";
 
 /**
  * GenUITypewriter — animates text content character by character.
@@ -17,24 +18,34 @@ import { ChativaElement } from "@chativa/core";
  */
 @customElement("genui-typewriter")
 export class GenUITypewriter extends ChativaElement {
-  static override styles = css`
-    :host {
-      display: inline;
-    }
+  static override styles = [
+    bubbleStyles,
+    css`
+      :host {
+        display: block;
+      }
 
-    .cursor {
-      display: inline-block;
-      font-weight: 300;
-      animation: blink 1s step-end infinite;
-      margin-left: 1px;
-      opacity: 1;
-    }
+      /* The typewriting happens inside a regular bot bubble. Override the
+         font per component with --chativa-typewriter-font, or globally
+         with --chativa-font-family. */
+      .chativa-bubble {
+        font-family: var(--chativa-typewriter-font, var(--chativa-font-family, inherit));
+      }
 
-    @keyframes blink {
-      0%, 100% { opacity: 1; }
-      50%       { opacity: 0; }
-    }
-  `;
+      .cursor {
+        display: inline-block;
+        font-weight: 300;
+        animation: blink 1s step-end infinite;
+        margin-left: 1px;
+        opacity: 1;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 1; }
+        50%       { opacity: 0; }
+      }
+    `,
+  ];
 
   /** Full text to animate. */
   @property({ type: String }) content = "";
@@ -79,6 +90,6 @@ export class GenUITypewriter extends ChativaElement {
   override render() {
     const complete = this._displayed.length >= this.content.length;
     const showCursor = this.cursor !== false && !complete;
-    return html`<span>${this._displayed}</span>${showCursor ? html`<span class="cursor">|</span>` : nothing}`;
+    return html`<div class="chativa-bubble"><span>${this._displayed}</span>${showCursor ? html`<span class="cursor">|</span>` : nothing}</div>`;
   }
 }

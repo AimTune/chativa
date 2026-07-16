@@ -22,6 +22,40 @@ chat-iva {
 
 The store's `setTheme()` ultimately writes these same variables via `themeToCSS()`.
 
+## Fonts
+
+Every Chativa surface (widget, conversation list, agent panel, GenUI
+components) resolves its typeface from one variable:
+
+```css
+chat-iva {
+  --chativa-font-family: "Inter", sans-serif;   /* global override */
+}
+```
+
+Unset, it falls back to the system font stack. Individual components can be
+overridden with their own variable where offered — e.g.
+`--chativa-typewriter-font` for `<genui-typewriter>`.
+
+Custom GenUI components inherit the widget font automatically as long as
+they don't set `font-family` themselves (or set it to `inherit`). To render
+text that looks like a regular bot bubble inside a custom component, compose
+the shared style:
+
+```ts
+import { bubbleStyles } from "@chativa/genui";
+
+class MyComponent extends ChativaElement {
+  static styles = [bubbleStyles, css`/* own styles */`];
+  render() {
+    return html`<div class="chativa-bubble">${this.text}</div>`;
+  }
+}
+```
+
+Or simply emit a `genui-text` chunk from the connector — it renders with the
+same bubble.
+
 ## ThemeConfig
 
 Full schema: [`schemas/theme.schema.json`](../schemas/theme.schema.json). Field-by-field reference: [configuration.md → ThemeConfig](./configuration.md#themeconfig).

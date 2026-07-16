@@ -20,7 +20,7 @@ export class ConversationList extends LitElement {
       height: 100%;
       background: #f8fafc;
       border-right: 1px solid #e2e8f0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: var(--chativa-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
       min-width: 0;
     }
 

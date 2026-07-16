@@ -3,6 +3,7 @@ import { customElement, property } from "lit/decorators.js";
 import type { GenUIStreamState, AIChunk, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
 import { ChativaElement, MessageTypeRegistry, chatStore, i18next, t } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
+import { bubbleStyles } from "../styles/bubble";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -15,7 +16,7 @@ interface EventListener {
 
 @customElement("genui-message")
 export class GenUIMessage extends ChativaElement {
-  static override styles = css`
+  static override styles = [bubbleStyles, css`
     :host {
       display: block;
       width: 100%;
@@ -65,7 +66,14 @@ export class GenUIMessage extends ChativaElement {
       gap: 3px;
       flex: 1;
       min-width: 0;
+      /* Single inheritance point for the whole GenUI subtree — built-in and
+         custom components pick this up unless they override it themselves. */
+      font-family: var(--chativa-font-family, inherit);
     }
+
+    /* Text chunks render as regular bot bubbles (shared chativa-bubble
+       look from ../styles/bubble) so mixed text + component streams read
+       like one conversation. */
 
     .genui-wrapper {
       display: flex;
@@ -139,7 +147,7 @@ export class GenUIMessage extends ChativaElement {
       font-size: 0.8125rem;
       font-family: inherit;
     }
-  `;
+  `];
 
   // ── Props passed by ChatMessageList ───────────────────────────────────────
 
@@ -196,14 +204,10 @@ export class GenUIMessage extends ChativaElement {
   // ── Chunk rendering ───────────────────────────────────────────────────────
 
   private _renderTextChunk(chunk: AIChunkText) {
-    // Inline markdown rendering without depending on marked at runtime in genui.
-    // We use unsafeHTML only if the content contains markdown markers.
-    const raw = chunk.content;
-    return html`
-      <div class="chunk-enter" style="font-size:0.875rem;line-height:1.6;color:#0f172a;white-space:pre-wrap;">
-        ${raw}
-      </div>
-    `;
+    // NOTE: `${chunk.content}` must stay flush against the tags — the div is
+    // white-space:pre-wrap, so template indentation would render literally
+    // as leading spaces.
+    return html`<div class="chunk-enter chativa-bubble">${chunk.content}</div>`;
   }
 
   private _renderUIChunk(chunk: AIChunkUI) {

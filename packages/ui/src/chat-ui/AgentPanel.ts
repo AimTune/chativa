@@ -34,7 +34,7 @@ export class AgentPanel extends LitElement {
       flex-direction: column;
       width: 100%;
       height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-family: var(--chativa-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
       background: white;
       border-radius: 12px;
       overflow: hidden;
