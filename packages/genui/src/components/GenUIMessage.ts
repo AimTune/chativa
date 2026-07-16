@@ -1,7 +1,7 @@
 import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import type { GenUIStreamState, AIChunk, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
-import { ChativaElement, MessageTypeRegistry, i18next, t } from "@chativa/core";
+import { ChativaElement, MessageTypeRegistry, chatStore, i18next, t } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -21,15 +21,77 @@ export class GenUIMessage extends ChativaElement {
       width: 100%;
     }
 
+    /* Same row layout as the built-in message types so GenUI content
+       lines up with regular bot bubbles (avatar gutter + 82% cap). */
+    .message {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      max-width: 82%;
+      margin-right: auto;
+      margin-bottom: 2px;
+    }
+
+    .avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #ede9fe;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .avatar.hidden { visibility: hidden; }
+
+    .avatar svg {
+      width: 16px;
+      height: 16px;
+      color: #7c3aed;
+    }
+
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .content {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      min-width: 0;
+    }
+
     .genui-wrapper {
       display: flex;
       flex-direction: column;
       gap: 10px;
       padding: 4px 0;
+      min-width: 0;
     }
 
     .chunk-enter {
       animation: chunkFadeIn 0.35s ease-out both;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    /* Custom components can declare any width — never let them push
+       past the message column (widget viewport). */
+    .chunk-enter > * {
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .time {
+      font-size: 0.6875rem;
+      color: #94a3b8;
+      padding: 0 2px;
     }
 
     @keyframes chunkFadeIn {
@@ -214,6 +276,37 @@ export class GenUIMessage extends ChativaElement {
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  private get _time(): string {
+    if (!this.timestamp) return "";
+    return new Date(this.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  private _renderAvatar(avatarUrl?: string) {
+    return html`
+      <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
+        ${avatarUrl
+          ? html`<img src=${avatarUrl} alt="bot avatar" />`
+          : html`
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="8" width="14" height="12" rx="2.5" />
+                <circle cx="9.5" cy="13" r="1.5" fill="white" />
+                <circle cx="14.5" cy="13" r="1.5" fill="white" />
+                <path
+                  d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
+                  stroke="white"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+              </svg>
+            `}
+      </div>
+    `;
+  }
+
   override render() {
     const state = this.messageData as unknown as GenUIStreamState;
     const chunks = state?.chunks ?? [];
@@ -232,18 +325,27 @@ export class GenUIMessage extends ChativaElement {
     const lastChunk = visibleChunks[visibleChunks.length - 1];
     const showTypingDots = !streamingComplete && (!lastChunk || lastChunk.type !== "ui");
 
+    const avatarCfg = chatStore.getState().theme.avatar;
+    const showAvatar = avatarCfg?.showBot !== false;
+
     return html`
-      <div class="genui-wrapper">
-        ${visibleChunks.map((chunk: AIChunkText | AIChunkUI) => {
-      if (chunk.type === "text") return this._renderTextChunk(chunk);
-      if (chunk.type === "ui") return this._renderUIChunk(chunk);
-      return nothing;
-    })}
-        ${showTypingDots ? html`
-          <div class="typing-dots">
-            <span></span><span></span><span></span>
+      <div class="message" role="article">
+        ${showAvatar ? this._renderAvatar(avatarCfg?.bot) : nothing}
+        <div class="content">
+          <div class="genui-wrapper">
+            ${visibleChunks.map((chunk: AIChunkText | AIChunkUI) => {
+              if (chunk.type === "text") return this._renderTextChunk(chunk);
+              if (chunk.type === "ui") return this._renderUIChunk(chunk);
+              return nothing;
+            })}
+            ${showTypingDots ? html`
+              <div class="typing-dots">
+                <span></span><span></span><span></span>
+              </div>
+            ` : nothing}
           </div>
-        ` : nothing}
+          ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}
+        </div>
       </div>
     `;
   }

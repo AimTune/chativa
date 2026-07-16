@@ -88,7 +88,8 @@
     "error": "Error",
     "parameters": "Parameters",
     "result": "Result",
-    "summary": "{{count}} operation(s) performed",
+    "summary_one": "{{count}} operation",
+    "summary_other": "{{count}} operations",
     "failed": "{{count}} failed",
     "ariaToggle": "Toggle tool call details"
   }
