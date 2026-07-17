@@ -2,8 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "paths": {
-      "@chativa/core": ["../core/src/index.ts"]
+      "@chativa/core": [
+        "../core/src/index.ts"
+      ],
+      "@chativa/core/frames": [
+        "../core/src/frames.ts"
+      ]
     }
   },
-  "include": ["src"]
+  "include": [
+    "src"
+  ]
 }

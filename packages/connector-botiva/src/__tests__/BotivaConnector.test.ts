@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { BotivaConnector } from "../index";
+import { BotivaConnector, CookieAuth, TokenAuth } from "../index";
+import type { BotivaAuthProvider } from "../index";
 import type { ToolCall } from "@chativa/core";
 
 /** Minimal WebSocket stub — tests drive open/close/message transitions by hand. */
@@ -192,6 +193,38 @@ describe("BotivaConnector.routeFrame", () => {
   });
 });
 
+/**
+ * Wait for the connector to create its Nth socket. With an auth provider the
+ * credential is resolved before the socket exists, so it appears a microtask
+ * later than it does on the anonymous path — polling covers both without the
+ * test having to know how many microtasks a given provider costs.
+ */
+async function socketAt(index: number): Promise<MockWebSocket> {
+  for (let i = 0; i < 50 && !MockWebSocket.instances[index]; i++) {
+    await Promise.resolve();
+  }
+  const ws = MockWebSocket.instances[index];
+  if (!ws) throw new Error(`no socket was created at index ${index}`);
+  return ws;
+}
+
+/** Let any pending microtask chain (provider → decision → reconnect) settle. */
+async function flush(): Promise<void> {
+  for (let i = 0; i < 50; i++) await Promise.resolve();
+}
+
+/** The `token` field of the hello frame a socket sent. */
+function helloToken(ws: MockWebSocket): string | undefined {
+  return (JSON.parse(ws.sent[0]) as { token?: string }).token;
+}
+
+/** Simulate the server rejecting auth: an `error` frame, then the close. */
+function rejectAuth(ws: MockWebSocket, message = "invalid token"): void {
+  ws.onmessage?.({
+    data: JSON.stringify({ type: "error", data: { code: "unauthorized", message } }),
+  });
+}
+
 describe("BotivaConnector socket lifecycle", () => {
   beforeEach(() => {
     MockWebSocket.instances = [];
@@ -297,7 +330,7 @@ describe("BotivaConnector socket lifecycle", () => {
   it("sends a static token in the hello handshake", async () => {
     const connector = new BotivaConnector({ url: "ws://test", token: "tok-123", reconnect: false });
     const p = connector.connect();
-    const ws = MockWebSocket.instances[0];
+    const ws = await socketAt(0);
     ws.open();
     await p;
 
@@ -314,15 +347,35 @@ describe("BotivaConnector socket lifecycle", () => {
     });
 
     const p1 = connector.connect();
-    MockWebSocket.instances[0].open();
+    (await socketAt(0)).open();
     await p1;
-    expect((JSON.parse(MockWebSocket.instances[0].sent[0]) as { token: string }).token).toBe("tok-1");
+    expect(helloToken(MockWebSocket.instances[0])).toBe("tok-1");
 
     await connector.disconnect();
     const p2 = connector.connect();
-    MockWebSocket.instances[1].open();
+    (await socketAt(1)).open();
     await p2;
-    expect((JSON.parse(MockWebSocket.instances[1].sent[0]) as { token: string }).token).toBe("tok-2");
+    expect(helloToken(MockWebSocket.instances[1])).toBe("tok-2");
+  });
+
+  it("legacy `token` still works and never retries a rejection", async () => {
+    // The pre-`auth` spelling desugars to TokenAuth({ maxRetries: 0 }) — apps
+    // written against it must not suddenly gain retry behaviour.
+    let n = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      token: () => `legacy-${++n}`,
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+    expect(helloToken(ws)).toBe("legacy-1");
+
+    rejectAuth(ws);
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(1);
   });
 
   it("does not auto-reconnect after an auth rejection", async () => {
@@ -340,5 +393,256 @@ describe("BotivaConnector socket lifecycle", () => {
     vi.advanceTimersByTime(1000);
 
     expect(MockWebSocket.instances).toHaveLength(1); // no reconnect attempt
+  });
+});
+
+describe("BotivaConnector auth providers", () => {
+  beforeEach(() => {
+    MockWebSocket.instances = [];
+    vi.stubGlobal("WebSocket", MockWebSocket);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("TokenAuth sends a static token in the hello frame by default", async () => {
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: "api-key" }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    expect(helloToken(ws)).toBe("api-key");
+    expect(ws.url).toBe("ws://test"); // credential stays out of the URL
+  });
+
+  it("TokenAuth transport 'query' puts the token in the socket URL, not the frame", async () => {
+    // The only transport an edge proxy authenticating at the HTTP upgrade can
+    // read — it never sees the hello frame.
+    const connector = new BotivaConnector({
+      url: "ws://test/chat",
+      auth: new TokenAuth({ token: "q-tok", transport: "query" }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    expect(ws.url).toContain("token=q-tok");
+    expect(helloToken(ws)).toBeUndefined();
+  });
+
+  it("TokenAuth honours a custom query param name", async () => {
+    const connector = new BotivaConnector({
+      url: "ws://test/chat?tenant=acme",
+      auth: new TokenAuth({ token: "k", transport: "query", queryParam: "access_token" }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    expect(ws.url).toContain("access_token=k");
+    expect(ws.url).toContain("tenant=acme"); // pre-existing query survives
+  });
+
+  it("TokenAuth re-mints a function token and retries once when rejected", async () => {
+    let n = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: () => `jwt-${++n}` }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const first = await socketAt(0);
+    first.open();
+    await p;
+    expect(helloToken(first)).toBe("jwt-1");
+
+    rejectAuth(first, "expired");
+    const second = await socketAt(1);
+    second.open();
+    await flush();
+
+    // The retry carries a *different* credential — the whole point of retrying.
+    expect(helloToken(second)).toBe("jwt-2");
+  });
+
+  it("TokenAuth stops after maxRetries instead of looping", async () => {
+    let n = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: () => `jwt-${++n}`, maxRetries: 1 }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    (await socketAt(0)).open();
+    await p;
+
+    rejectAuth(MockWebSocket.instances[0]);
+    (await socketAt(1)).open();
+    await flush();
+
+    rejectAuth(MockWebSocket.instances[1]); // second rejection: give up
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(2);
+  });
+
+  it("TokenAuth never retries a static token", async () => {
+    // Re-sending a string the server just refused cannot change the verdict.
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: "static" }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    rejectAuth(ws);
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(1);
+  });
+
+  it("CookieAuth contributes no credential — the browser attaches the cookie", async () => {
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new CookieAuth(),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    expect(helloToken(ws)).toBeUndefined();
+    expect(ws.url).toBe("ws://test");
+  });
+
+  it("CookieAuth refreshes an expired session once, then reconnects", async () => {
+    let refreshed = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new CookieAuth({ refresh: () => { refreshed++; } }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    rejectAuth(ws, "session expired");
+    await socketAt(1);
+    expect(refreshed).toBe(1);
+  });
+
+  it("CookieAuth gives up when the refresh itself fails", async () => {
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new CookieAuth({ refresh: () => Promise.reject(new Error("refresh 500")) }),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    rejectAuth(ws);
+    await flush();
+    expect(MockWebSocket.instances).toHaveLength(1); // no pointless reconnect
+  });
+
+  it("a provider that throws fails connect() instead of connecting anonymously", async () => {
+    // Degrading to no credential would surface a token-endpoint outage as a
+    // misleading "unauthorized" from the server.
+    const broken: BotivaAuthProvider = {
+      name: "broken",
+      authenticate: () => {
+        throw new Error("token endpoint down");
+      },
+    };
+    const connector = new BotivaConnector({ url: "ws://test", auth: broken, reconnect: false });
+
+    await expect(connector.connect()).rejects.toThrow("token endpoint down");
+    expect(MockWebSocket.instances).toHaveLength(0);
+  });
+
+  it("disconnect() during authenticate() leaves no zombie socket", async () => {
+    let release!: (token: string) => void;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: () => new Promise<string>((r) => (release = r)) }),
+      reconnect: false,
+    });
+
+    const p = connector.connect();
+    await Promise.resolve();
+    await connector.disconnect(); // shut down while the token is still in flight
+    release("too-late");
+    await p;
+
+    expect(MockWebSocket.instances).toHaveLength(0);
+  });
+
+  it("a second connect() during authenticate() supersedes the first", async () => {
+    // Neither attempt is "closed by user", so only the generation guard can
+    // tell the stale credential apart from the live one.
+    const release: Array<(token: string) => void> = [];
+    let n = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({
+        token: () => {
+          n++;
+          return new Promise<string>((r) => release.push(r));
+        },
+      }),
+      reconnect: false,
+    });
+
+    const p1 = connector.connect();
+    await Promise.resolve();
+    const p2 = connector.connect();
+    await flush();
+    expect(n).toBe(2); // both attempts asked for a credential
+
+    release[0]("stale");
+    release[1]("live");
+    await flush();
+
+    const ws = await socketAt(0);
+    ws.open();
+    await Promise.all([p1, p2]);
+
+    expect(MockWebSocket.instances).toHaveLength(1);
+    expect(helloToken(ws)).toBe("live");
+  });
+
+  it("onAuthError still fires for a provider-driven rejection", async () => {
+    const seen: string[] = [];
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      auth: new TokenAuth({ token: "static" }),
+      onAuthError: (e) => seen.push(e.code),
+      reconnect: false,
+    });
+    const p = connector.connect();
+    const ws = await socketAt(0);
+    ws.open();
+    await p;
+
+    rejectAuth(ws);
+    await flush();
+
+    expect(seen).toEqual(["unauthorized"]);
+    expect(connector.authError?.message).toBe("invalid token");
   });
 });

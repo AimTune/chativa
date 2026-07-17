@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/botiva.schema.json",
+  "title": "BotivaConnectorOptions",
+  "description": "Constructor options for BotivaConnector — client adapter for botiva servers (Botiva Wire Protocol v1). Source: packages/connector-botiva/src/index.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["url"],
+  "properties": {
+    "url":                  { "type": "string", "format": "uri", "description": "botiva WebSocket endpoint URL (ws:// or wss://).", "examples": ["wss://bot.example.com/chat"] },
+    "protocols":            { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }], "default": [], "description": "Sub-protocol(s) passed to the WebSocket constructor." },
+    "reconnect":            { "type": "boolean", "default": true,  "description": "Auto-reconnect when the socket closes. Suppressed after an auth rejection (close code 4401)." },
+    "reconnectDelay":       { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait between reconnect attempts." },
+    "maxReconnectAttempts": { "type": "integer", "minimum": 0, "default": 5,    "description": "Stop reconnecting after this many consecutive failures. Reset on a successful handshake." },
+    "queueOfflineMessages": { "type": "boolean", "default": true,  "description": "Queue outgoing messages while the socket is down and flush them on (re)connect." },
+    "userId":               { "type": "string", "description": "Stable user identity sent in the hello handshake. Omit to let the server mint one (announced via the welcome frame). An authenticating server may override this with the verified identity." },
+    "conversationId":       { "type": "string", "description": "Conversation to resume. Omit to start a new one." },
+    "resumeConversation":   { "type": "boolean", "default": false, "description": "Persist identity + watermark in localStorage and resume across page reloads." },
+    "auth":                 { "type": "object", "description": "BotivaAuthProvider adapter deciding what credential this client presents (CookieAuth, TokenAuth, or a custom provider). Cannot be serialised — set programmatically. Takes precedence over `token`." },
+    "token":                { "type": "string", "description": "Deprecated — shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })`: a credential sent in the hello handshake with no retry on rejection. A function returning a fresh token per attempt is also accepted, but cannot be serialised — set that programmatically. Not needed for cookie-based auth.", "deprecated": true },
+    "onAuthError":          { "type": "object", "description": "Callback invoked when the server rejects the connection (error frame + close code 4401). Cannot be serialised — set programmatically." }
+  }
+}

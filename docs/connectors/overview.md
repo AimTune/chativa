@@ -10,9 +10,12 @@ A connector is the adapter between Chativa and your backend. It implements [`ICo
 | [`@chativa/connector-websocket`](./websocket.md) | `WebSocketConnector` | Custom WS backend. JSON frames in/out. |
 | [`@chativa/connector-signalr`](./signalr.md) | `SignalRConnector` | Microsoft SignalR hub. |
 | [`@chativa/connector-directline`](./directline.md) | `DirectLineConnector` | Azure Bot Framework v3. Maps every activity type. |
+| [`@chativa/connector-botiva`](./botiva.md) | `BotivaConnector` | [botiva](https://github.com/AimTune/botiva) servers — Chativa's server-side sibling. Tool calls, GenUI, HITL, watermark resume. |
 | [`@chativa/connector-sse`](./sse.md) | `SseConnector` | Server-Sent Events stream + REST POST. |
 | [`@chativa/connector-http`](./http.md) | `HttpConnector` | Plain REST polling — simplest deployment. |
 | [Custom](./custom.md) | _your class_ | Anything else (REST, MQTT, gRPC, IPC…). |
+
+Tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP and Botiva — see [Rich frames](./frames.md) for the shared JSON vocabulary.
 
 ## Registering and selecting a connector
 
@@ -30,19 +33,22 @@ Or via `<chat-iva connector="directline">` once it's registered.
 
 All optional methods are feature-detected at runtime. A capability is "advertised" simply by implementing the method.
 
-| Capability | Method | Dummy | WS | SignalR | DirectLine | SSE | HTTP |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| Send message | `sendMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Connect / disconnect events | `onConnect` / `onDisconnect` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typing indicator | `onTyping` | ✅ |   |   | ✅ | ✅ |   |
-| File upload | `sendFile` | ✅ |   |   | ✅ |   |   |
-| History pagination | `loadHistory` | ✅ |   |   | ✅ | ✅ | ✅ |
-| Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   |   |
-| Like / dislike feedback | `sendFeedback` | ✅ |   |   | ✅ |   |   |
-| End-of-conversation survey | `sendSurvey` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| GenUI streaming | `onGenUIChunk` | ✅ |   |   |   |   |   |
-| Multi-conversation | `listConversations` & co | ✅ |   |   |   |   |   |
+| Capability | Method | Dummy | WS | SignalR | DirectLine | Botiva | SSE | HTTP |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Send message | `sendMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Connect / disconnect events | `onConnect` / `onDisconnect` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Typing indicator | `onTyping` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| File upload | `sendFile` | ✅ |   |   | ✅ |   |   |   |
+| History pagination | `loadHistory` | ✅ |   |   | ✅ |   | ✅ | ✅ |
+| Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   |   |   |
+| Like / dislike feedback | `sendFeedback` | ✅ |   |   | ✅ |   |   |   |
+| End-of-conversation survey | `sendSurvey` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Tool calls | `onToolCall` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
+| GenUI streaming | `onGenUIChunk` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
+| GenUI events back | `receiveComponentEvent` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
+| Human-in-the-loop chips | quick-reply chips |   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Multi-conversation | `listConversations` & co | ✅ |   |   |   |   |   |   |
 
 > Empty cells are connectors that simply don't implement the method — the corresponding UI feature degrades gracefully (e.g. the file upload button hides itself when `sendFile` is missing).
 

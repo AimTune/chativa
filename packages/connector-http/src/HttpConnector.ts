@@ -3,10 +3,16 @@ import type {
   MessageHandler,
   ConnectHandler,
   DisconnectHandler,
+  TypingHandler,
   HistoryResult,
   SurveyPayload,
+  ToolCallHandler,
+  GenUIChunkHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
+// Value import — deliberately from the `frames` subpath, not the package root:
+// the root would inline all of core into this connector's standalone bundle.
+import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
 
 export interface HttpConnectorOptions {
   /**
@@ -57,6 +63,9 @@ export class HttpConnector implements IConnector {
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
+  private typingHandler: TypingHandler | null = null;
+  private toolCallHandler: ToolCallHandler | null = null;
+  private genUIChunkHandler: GenUIChunkHandler | null = null;
 
   constructor(options: HttpConnectorOptions) {
     this.options = {
@@ -119,7 +128,57 @@ export class HttpConnector implements IConnector {
     this.disconnectHandler = callback;
   }
 
+  onTyping(callback: TypingHandler): void {
+    this.typingHandler = callback;
+  }
+
+  onToolCall(callback: ToolCallHandler): void {
+    this.toolCallHandler = callback;
+  }
+
+  onGenUIChunk(callback: GenUIChunkHandler): void {
+    this.genUIChunkHandler = callback;
+  }
+
+  /**
+   * Forward a GenUI component event (form submit, card action, …) to the server
+   * by POSTing the `genui_event` frame to `{url}/messages` — the outbound
+   * counterpart of the inbound `genui` frame.
+   */
+  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+    // Fire-and-forget: a UI event must not block on the POST, and a failed send
+    // is not worth tearing the conversation down over.
+    void this._fetch(`${this.options.url}/messages`, {
+      method: "POST",
+      body: JSON.stringify(createGenUIEventFrame(streamId, eventType, payload)),
+    }).catch(() => {});
+  }
+
   // ── Private helpers ─────────────────────────────────────────────────────────
+
+  /**
+   * Route a rich frame (tool call, GenUI chunk, typing, HITL chips).
+   * Returns true when the frame was handled and is not a chat message.
+   */
+  private _routeFrame(data: unknown): boolean {
+    const frame = parseChatFrame(data, { idPrefix: "http" });
+    switch (frame.kind) {
+      case "tool_call":
+        this.toolCallHandler?.(frame.toolCall);
+        return true;
+      case "genui":
+        this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return true;
+      case "typing":
+        this.typingHandler?.(frame.isTyping);
+        return true;
+      case "quick_reply":
+        this.messageHandler?.(frame.message);
+        return true;
+      case "other":
+        return false;
+    }
+  }
 
   private _startPolling(): void {
     this._pollTimer = setInterval(() => void this._poll(), this.options.pollInterval);
@@ -149,7 +208,11 @@ export class HttpConnector implements IConnector {
 
       if (data.cursor) this._cursor = data.cursor;
 
+      // A poll batch may carry rich frames (tool calls, GenUI chunks, HITL
+      // chips) interleaved with plain messages — the same vocabulary the
+      // streaming connectors use, just delivered a batch at a time.
       for (const msg of data.messages ?? []) {
+        if (this._routeFrame(msg)) continue;
         this.messageHandler?.(msg);
       }
     } catch {
