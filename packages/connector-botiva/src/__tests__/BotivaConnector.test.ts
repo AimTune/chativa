@@ -126,6 +126,24 @@ describe("BotivaConnector.routeFrame", () => {
     expect(toolCalls[0]).toMatchObject({ id: "t1", status: "running" });
   });
 
+  it("surfaces an auth error frame via onAuthError, not as a chat message", () => {
+    const authErrors: Array<{ code: string; message: string }> = [];
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      reconnect: false,
+      onAuthError: (e) => authErrors.push(e),
+    });
+    const messages: unknown[] = [];
+    connector.onMessage((m) => messages.push(m));
+    (connector as unknown as { routeFrame(raw: string): void }).routeFrame(
+      JSON.stringify({ type: "error", data: { code: "unauthorized", message: "invalid token" } }),
+    );
+
+    expect(messages).toHaveLength(0);
+    expect(authErrors).toEqual([{ code: "unauthorized", message: "invalid token" }]);
+    expect(connector.authError).toEqual({ code: "unauthorized", message: "invalid token" });
+  });
+
   it("welcome with a partial payload does not clobber configured identity", () => {
     const connector = new BotivaConnector({
       url: "ws://test",
@@ -274,5 +292,53 @@ describe("BotivaConnector socket lifecycle", () => {
       eventType: "form_submit",
       payload: { answer: 42 },
     });
+  });
+
+  it("sends a static token in the hello handshake", async () => {
+    const connector = new BotivaConnector({ url: "ws://test", token: "tok-123", reconnect: false });
+    const p = connector.connect();
+    const ws = MockWebSocket.instances[0];
+    ws.open();
+    await p;
+
+    const hello = JSON.parse(ws.sent[0]) as Record<string, unknown>;
+    expect(hello).toMatchObject({ type: "hello", token: "tok-123" });
+  });
+
+  it("resolves a function token freshly on every connect", async () => {
+    let n = 0;
+    const connector = new BotivaConnector({
+      url: "ws://test",
+      token: () => `tok-${++n}`,
+      reconnect: false,
+    });
+
+    const p1 = connector.connect();
+    MockWebSocket.instances[0].open();
+    await p1;
+    expect((JSON.parse(MockWebSocket.instances[0].sent[0]) as { token: string }).token).toBe("tok-1");
+
+    await connector.disconnect();
+    const p2 = connector.connect();
+    MockWebSocket.instances[1].open();
+    await p2;
+    expect((JSON.parse(MockWebSocket.instances[1].sent[0]) as { token: string }).token).toBe("tok-2");
+  });
+
+  it("does not auto-reconnect after an auth rejection", async () => {
+    const connector = new BotivaConnector({ url: "ws://test", reconnectDelay: 10 });
+    const p = connector.connect();
+    const ws = MockWebSocket.instances[0];
+    ws.open();
+    await p;
+
+    // Server rejects: an error frame, then the socket closes.
+    ws.onmessage?.({
+      data: JSON.stringify({ type: "error", data: { code: "unauthorized", message: "no" } }),
+    });
+    ws.serverClose();
+    vi.advanceTimersByTime(1000);
+
+    expect(MockWebSocket.instances).toHaveLength(1); // no reconnect attempt
   });
 });

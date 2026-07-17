@@ -27,6 +27,25 @@ export interface BotivaConnectorOptions {
   conversationId?: string;
   /** Persist identity + watermark in localStorage and resume across page reloads. */
   resumeConversation?: boolean;
+  /**
+   * Auth credential for servers that authenticate (PROTOCOL.md §2.1). Sent in
+   * the `hello` handshake. Pass a function to supply a fresh token per
+   * (re)connect — e.g. a short-lived JWT. Not needed for cookie-based auth:
+   * browsers attach cookies to the WebSocket handshake automatically.
+   */
+  token?: string | (() => string | Promise<string>);
+  /**
+   * Called when the server rejects the connection (an `error` frame + close,
+   * WebSocket code 4401). Auto-reconnect is suppressed after a rejection, so
+   * this is where an app refreshes the token / redirects to login.
+   */
+  onAuthError?: (error: BotivaAuthError) => void;
+}
+
+/** Auth rejection surfaced from the server's `error` frame. */
+export interface BotivaAuthError {
+  code: string;
+  message: string;
 }
 
 /** Identity assigned/confirmed by the server's `welcome` frame. */
@@ -65,6 +84,12 @@ interface PersistedSession {
  *   GenUIRegistry component inline via `onGenUIChunk`.
  * - `{ type: "genui_event", streamId, eventType, payload }` ← sent by us when
  *   a mounted GenUI component fires an event (form submit, card action, …).
+ * - `{ type: "error", data: { code, message } }` → auth rejection (§2.1),
+ *   followed by a close (code 4401); surfaced via `onAuthError`, reconnect off.
+ *
+ * Authenticated servers (PROTOCOL.md §2.1): pass `token` (a string or a
+ * per-connect function) — it rides in the `hello` handshake. Cookie-based auth
+ * needs nothing here: the browser attaches cookies to the WS handshake.
  *
  * Persistent frames carry `seq`; we track the highest one as our watermark and
  * hand it back on reconnect, so the server replays only what we missed —
@@ -76,9 +101,9 @@ export class BotivaConnector implements IConnector {
 
   private ws: WebSocket | null = null;
   private options: Required<
-    Omit<BotivaConnectorOptions, "userId" | "conversationId">
+    Omit<BotivaConnectorOptions, "userId" | "conversationId" | "token" | "onAuthError">
   > &
-    Pick<BotivaConnectorOptions, "userId" | "conversationId">;
+    Pick<BotivaConnectorOptions, "userId" | "conversationId" | "token" | "onAuthError">;
 
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectHandler | null = null;
@@ -94,6 +119,8 @@ export class BotivaConnector implements IConnector {
   private queue: Array<{ payload: string; resolve: () => void }> = [];
   private watermark = 0;
   private _identity: BotivaIdentity | null = null;
+  /** Set when the server rejects auth; suppresses reconnect and is cleared on the next connect(). */
+  private _authError: BotivaAuthError | null = null;
 
   constructor(options: BotivaConnectorOptions) {
     this.options = {
@@ -118,6 +145,11 @@ export class BotivaConnector implements IConnector {
     return this._identity;
   }
 
+  /** The last auth rejection (null unless the server refused this connection). */
+  get authError(): BotivaAuthError | null {
+    return this._authError;
+  }
+
   async connect(): Promise<void> {
     return new Promise((resolve, reject) => {
       // Re-entrant safe: ChatEngine's auto-reconnect and our own onclose timer
@@ -130,24 +162,15 @@ export class BotivaConnector implements IConnector {
       }
       this.detachSocket();
       this.closedByUser = false;
+      this._authError = null;
 
       const ws = new WebSocket(this.options.url, this.options.protocols);
       this.ws = ws;
 
+      // Resolved in onopen (not before new WebSocket) so socket creation stays
+      // synchronous; a function token is refreshed on every (re)connect.
       ws.onopen = () => {
-        this.reconnectAttempts = 0;
-        // botiva/1 handshake — all fields optional, server fills the gaps.
-        ws.send(
-          JSON.stringify({
-            type: "hello",
-            userId: this.options.userId,
-            conversationId: this.options.conversationId,
-            watermark: this.watermark,
-          }),
-        );
-        this.flushQueue();
-        this.connectHandler?.();
-        resolve();
+        void this.sendHello(ws, resolve);
       };
 
       ws.onerror = (event) => {
@@ -162,8 +185,14 @@ export class BotivaConnector implements IConnector {
         // The run may have died with the socket — don't leave typing stuck on.
         this.typingHandler?.(false);
         this.disconnectHandler?.(event.reason);
+        // An auth rejection (error frame seen, or close code 4401) must not
+        // auto-reconnect: the same credential would just be refused again.
+        const authRejected =
+          this._authError !== null ||
+          (event as { code?: number }).code === 4401;
         if (
           !this.closedByUser &&
+          !authRejected &&
           this.options.reconnect &&
           this.reconnectAttempts < this.options.maxReconnectAttempts
         ) {
@@ -266,6 +295,21 @@ export class BotivaConnector implements IConnector {
     if (typeof data.seq === "number" && data.seq > this.watermark) {
       this.watermark = data.seq;
       if (this.options.resumeConversation) this.saveSession();
+    }
+
+    // Auth rejection (PROTOCOL.md §2.1): { type: "error", data: { code, message } }
+    // followed by a close (code 4401). Surface it and stop reconnecting.
+    if (data?.type === "error") {
+      const d = (data.data ?? {}) as Record<string, unknown>;
+      const error: BotivaAuthError = {
+        code: String(d.code ?? "error"),
+        message: String(d.message ?? ""),
+      };
+      this._authError = error;
+      this.typingHandler?.(false);
+      this.options.onAuthError?.(error);
+      this.disconnectHandler?.(error.message);
+      return;
     }
 
     // Handshake response: identity + current watermark. Not a chat message.
@@ -375,6 +419,42 @@ export class BotivaConnector implements IConnector {
       this.ws.send(entry.payload);
       entry.resolve();
     }
+  }
+
+  /** Send the botiva/1 hello handshake once the socket is open, then resolve connect(). */
+  private async sendHello(ws: WebSocket, resolve: () => void): Promise<void> {
+    let token: string | undefined;
+    try {
+      token = await this.resolveToken();
+    } catch {
+      token = undefined; // a failing token supplier degrades to no credential
+    }
+    if (this.ws !== ws || ws.readyState !== WebSocket.OPEN) {
+      // Superseded by a newer socket (or already closed) while resolving.
+      resolve();
+      return;
+    }
+    this.reconnectAttempts = 0;
+    // botiva/1 handshake — all fields optional, server fills the gaps.
+    // `token` is only present when the server authenticates (§2.1).
+    ws.send(
+      JSON.stringify({
+        type: "hello",
+        userId: this.options.userId,
+        conversationId: this.options.conversationId,
+        watermark: this.watermark,
+        ...(token ? { token } : {}),
+      }),
+    );
+    this.flushQueue();
+    this.connectHandler?.();
+    resolve();
+  }
+
+  /** Resolve the auth credential (static or per-connect function), if any. */
+  private async resolveToken(): Promise<string | undefined> {
+    const token = this.options.token;
+    return typeof token === "function" ? await token() : token;
   }
 
   private storageKey(): string {
