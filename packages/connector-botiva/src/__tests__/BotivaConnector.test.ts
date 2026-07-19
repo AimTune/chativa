@@ -646,3 +646,68 @@ describe("BotivaConnector auth providers", () => {
     expect(connector.authError?.message).toBe("invalid token");
   });
 });
+
+describe("BotivaConnector botiva/2 human-in-the-loop", () => {
+  it("renders an interrupt frame as quick-reply chips and answers with a resume", () => {
+    const { connector, messages, route } = makeConnector();
+    route({
+      type: "interrupt",
+      seq: 5,
+      id: "gate:interrupt#0",
+      data: {
+        payload: { title: "Refund 249.9?" },
+        actions: [
+          { label: "Approve", value: { approved: true } },
+          { label: "Reject", value: { approved: false } },
+        ],
+      },
+    });
+
+    expect(messages).toHaveLength(1);
+    expect(messages[0].type).toBe("quick-reply");
+    const data = messages[0].data as Record<string, unknown>;
+    expect(data.text).toBe("Refund 249.9?");
+    expect((data.actions as Array<{ label: string }>).map((a) => a.label)).toEqual([
+      "Approve",
+      "Reject",
+    ]);
+
+    // Tapping "Approve" resumes by the interrupt id with the structured answer.
+    void connector.sendMessage({ type: "text", data: { text: "Approve" } } as never);
+    const queue = (connector as unknown as { queue: Array<{ payload: string }> }).queue;
+    expect(queue).toHaveLength(1);
+    expect(JSON.parse(queue[0].payload)).toEqual({
+      type: "resume",
+      answers: { "gate:interrupt#0": { approved: true } },
+    });
+  });
+
+  it("stops treating messages as resumes once interrupt_resolved arrives", () => {
+    const { connector, route } = makeConnector();
+    route({ type: "interrupt", id: "x:interrupt#0", data: { actions: [{ label: "OK", value: true }] } });
+    route({ type: "interrupt_resolved", id: "x:interrupt#0", data: { answer: true } });
+
+    void connector.sendMessage({ type: "text", data: { text: "OK" } } as never);
+    const queue = (connector as unknown as { queue: Array<{ payload: string }> }).queue;
+    expect(JSON.parse(queue[0].payload).type).not.toBe("resume");
+  });
+
+  it("re-renders open interrupts announced in welcome.pending", () => {
+    const { messages, route } = makeConnector();
+    route({
+      type: "welcome",
+      data: {
+        conversationId: "c1",
+        userId: "u1",
+        connectionId: "cx",
+        watermark: 3,
+        pending: [
+          { id: "gate:interrupt#0", data: { payload: { title: "Still pending?" }, actions: [{ label: "Yes" }] } },
+        ],
+      },
+    });
+    expect(messages).toHaveLength(1);
+    expect(messages[0].type).toBe("quick-reply");
+    expect((messages[0].data as Record<string, unknown>).text).toBe("Still pending?");
+  });
+});

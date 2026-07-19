@@ -157,6 +157,8 @@ export class GenUIMessage extends ChativaElement {
   @property({ type: Number }) timestamp = 0;
   @property({ type: Boolean }) hideAvatar = false;
   @property({ type: String }) status = "sent";
+  /** Show developer diagnostics (e.g. the unknown-component fallback). Off in production. */
+  @property({ type: Boolean }) debug = false;
 
   // ── Internal state ────────────────────────────────────────────────────────
 
@@ -214,6 +216,10 @@ export class GenUIMessage extends ChativaElement {
     const entry = GenUIRegistry.resolve(chunk.component);
 
     if (!entry) {
+      // An unregistered component is a development mistake, not something an end
+      // user should see. Render nothing in production; surface the diagnostic
+      // only when `debug` is on.
+      if (!this.debug) return html``;
       return html`
         <div class="unknown-fallback chunk-enter">
           <strong>Unknown component:</strong> "${chunk.component}"

@@ -3,6 +3,7 @@ import { DummyConnector } from "@chativa/connector-dummy";
 import { GenUIRegistry } from "@chativa/genui";
 import { WeatherWidget } from "./components/WeatherWidget";
 import { AIAppointmentForm } from "./components/AIForm";
+import { OrderCard } from "./components/OrderCard";
 import type { LinkMetadata } from "@chativa/ui";
 
 // Register connector BEFORE UI loads so connectedCallback can find it
@@ -12,6 +13,7 @@ ConnectorRegistry.register(connector);
 // Register custom GenUI components
 GenUIRegistry.register("weather", WeatherWidget);
 GenUIRegistry.register("genui-appointment-form", AIAppointmentForm as unknown as typeof HTMLElement);
+GenUIRegistry.register("order-card", OrderCard);
 
 // Install link preview extension by default
 ExtensionRegistry.install(new LinkPreviewExtension({ maxUrlsPerMessage: 3 }));

@@ -8,7 +8,7 @@ import type {
   ToolCallHandler,
   GenUIChunkHandler,
 } from "@chativa/core";
-import type { OutgoingMessage } from "@chativa/core";
+import type { OutgoingMessage, MessageAction } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
 // the root would inline all of core into this connector's standalone bundle.
 import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
@@ -32,6 +32,19 @@ export type {
   TokenAuthOptions,
 } from "./auth";
 export { CookieAuth, TokenAuth } from "./auth";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+/** The prompt shown for an interrupt — the first human-readable field its payload offers. */
+function interruptText(payload: Record<string, unknown>): string {
+  for (const key of ["title", "message", "question", "text"]) {
+    const v = payload[key];
+    if (typeof v === "string" && v) return v;
+  }
+  return "Onayınız gerekiyor";
+}
 
 export interface BotivaConnectorOptions {
   /** botiva WebSocket endpoint, e.g. "ws://localhost:8790/chat". */
@@ -153,6 +166,13 @@ export class BotivaConnector implements IConnector {
   private closedByUser = false;
   private queue: Array<{ payload: string; resolve: () => void }> = [];
   private watermark = 0;
+  /**
+   * Interrupts the server is parked on (botiva/2 §4). Keyed by the thread-scoped
+   * interrupt `id`, which is how the answer must be routed back in a `resume`
+   * frame. Filled by `interrupt` frames (and `welcome.pending` on reconnect),
+   * drained by `interrupt_resolved` or by sending the answer.
+   */
+  private readonly openInterrupts = new Map<string, { ui?: unknown; actions?: MessageAction[] }>();
   private _identity: BotivaIdentity | null = null;
   /** Set when the server rejects auth; suppresses reconnect and is cleared on the next connect(). */
   private _authError: BotivaAuthError | null = null;
@@ -317,7 +337,78 @@ export class BotivaConnector implements IConnector {
   }
 
   async sendMessage(message: OutgoingMessage): Promise<void> {
+    // If the server is parked on an interrupt (botiva/2 §4), an answer must go
+    // back as a `resume` frame keyed by the interrupt id — not as a new turn.
+    const resume = this.asResume(message);
+    if (resume) {
+      this.openInterrupts.delete(resume.id);
+      await this.sendOrQueue(JSON.stringify(resume.frame));
+      return;
+    }
     await this.sendOrQueue(JSON.stringify(message));
+  }
+
+  /**
+   * Turn an outgoing message into a `resume` frame when the conversation is
+   * parked. A quick-reply chip carries its action's `label`; we match it back to
+   * the stored action to recover the structured answer. A free-text reply while
+   * exactly one interrupt is open resumes that one with the text.
+   */
+  private asResume(message: OutgoingMessage): { id: string; frame: unknown } | null {
+    // The text lives at `data.text` on an OutgoingMessage — the same field the
+    // server reads for a normal turn.
+    const raw = message?.data?.text;
+    const text = typeof raw === "string" ? raw : undefined;
+    if (text === undefined || this.openInterrupts.size === 0) return null;
+
+    for (const [id, info] of this.openInterrupts) {
+      const match = info.actions?.find((a) => a.label === text);
+      if (match) {
+        const answer = "value" in match ? match.value : match.label;
+        return { id, frame: { type: "resume", answers: { [id]: answer } } };
+      }
+    }
+    if (this.openInterrupts.size === 1) {
+      const id = this.openInterrupts.keys().next().value as string;
+      return { id, frame: { type: "resume", answers: { [id]: text } } };
+    }
+    return null;
+  }
+
+  /**
+   * Render an `interrupt` frame (botiva/2 §4). Chips are the reliable answer path
+   * (a tap sends a `resume`); a mounted `ui` form is streamed as a GenUI chunk,
+   * handed the interrupt id so its submit can round-trip.
+   */
+  private handleInterrupt(frame: Record<string, unknown>): void {
+    const id = typeof frame.id === "string" ? frame.id : "";
+    if (!id) return;
+    const d = (frame.data ?? {}) as Record<string, unknown>;
+    const payload = (d.payload ?? {}) as Record<string, unknown>;
+    const actions = Array.isArray(d.actions) ? (d.actions as MessageAction[]) : undefined;
+    this.openInterrupts.set(id, { ui: d.ui, actions });
+    this.typingHandler?.(false);
+
+    if (actions && actions.length > 0) {
+      // Chips display and send the label; asResume maps it back to the answer.
+      this.renderQuickReply(id, interruptText(payload), actions.map((a) => ({ label: a.label, value: a.label })));
+      return;
+    }
+    if (isRecord(d.ui) && typeof d.ui.component === "string") {
+      const props = { ...(isRecord(d.ui.props) ? d.ui.props : {}), interruptId: id };
+      this.genUIChunkHandler?.(`interrupt-${id}`, { type: "ui", component: d.ui.component, props, id: 1 }, true);
+      return;
+    }
+    // Nothing to answer with: default Approve/Cancel chips.
+    this.renderQuickReply(id, interruptText(payload), [{ label: "Approve" }, { label: "Cancel" }]);
+  }
+
+  private renderQuickReply(id: string, text: string, chips: MessageAction[]): void {
+    const frame = parseChatFrame(
+      { type: "text", id: `interrupt-${id}`, from: "bot", data: { text }, actions: chips },
+      { idPrefix: "botiva" },
+    );
+    if (frame.kind === "quick_reply") this.messageHandler?.(frame.message);
   }
 
   /** Send the survey as a JSON frame with discriminator `{ type: "survey", ... }`. */
@@ -383,19 +474,23 @@ export class BotivaConnector implements IConnector {
       if (this.options.resumeConversation) this.saveSession();
     }
 
-    // Auth rejection (PROTOCOL.md §2.1): { type: "error", data: { code, message } }
-    // followed by a close (code 4401). Surface it and stop reconnecting.
+    // Error frame: { type: "error", data: { code, message } }. Only an auth
+    // rejection (code "unauthorized", followed by a 4401 close) tears the
+    // connection down and stops reconnecting. Ordinary protocol errors — `busy`,
+    // `interrupted`, `incomplete_resume`, `bad_request` — must NOT be mistaken
+    // for an auth failure: surface them and keep the socket open.
     if (data?.type === "error") {
       const d = (data.data ?? {}) as Record<string, unknown>;
-      const error: BotivaAuthError = {
-        code: String(d.code ?? "error"),
-        message: String(d.message ?? ""),
-      };
-      this._authError = error;
+      const code = typeof d.code === "string" ? d.code : "error";
+      const message = typeof d.message === "string" ? d.message : "";
       this.typingHandler?.(false);
-      this.options.onAuthError?.(error);
-      this.disconnectHandler?.(error.message);
-      void this.handleAuthRejection(error);
+      if (code === "unauthorized") {
+        const error: BotivaAuthError = { code, message };
+        this._authError = error;
+        this.options.onAuthError?.(error);
+        this.disconnectHandler?.(message);
+        void this.handleAuthRejection(error);
+      }
       return;
     }
 
@@ -430,14 +525,40 @@ export class BotivaConnector implements IConnector {
         this.watermark = 0;
       }
       if (this.options.resumeConversation) this.saveSession();
+
+      // botiva/2: the server re-announces any open interrupts so a reconnecting
+      // tab re-renders the approval it was parked on (§3.2).
+      const pending = (data.data as Record<string, unknown> | undefined)?.pending;
+      if (Array.isArray(pending)) {
+        for (const p of pending) {
+          if (isRecord(p)) this.handleInterrupt({ type: "interrupt", ...p });
+        }
+      }
       return;
     }
 
     // Run lifecycle frame: { type: "run", data: { status } } → typing indicator.
-    // botiva-specific: the shared vocabulary has no `run` frame.
+    // botiva-specific: the shared vocabulary has no `run` frame. Only "started"
+    // means work is in flight; "finished"/"interrupted"/"error"/"aborted" all
+    // clear the indicator.
     if (data?.type === "run") {
       const status = (data.data as Record<string, unknown> | undefined)?.status;
       this.typingHandler?.(status === "started");
+      return;
+    }
+
+    // botiva/2 human-in-the-loop (§4): a first-class `interrupt` frame the server
+    // is parked on. Render it as quick-reply chips (or a mounted form) and
+    // remember the id so the answer goes back as a `resume`.
+    if (data?.type === "interrupt") {
+      this.handleInterrupt(data);
+      return;
+    }
+
+    // The pause was answered (by us or another tab): stop tracking it so a later
+    // message is sent as a normal turn, not a stray resume.
+    if (data?.type === "interrupt_resolved") {
+      this.openInterrupts.delete(String(data.id ?? ""));
       return;
     }
 
