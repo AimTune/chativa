@@ -20,7 +20,7 @@ const sidebars: SidebarsConfig = {
         "connectors/websocket",
         "connectors/signalr",
         "connectors/directline",
-        "connectors/botiva",
+        "connectors/mekik",
         "connectors/sse",
         "connectors/http",
         "connectors/frames",

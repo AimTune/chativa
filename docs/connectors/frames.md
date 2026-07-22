@@ -2,7 +2,7 @@
 
 Tool-call traces, Generative UI and human-in-the-loop chips are **not transport features**. A `{ "type": "genui", ... }` frame means the same thing whether it arrives over a WebSocket, a SignalR hub, an SSE stream or an HTTP poll — so your backend speaks one dialect and you can swap transports without touching it.
 
-Every JSON-frame connector — [WebSocket](./websocket.md), [SignalR](./signalr.md), [SSE](./sse.md), [HTTP](./http.md) and [Botiva](./botiva.md) — routes these frames through the same parser, [`parseChatFrame`](../../packages/core/src/domain/entities/ChatFrame.ts) in `@chativa/core`. There is one implementation of the rules, so the transports cannot drift apart.
+Every JSON-frame connector — [WebSocket](./websocket.md), [SignalR](./signalr.md), [SSE](./sse.md), [HTTP](./http.md) and [Mekik](./mekik.md) — routes these frames through the same parser, [`parseChatFrame`](../../packages/core/src/domain/entities/ChatFrame.ts) in `@chativa/core`. There is one implementation of the rules, so the transports cannot drift apart.
 
 > DirectLine is the exception: it speaks Bot Framework activities, not these frames, and maps them separately (see [DirectLine](./directline.md)).
 
@@ -82,7 +82,7 @@ When a mounted component fires an event (a form submit, a card action), Chativa 
 
 | Connector | Component event travels as |
 |---|---|
-| WebSocket / Botiva | A `genui_event` frame on the socket |
+| WebSocket / Mekik | A `genui_event` frame on the socket |
 | SignalR | An invoke of `genUIEventMethod` (default `SendGenUIEvent`) with the frame |
 | SSE | `POST` of the frame to `sendUrl` (the stream is receive-only) |
 | HTTP | `POST` of the frame to `{url}/messages` |
@@ -122,7 +122,7 @@ Two rules worth knowing:
 
 ```
 1. user: "Deploy the release"
-2. server → { type: "run",  data: { status: "started" } }      (typing on, Botiva)
+2. server → { type: "run",  data: { status: "started" } }      (typing on, Mekik)
    or     → { type: "typing", isTyping: true }                  (other connectors)
 3. server → { type: "tool_call", data: { id: "c1", name: "deploy", status: "running" } }
 4. server → { type: "text", data: { text: "Deploy to production?" },
@@ -141,7 +141,7 @@ Step 4 is the only unusual part, and it's just a text frame with `actions`.
 { "type": "typing", "isTyping": true }
 ```
 
-Botiva servers use their own `run` lifecycle frame instead (`{ type: "run", data: { status: "started" } }`) — see [Botiva](./botiva.md).
+Mekik servers use their own `run` lifecycle frame instead (`{ type: "run", data: { status: "started" } }`) — see [Mekik](./mekik.md).
 
 ## Trying it without a backend
 

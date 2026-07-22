@@ -18,12 +18,12 @@ If "connector" is a new word, read [Concepts → Ports](../concepts.md#3-ports--
 | [`@chativa/connector-websocket`](./websocket.md) | `WebSocketConnector` | Custom WS backend. JSON frames in/out. |
 | [`@chativa/connector-signalr`](./signalr.md) | `SignalRConnector` | Microsoft SignalR hub. |
 | [`@chativa/connector-directline`](./directline.md) | `DirectLineConnector` | Azure Bot Framework v3. Maps every activity type. |
-| [`@chativa/connector-botiva`](./botiva.md) | `BotivaConnector` | [botiva](https://github.com/AimTune/botiva) servers — Chativa's server-side sibling. Tool calls, GenUI, HITL, watermark resume. |
+| [`@chativa/connector-mekik`](./mekik.md) | `MekikConnector` | [mekik](https://github.com/AimTune/mekik) servers — Chativa's server-side sibling. Tool calls, GenUI, HITL, watermark resume. |
 | [`@chativa/connector-sse`](./sse.md) | `SseConnector` | Server-Sent Events stream + REST POST. |
 | [`@chativa/connector-http`](./http.md) | `HttpConnector` | Plain REST polling — simplest deployment. |
 | [Custom](./custom.md) | _your class_ | Anything else (REST, MQTT, gRPC, IPC…). |
 
-Tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP and Botiva — see [Rich frames](./frames.md) for the shared JSON vocabulary.
+Tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP and Mekik — see [Rich frames](./frames.md) for the shared JSON vocabulary.
 
 ## Registering and selecting a connector
 
@@ -41,7 +41,7 @@ Or via `<chat-iva connector="directline">` once it's registered.
 
 All optional methods are feature-detected at runtime. A capability is "advertised" simply by implementing the method.
 
-| Capability | Method | Dummy | WS | SignalR | DirectLine | Botiva | SSE | HTTP |
+| Capability | Method | Dummy | WS | SignalR | DirectLine | Mekik | SSE | HTTP |
 |---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | Send message | `sendMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |

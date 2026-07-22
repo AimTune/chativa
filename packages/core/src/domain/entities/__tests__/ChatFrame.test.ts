@@ -131,7 +131,7 @@ describe("parseChatFrame — passthrough", () => {
   it.each([
     ["a plain message", { type: "image", id: "m2", data: { url: "x.png" } }],
     ["an SSE connected notice", { type: "connected" }],
-    ["a botiva welcome", { type: "welcome", data: { userId: "u1" } }],
+    ["a mekik welcome", { type: "welcome", data: { userId: "u1" } }],
     ["an unknown type", { type: "something_new", data: {} }],
     ["a typeless object", { hello: 1 }],
   ])("leaves %s to the connector", (_label, payload) => {

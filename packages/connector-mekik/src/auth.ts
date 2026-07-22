@@ -1,10 +1,10 @@
 /**
- * Botiva client authentication — port + adapters.
+ * Mekik client authentication — port + adapters.
  *
- * The client-side mirror of botiva's server-side auth (PROTOCOL.md §2.1): the
- * `Authenticator` port lives in `@botiva/core` and decides whether a connection
+ * The client-side mirror of mekik's server-side auth (PROTOCOL.md §2.1): the
+ * `Authenticator` port lives in `@mekik/core` and decides whether a connection
  * may open; reference adapters (`StaticTokenAuthenticator`, `HmacJwtAuthenticator`,
- * `CookieAuthenticator`) live in `@botiva/authentication`. This file is the other
+ * `CookieAuthenticator`) live in `@mekik/authentication`. This file is the other
  * half of that handshake — the port decides *what credential the client presents*,
  * and the adapters are the ready-made ways of presenting one.
  *
@@ -12,34 +12,34 @@
  * connector's: a cookie session, a static API key and a short-lived JWT all reach
  * the same server through the same wire fields, but they are obtained — and
  * refreshed — in completely different ways. Passing a provider keeps that
- * variation out of BotivaConnector.
+ * variation out of MekikConnector.
  *
  * No external dependencies allowed in this file.
  */
 
 /** Auth rejection surfaced from the server's `error` frame (PROTOCOL.md §2.1). */
-export interface BotivaAuthError {
+export interface MekikAuthError {
   code: string;
   message: string;
 }
 
 /** Everything the connector knows about a connection attempt. */
-export interface BotivaAuthContext {
+export interface MekikAuthContext {
   /** The endpoint being connected to (without any credential query params). */
   url: string;
   /** 0 on the first attempt; incremented once per auth retry. */
   attempt: number;
   /** The rejection that caused this retry — null on a first attempt. */
-  previousError: BotivaAuthError | null;
+  previousError: MekikAuthError | null;
 }
 
 /**
- * What a provider contributes to the botiva/1 handshake.
+ * What a provider contributes to the mekik/1 handshake.
  *
  * Both fields are optional: a cookie-session provider returns `{}` because the
  * browser attaches the credential to the handshake on its own.
  */
-export interface BotivaCredential {
+export interface MekikCredential {
   /** Sent as the `hello` frame's `token`. */
   token?: string;
   /** Merged into the socket URL's query string before the handshake opens. */
@@ -47,7 +47,7 @@ export interface BotivaCredential {
 }
 
 /** What the connector should do after the server rejects a connection. */
-export type BotivaAuthDecision = "retry" | "fail";
+export type MekikAuthDecision = "retry" | "fail";
 
 /**
  * The client auth port: produce the credential for a (re)connect attempt.
@@ -58,12 +58,12 @@ export type BotivaAuthDecision = "retry" | "fail";
  * degrading to an anonymous connection, which would surface a credential
  * outage as a misleading "unauthorized".
  */
-export interface BotivaAuthProvider {
+export interface MekikAuthProvider {
   /** Identifies the adapter (diagnostics only). */
   readonly name: string;
 
   /** Resolve the credential for this attempt. */
-  authenticate(ctx: BotivaAuthContext): BotivaCredential | Promise<BotivaCredential>;
+  authenticate(ctx: MekikAuthContext): MekikCredential | Promise<MekikCredential>;
 
   /**
    * Decide what happens after the server rejects the connection. `"retry"` runs
@@ -71,13 +71,13 @@ export interface BotivaAuthProvider {
    * and reconnects; `"fail"` leaves the connection down. Omit to never retry.
    */
   onReject?(
-    error: BotivaAuthError,
-    ctx: BotivaAuthContext,
-  ): BotivaAuthDecision | Promise<BotivaAuthDecision>;
+    error: MekikAuthError,
+    ctx: MekikAuthContext,
+  ): MekikAuthDecision | Promise<MekikAuthDecision>;
 }
 
 /** Where a token rides on the handshake. */
-export type BotivaTokenTransport = "hello" | "query";
+export type MekikTokenTransport = "hello" | "query";
 
 export interface TokenAuthOptions {
   /**
@@ -85,15 +85,15 @@ export interface TokenAuthOptions {
    * one per attempt (a short-lived JWT), which is what makes a reconnect after
    * a long sleep work — a token captured at page load has expired by then.
    */
-  token: string | ((ctx: BotivaAuthContext) => string | Promise<string>);
+  token: string | ((ctx: MekikAuthContext) => string | Promise<string>);
   /**
    * `"hello"` (default) sends the token in the handshake frame. `"query"` puts
    * it in the socket URL, which is the only thing an edge proxy or gateway
    * authenticating at the HTTP upgrade can see — but it also lands in server
    * and proxy access logs, so prefer `"hello"` unless something upstream of
-   * botiva needs to read it.
+   * mekik needs to read it.
    */
-  transport?: BotivaTokenTransport;
+  transport?: MekikTokenTransport;
   /** Query param name for `transport: "query"`. */
   queryParam?: string;
   /** How many times a *function* token may be re-minted after a rejection. */
@@ -101,14 +101,14 @@ export interface TokenAuthOptions {
 }
 
 /**
- * Token credential — pairs with botiva's `StaticTokenAuthenticator` (a string)
+ * Token credential — pairs with mekik's `StaticTokenAuthenticator` (a string)
  * or `HmacJwtAuthenticator` (a function returning a short-lived JWT).
  */
-export class TokenAuth implements BotivaAuthProvider {
+export class TokenAuth implements MekikAuthProvider {
   readonly name = "token";
 
   private readonly token: TokenAuthOptions["token"];
-  private readonly transport: BotivaTokenTransport;
+  private readonly transport: MekikTokenTransport;
   private readonly queryParam: string;
   private readonly maxRetries: number;
 
@@ -119,7 +119,7 @@ export class TokenAuth implements BotivaAuthProvider {
     this.maxRetries = options.maxRetries ?? 1;
   }
 
-  async authenticate(ctx: BotivaAuthContext): Promise<BotivaCredential> {
+  async authenticate(ctx: MekikAuthContext): Promise<MekikCredential> {
     const token = typeof this.token === "function" ? await this.token(ctx) : this.token;
     if (!token) return {};
     return this.transport === "query"
@@ -127,7 +127,7 @@ export class TokenAuth implements BotivaAuthProvider {
       : { token };
   }
 
-  onReject(_error: BotivaAuthError, ctx: BotivaAuthContext): BotivaAuthDecision {
+  onReject(_error: MekikAuthError, ctx: MekikAuthContext): MekikAuthDecision {
     // A static string cannot become valid by being sent again — only a supplier
     // function can produce a different credential, so only it is worth retrying.
     if (typeof this.token !== "function") return "fail";
@@ -146,15 +146,15 @@ export interface CookieAuthOptions {
 }
 
 /**
- * Cookie session — pairs with botiva's `CookieAuthenticator`.
+ * Cookie session — pairs with mekik's `CookieAuthenticator`.
  *
  * Contributes no credential on purpose: browsers attach cookies to the
- * WebSocket handshake themselves, and botiva forwards request headers to its
+ * WebSocket handshake themselves, and mekik forwards request headers to its
  * authenticator. That is the point of cookie auth — the credential stays
  * `HttpOnly` and never touches JavaScript. This adapter exists to declare that
  * intent in app code and to give an expiring session somewhere to refresh from.
  */
-export class CookieAuth implements BotivaAuthProvider {
+export class CookieAuth implements MekikAuthProvider {
   readonly name = "cookie";
 
   private readonly refresh: CookieAuthOptions["refresh"];
@@ -165,11 +165,11 @@ export class CookieAuth implements BotivaAuthProvider {
     this.maxRetries = options.maxRetries ?? 1;
   }
 
-  authenticate(): BotivaCredential {
+  authenticate(): MekikCredential {
     return {};
   }
 
-  async onReject(_error: BotivaAuthError, ctx: BotivaAuthContext): Promise<BotivaAuthDecision> {
+  async onReject(_error: MekikAuthError, ctx: MekikAuthContext): Promise<MekikAuthDecision> {
     if (!this.refresh || ctx.attempt >= this.maxRetries) return "fail";
     try {
       await this.refresh();

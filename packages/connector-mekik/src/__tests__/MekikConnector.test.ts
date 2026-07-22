@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { BotivaConnector, CookieAuth, TokenAuth } from "../index";
-import type { BotivaAuthProvider } from "../index";
+import { MekikConnector, CookieAuth, TokenAuth } from "../index";
+import type { MekikAuthProvider } from "../index";
 import type { ToolCall } from "@chativa/core";
 
 /** Minimal WebSocket stub — tests drive open/close/message transitions by hand. */
@@ -53,7 +53,7 @@ class MockWebSocket {
  * to receiving the frame over any transport.
  */
 function makeConnector() {
-  const connector = new BotivaConnector({ url: "ws://test", reconnect: false });
+  const connector = new MekikConnector({ url: "ws://test", reconnect: false });
   const messages: Array<Record<string, unknown>> = [];
   const toolCalls: ToolCall[] = [];
   connector.onMessage((m) => messages.push(m as unknown as Record<string, unknown>));
@@ -65,7 +65,7 @@ function makeConnector() {
   return { connector, messages, toolCalls, route };
 }
 
-describe("BotivaConnector.routeFrame", () => {
+describe("MekikConnector.routeFrame", () => {
   it("surfaces a bot text frame with actions as a quick-reply message", () => {
     const { messages, route } = makeConnector();
     route({
@@ -129,7 +129,7 @@ describe("BotivaConnector.routeFrame", () => {
 
   it("surfaces an auth error frame via onAuthError, not as a chat message", () => {
     const authErrors: Array<{ code: string; message: string }> = [];
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       reconnect: false,
       onAuthError: (e) => authErrors.push(e),
@@ -146,7 +146,7 @@ describe("BotivaConnector.routeFrame", () => {
   });
 
   it("welcome with a partial payload does not clobber configured identity", () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       reconnect: false,
       userId: "alice",
@@ -168,7 +168,7 @@ describe("BotivaConnector.routeFrame", () => {
   });
 
   it("welcome assigning a different conversationId resets the watermark", () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       reconnect: false,
       conversationId: "conv-old",
@@ -225,7 +225,7 @@ function rejectAuth(ws: MockWebSocket, message = "invalid token"): void {
   });
 }
 
-describe("BotivaConnector socket lifecycle", () => {
+describe("MekikConnector socket lifecycle", () => {
   beforeEach(() => {
     MockWebSocket.instances = [];
     vi.stubGlobal("WebSocket", MockWebSocket);
@@ -238,7 +238,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("disconnect() cancels a pending auto-reconnect (no zombie socket)", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnectDelay: 10 });
+    const connector = new MekikConnector({ url: "ws://test", reconnectDelay: 10 });
     const p = connector.connect();
     MockWebSocket.instances[0].open();
     await p;
@@ -251,7 +251,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("auto-reconnect survives a disconnect/connect cycle (options not mutated)", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnectDelay: 10 });
+    const connector = new MekikConnector({ url: "ws://test", reconnectDelay: 10 });
     const p1 = connector.connect();
     MockWebSocket.instances[0].open();
     await p1;
@@ -267,7 +267,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("a second connect() detaches the previous socket — only one routes frames", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnect: false });
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
     const received: unknown[] = [];
     connector.onMessage((m) => received.push(m));
 
@@ -288,7 +288,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("queued sends resolve only when actually flushed on (re)connect", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnect: false });
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
     let resolved = false;
     const sendP = connector
       .sendMessage({ id: "m1", type: "text", data: { text: "offline" } })
@@ -310,7 +310,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("forwards GenUI component events as genui_event frames", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnect: false });
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
     const p = connector.connect();
     const ws = MockWebSocket.instances[0];
     ws.open();
@@ -328,7 +328,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("sends a static token in the hello handshake", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", token: "tok-123", reconnect: false });
+    const connector = new MekikConnector({ url: "ws://test", token: "tok-123", reconnect: false });
     const p = connector.connect();
     const ws = await socketAt(0);
     ws.open();
@@ -340,7 +340,7 @@ describe("BotivaConnector socket lifecycle", () => {
 
   it("resolves a function token freshly on every connect", async () => {
     let n = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       token: () => `tok-${++n}`,
       reconnect: false,
@@ -362,7 +362,7 @@ describe("BotivaConnector socket lifecycle", () => {
     // The pre-`auth` spelling desugars to TokenAuth({ maxRetries: 0 }) — apps
     // written against it must not suddenly gain retry behaviour.
     let n = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       token: () => `legacy-${++n}`,
       reconnect: false,
@@ -379,7 +379,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 
   it("does not auto-reconnect after an auth rejection", async () => {
-    const connector = new BotivaConnector({ url: "ws://test", reconnectDelay: 10 });
+    const connector = new MekikConnector({ url: "ws://test", reconnectDelay: 10 });
     const p = connector.connect();
     const ws = MockWebSocket.instances[0];
     ws.open();
@@ -396,7 +396,7 @@ describe("BotivaConnector socket lifecycle", () => {
   });
 });
 
-describe("BotivaConnector auth providers", () => {
+describe("MekikConnector auth providers", () => {
   beforeEach(() => {
     MockWebSocket.instances = [];
     vi.stubGlobal("WebSocket", MockWebSocket);
@@ -407,7 +407,7 @@ describe("BotivaConnector auth providers", () => {
   });
 
   it("TokenAuth sends a static token in the hello frame by default", async () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: "api-key" }),
       reconnect: false,
@@ -424,7 +424,7 @@ describe("BotivaConnector auth providers", () => {
   it("TokenAuth transport 'query' puts the token in the socket URL, not the frame", async () => {
     // The only transport an edge proxy authenticating at the HTTP upgrade can
     // read — it never sees the hello frame.
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test/chat",
       auth: new TokenAuth({ token: "q-tok", transport: "query" }),
       reconnect: false,
@@ -439,7 +439,7 @@ describe("BotivaConnector auth providers", () => {
   });
 
   it("TokenAuth honours a custom query param name", async () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test/chat?tenant=acme",
       auth: new TokenAuth({ token: "k", transport: "query", queryParam: "access_token" }),
       reconnect: false,
@@ -455,7 +455,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("TokenAuth re-mints a function token and retries once when rejected", async () => {
     let n = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: () => `jwt-${++n}` }),
       reconnect: false,
@@ -477,7 +477,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("TokenAuth stops after maxRetries instead of looping", async () => {
     let n = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: () => `jwt-${++n}`, maxRetries: 1 }),
       reconnect: false,
@@ -497,7 +497,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("TokenAuth never retries a static token", async () => {
     // Re-sending a string the server just refused cannot change the verdict.
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: "static" }),
       reconnect: false,
@@ -513,7 +513,7 @@ describe("BotivaConnector auth providers", () => {
   });
 
   it("CookieAuth contributes no credential — the browser attaches the cookie", async () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new CookieAuth(),
       reconnect: false,
@@ -529,7 +529,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("CookieAuth refreshes an expired session once, then reconnects", async () => {
     let refreshed = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new CookieAuth({ refresh: () => { refreshed++; } }),
       reconnect: false,
@@ -545,7 +545,7 @@ describe("BotivaConnector auth providers", () => {
   });
 
   it("CookieAuth gives up when the refresh itself fails", async () => {
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new CookieAuth({ refresh: () => Promise.reject(new Error("refresh 500")) }),
       reconnect: false,
@@ -563,13 +563,13 @@ describe("BotivaConnector auth providers", () => {
   it("a provider that throws fails connect() instead of connecting anonymously", async () => {
     // Degrading to no credential would surface a token-endpoint outage as a
     // misleading "unauthorized" from the server.
-    const broken: BotivaAuthProvider = {
+    const broken: MekikAuthProvider = {
       name: "broken",
       authenticate: () => {
         throw new Error("token endpoint down");
       },
     };
-    const connector = new BotivaConnector({ url: "ws://test", auth: broken, reconnect: false });
+    const connector = new MekikConnector({ url: "ws://test", auth: broken, reconnect: false });
 
     await expect(connector.connect()).rejects.toThrow("token endpoint down");
     expect(MockWebSocket.instances).toHaveLength(0);
@@ -577,7 +577,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("disconnect() during authenticate() leaves no zombie socket", async () => {
     let release!: (token: string) => void;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: () => new Promise<string>((r) => (release = r)) }),
       reconnect: false,
@@ -597,7 +597,7 @@ describe("BotivaConnector auth providers", () => {
     // tell the stale credential apart from the live one.
     const release: Array<(token: string) => void> = [];
     let n = 0;
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({
         token: () => {
@@ -628,7 +628,7 @@ describe("BotivaConnector auth providers", () => {
 
   it("onAuthError still fires for a provider-driven rejection", async () => {
     const seen: string[] = [];
-    const connector = new BotivaConnector({
+    const connector = new MekikConnector({
       url: "ws://test",
       auth: new TokenAuth({ token: "static" }),
       onAuthError: (e) => seen.push(e.code),
@@ -647,7 +647,7 @@ describe("BotivaConnector auth providers", () => {
   });
 });
 
-describe("BotivaConnector botiva/2 human-in-the-loop", () => {
+describe("MekikConnector mekik/2 human-in-the-loop", () => {
   it("renders an interrupt frame as quick-reply chips and answers with a resume", () => {
     const { connector, messages, route } = makeConnector();
     route({

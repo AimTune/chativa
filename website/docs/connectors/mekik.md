@@ -1,29 +1,35 @@
-# BotivaConnector
+---
+sidebar_position: 6
+title: Mekik
+description: Client adapter for mekik servers (Mekik Wire Protocol v1) — identity handshake, watermark resume, authentication, tool calls, GenUI and human-in-the-loop.
+---
 
-Client adapter for [botiva](https://github.com/AimTune/botiva) servers — Botiva Wire Protocol v1. Botiva is Chativa's server-side sibling: Chativa renders the chat, botiva runs the conversation. Because both sides speak one protocol, this connector gets identity handshake, watermark resume, tool-call lifecycle, typing, Generative UI streaming and human-in-the-loop chips with no per-app glue.
+# MekikConnector
+
+Client adapter for [mekik](https://github.com/AimTune/mekik) servers — Mekik Wire Protocol v1. Mekik is Chativa's server-side sibling: Chativa renders the chat, mekik runs the conversation. Because both sides speak one protocol, this connector gets identity handshake, watermark resume, tool-call lifecycle, typing, Generative UI streaming and human-in-the-loop chips with no per-app glue.
 
 ```ts
-import { BotivaConnector } from "@chativa/connector-botiva";
+import { MekikConnector } from "@chativa/connector-mekik";
 import { ConnectorRegistry, chatStore } from "@chativa/core";
 
 ConnectorRegistry.register(
-  new BotivaConnector({
+  new MekikConnector({
     url: "wss://bot.example.com/chat",
     resumeConversation: true,
   })
 );
-chatStore.getState().setConnector("botiva");
+chatStore.getState().setConnector("mekik");
 ```
 
-The wire protocol is transport-agnostic on the botiva side, but this connector speaks the **WebSocket** profile.
+The wire protocol is transport-agnostic on the mekik side, but this connector speaks the **WebSocket** profile.
 
 ## Options
 
-Schema: [`schemas/connectors/botiva.schema.json`](../../schemas/connectors/botiva.schema.json).
+Schema: [`schemas/connectors/mekik.schema.json`](https://github.com/AimTune/chativa/blob/main/schemas/connectors/mekik.schema.json).
 
 | Field | Default | Description |
 |---|---|---|
-| `url` | — | **Required.** botiva WebSocket endpoint, e.g. `wss://bot.example.com/chat`. |
+| `url` | — | **Required.** mekik WebSocket endpoint, e.g. `wss://bot.example.com/chat`. |
 | `protocols` | `[]` | Sub-protocol(s) passed to the `WebSocket` constructor. |
 | `reconnect` | `true` | Auto-reconnect when the socket drops. Suppressed after an auth rejection. |
 | `reconnectDelay` | `2000` | Milliseconds between reconnect attempts. |
@@ -32,15 +38,15 @@ Schema: [`schemas/connectors/botiva.schema.json`](../../schemas/connectors/botiv
 | `userId` | server-minted | Stable user identity. Omit to let the server generate one (announced via `welcome`). |
 | `conversationId` | server-minted | Conversation to resume. Omit to start a new one. |
 | `resumeConversation` | `false` | Persist identity + watermark in `localStorage` and resume across page reloads. |
-| `auth` | — | How this client authenticates — a `BotivaAuthProvider` adapter (`CookieAuth`, `TokenAuth`, or your own). Omit for servers that don't authenticate. See [Authentication](#authentication). |
+| `auth` | — | How this client authenticates — a `MekikAuthProvider` adapter (`CookieAuth`, `TokenAuth`, or your own). Omit for servers that don't authenticate. See [Authentication](#authentication). |
 | `token` | — | **Deprecated** — shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })`. Still works. |
 | `onAuthError` | — | Called when the server rejects the connection, whichever adapter is in use. |
 
 ## Frame mapping
 
-Every botiva transport carries the same JSON frames. The connector routes them like this:
+Every mekik transport carries the same JSON frames. The connector routes them like this:
 
-| botiva frame | Direction | Becomes |
+| mekik frame | Direction | Becomes |
 |---|---|---|
 | `hello` | client → server | Sent on open — `userId` / `conversationId` / `watermark` / `token`. All fields optional. |
 | `welcome` | server → client | Identity + current watermark. Captured on `connector.identity`, never rendered as a message. |
@@ -58,10 +64,10 @@ Unknown frame types and unknown fields are ignored on both sides — that's the 
 
 ## Identity and resume
 
-botiva identity is a triple: `userId`, `conversationId`, `connectionId`. You may assert any of them in the `hello` handshake; the server fills in whatever you omit and announces the result in `welcome`:
+mekik identity is a triple: `userId`, `conversationId`, `connectionId`. You may assert any of them in the `hello` handshake; the server fills in whatever you omit and announces the result in `welcome`:
 
 ```ts
-const connector = new BotivaConnector({ url: "wss://bot.example.com/chat" });
+const connector = new MekikConnector({ url: "wss://bot.example.com/chat" });
 await connector.connect();
 connector.identity; // { conversationId, userId, connectionId, watermark }
 ```
@@ -70,38 +76,38 @@ Server-minted ids are adopted automatically, so the next reconnect resumes the s
 
 **Watermark replay.** Persistent frames (`text`, `tool_call`, `genui`) carry a monotonic `seq`. The connector tracks the highest one it has seen and hands it back on reconnect, so the server replays only what you missed — the same resume model as DirectLine, and it covers multi-tab and multi-device out of the box.
 
-With `resumeConversation: true` the identity and watermark are persisted to `localStorage` under `chativa:botiva:<url>`, so a page reload rejoins the same conversation mid-transcript. If the server answers with a *different* `conversationId` than the one you tried to resume (the old one expired, say), the watermark resets to zero — the old watermark belongs to a transcript that no longer exists.
+With `resumeConversation: true` the identity and watermark are persisted to `localStorage` under `chativa:mekik:<url>`, so a page reload rejoins the same conversation mid-transcript. If the server answers with a *different* `conversationId` than the one you tried to resume (the old one expired, say), the watermark resets to zero — the old watermark belongs to a transcript that no longer exists.
 
 ## Authentication
 
-By default botiva accepts every connection and identity is client-asserted. A server opts into authentication by configuring an **Authenticator** ([PROTOCOL.md §2.1](https://github.com/AimTune/botiva/blob/main/PROTOCOL.md)); that gate then applies to `connect()`.
+By default mekik accepts every connection and identity is client-asserted. A server opts into authentication by configuring an **Authenticator** ([PROTOCOL.md §2.1](https://github.com/AimTune/mekik/blob/main/PROTOCOL.md)); that gate then applies to `connect()`.
 
-Authentication is a port here, mirroring the server. Botiva's `Authenticator` (in `@botiva/core`) decides *whether a connection may open*; Chativa's `BotivaAuthProvider` decides *what credential the client presents*. You pass an adapter as `auth` and the connector stays out of it:
+Authentication is a port here, mirroring the server. Mekik's `Authenticator` (in `@mekik/core`) decides *whether a connection may open*; Chativa's `MekikAuthProvider` decides *what credential the client presents*. You pass an adapter as `auth` and the connector stays out of it:
 
 ```ts
-import { BotivaConnector, CookieAuth, TokenAuth } from "@chativa/connector-botiva";
+import { MekikConnector, CookieAuth, TokenAuth } from "@chativa/connector-mekik";
 
-new BotivaConnector({ url, auth: new CookieAuth() });                  // cookie session
-new BotivaConnector({ url, auth: new TokenAuth({ token: "api-key" }) }); // API key / JWT
+new MekikConnector({ url, auth: new CookieAuth() });                  // cookie session
+new MekikConnector({ url, auth: new TokenAuth({ token: "api-key" }) }); // API key / JWT
 ```
 
 The split matters because a cookie session, a static API key and a short-lived JWT all reach the same server through the same wire fields, but they're obtained — and refreshed — in completely different ways. That variation belongs in the adapter, not in the connector.
 
-| Chativa adapter (client) | botiva adapter (server) | Credential |
+| Chativa adapter (client) | mekik adapter (server) | Credential |
 |---|---|---|
 | `CookieAuth` | `CookieAuthenticator` | The browser's cookie — nothing to send |
 | `TokenAuth` (string) | `StaticTokenAuthenticator` | A long-lived API key |
 | `TokenAuth` (function) | `HmacJwtAuthenticator` | A short-lived JWT, re-minted per attempt |
-| your own `BotivaAuthProvider` | your own `Authenticator` | anything |
+| your own `MekikAuthProvider` | your own `Authenticator` | anything |
 
 The provider is consulted **before every socket**, never once and cached — which is what lets a reconnect carry a credential that's still valid.
 
 ### Cookie sessions
 
-If your server uses `CookieAuthenticator`, the client sends nothing: browsers attach cookies to the WebSocket handshake themselves, and botiva forwards request headers to its authenticator. This is the best option for same-site browser apps — the credential stays `HttpOnly` and never touches JavaScript.
+If your server uses `CookieAuthenticator`, the client sends nothing: browsers attach cookies to the WebSocket handshake themselves, and mekik forwards request headers to its authenticator. This is the best option for same-site browser apps — the credential stays `HttpOnly` and never touches JavaScript.
 
 ```ts
-new BotivaConnector({
+new MekikConnector({
   url: "wss://bot.example.com/chat",
   auth: new CookieAuth({
     // Optional: renew an expired session, then retry the connection once.
@@ -115,7 +121,7 @@ new BotivaConnector({
 ### Token credential
 
 ```ts
-new BotivaConnector({
+new MekikConnector({
   url: "wss://bot.example.com/chat",
   auth: new TokenAuth({ token: "eyJhbGciOiJIUzI1NiIs..." }),
 });
@@ -141,17 +147,17 @@ If the function throws, `connect()` rejects with that error. The connector delib
 | `transport` | Credential rides in | Use when |
 |---|---|---|
 | `"hello"` (default) | The `hello` frame's `token` | Almost always. |
-| `"query"` | `?token=` on the socket URL | Something upstream of botiva — an edge proxy or gateway authenticating at the HTTP upgrade — must read it. It never sees the `hello` frame. |
+| `"query"` | `?token=` on the socket URL | Something upstream of mekik — an edge proxy or gateway authenticating at the HTTP upgrade — must read it. It never sees the `hello` frame. |
 
 ```ts
 auth: new TokenAuth({ token, transport: "query", queryParam: "access_token" });
 ```
 
-Prefer `"hello"`: a query token lands in server and proxy access logs. (botiva also accepts an `Authorization: Bearer` header, but browsers can't set headers on a WebSocket handshake, so it isn't reachable from this connector.)
+Prefer `"hello"`: a query token lands in server and proxy access logs. (mekik also accepts an `Authorization: Bearer` header, but browsers can't set headers on a WebSocket handshake, so it isn't reachable from this connector.)
 
 ### Rejection and retry
 
-When the authenticator returns `ok: false`, botiva sends an `error` frame and closes with WebSocket code **4401**:
+When the authenticator returns `ok: false`, mekik sends an `error` frame and closes with WebSocket code **4401**:
 
 ```json
 { "type": "error", "data": { "code": "unauthorized", "message": "invalid token" } }
@@ -165,7 +171,7 @@ The connector surfaces that through `onAuthError`, and blind auto-reconnect stay
 So the common expired-JWT flow needs no app code at all:
 
 ```ts
-new BotivaConnector({
+new MekikConnector({
   url,
   auth: new TokenAuth({ token: () => auth.freshAccessToken() }), // rejected → re-mint → retry
   onAuthError: (err) => redirectToLogin(err), // still fires; for terminal failures
@@ -179,9 +185,9 @@ The last rejection is readable at `connector.authError` (`null` unless the serve
 Implement the one-method port — the client mirror of writing your own `Authenticator` on the server:
 
 ```ts
-import type { BotivaAuthProvider } from "@chativa/connector-botiva";
+import type { MekikAuthProvider } from "@chativa/connector-mekik";
 
-const oidcAuth: BotivaAuthProvider = {
+const oidcAuth: MekikAuthProvider = {
   name: "oidc",
   async authenticate({ attempt, previousError }) {
     const token = await oidc.getAccessToken({ forceRefresh: attempt > 0 });
@@ -190,10 +196,10 @@ const oidcAuth: BotivaAuthProvider = {
   onReject: (error, ctx) => (ctx.attempt < 2 ? "retry" : "fail"),
 };
 
-new BotivaConnector({ url, auth: oidcAuth });
+new MekikConnector({ url, auth: oidcAuth });
 ```
 
-`authenticate()` receives the attempt number and the rejection that caused the retry, and returns a `BotivaCredential` — `{ token }`, `{ query }`, or `{}` for "nothing to send".
+`authenticate()` receives the attempt number and the rejection that caused the retry, and returns a `MekikCredential` — `{ token }`, `{ query }`, or `{}` for "nothing to send".
 
 ### Verified identity
 
@@ -208,26 +214,26 @@ Any `claims` the authenticator returns stay server-side, exposed to the runtime 
 
 ### Pairing with the server
 
-`new BotivaConnector({ auth: new CookieAuth({ refresh }) })` pairs with a botiva server configured like this:
+`new MekikConnector({ auth: new CookieAuth({ refresh }) })` pairs with a mekik server configured like this:
 
 ```ts
-import { ConversationEngine } from "@botiva/core";
-import { CookieAuthenticator, HmacJwtAuthenticator } from "@botiva/authentication";
+import { ConversationEngine } from "@mekik/core";
+import { CookieAuthenticator, HmacJwtAuthenticator } from "@mekik/authentication";
 
 const engine = new ConversationEngine({
   runtime,
   authenticator: new CookieAuthenticator({
-    cookie: "botiva_session",
+    cookie: "mekik_session",
     inner: new HmacJwtAuthenticator({ secret: process.env.JWT_SECRET! }),
   }),
 });
 ```
 
-Authentication in botiva is **connection-time only** — it decides who may open a socket, and implies no authorization or RBAC beyond that.
+Authentication in mekik is **connection-time only** — it decides who may open a socket, and implies no authorization or RBAC beyond that.
 
 ## Human-in-the-loop
 
-When a run needs an answer, botiva sends a `text` frame carrying `actions`. The connector maps it to Chativa's native `quick-reply` type, so the chips render without a custom component; tapping one sends the value back as the user's answer, which resumes the interrupted run:
+When a run needs an answer, mekik sends a `text` frame carrying `actions`. The connector maps it to Chativa's native `quick-reply` type, so the chips render without a custom component; tapping one sends the value back as the user's answer, which resumes the interrupted run:
 
 ```json
 { "type": "text", "seq": 43, "from": "bot",

@@ -1,20 +1,20 @@
 {
-  "name": "@chativa/connector-botiva",
+  "name": "@chativa/connector-mekik",
   "version": "0.0.1",
-  "description": "Chativa connector for botiva servers (Botiva Wire Protocol v1) — identity handshake, watermark resume, tool-call, typing (run lifecycle), GenUI and offline queue support.",
+  "description": "Chativa connector for mekik servers (Mekik Wire Protocol v1) — identity handshake, watermark resume, tool-call, typing (run lifecycle), GenUI and offline queue support.",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "jsdelivr": "./dist/chativa-botiva.global.js",
+  "jsdelivr": "./dist/chativa-mekik.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
-      "default": "./dist/chativa-botiva.global.js"
+      "default": "./dist/chativa-mekik.global.js"
     }
   },
   "files": [
@@ -24,7 +24,7 @@
     "chativa",
     "chat",
     "connector",
-    "botiva",
+    "mekik",
     "websocket",
     "tool-call",
     "human-in-the-loop"

@@ -2,10 +2,10 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 
 /**
- * `<order-card>` — Sandbox Generative UI component for the botiva refund demo.
+ * `<order-card>` — Sandbox Generative UI component for the mekik refund demo.
  * Register with: `GenUIRegistry.register("order-card", OrderCard)`
  *
- * Props emitted by the graph's `botiva.ui("order-card", { … })`:
+ * Props emitted by the graph's `mekik.ui("order-card", { … })`:
  * ```json
  * { "id": "ORD-42", "total": 249.9, "items": ["Kettle", "Mug"] }
  * ```

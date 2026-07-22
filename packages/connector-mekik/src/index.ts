@@ -13,21 +13,21 @@ import type { OutgoingMessage, MessageAction } from "@chativa/core";
 // the root would inline all of core into this connector's standalone bundle.
 import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
 import type {
-  BotivaAuthContext,
-  BotivaAuthDecision,
-  BotivaAuthError,
-  BotivaAuthProvider,
-  BotivaCredential,
+  MekikAuthContext,
+  MekikAuthDecision,
+  MekikAuthError,
+  MekikAuthProvider,
+  MekikCredential,
 } from "./auth";
 import { TokenAuth } from "./auth";
 
 export type {
-  BotivaAuthContext,
-  BotivaAuthDecision,
-  BotivaAuthError,
-  BotivaAuthProvider,
-  BotivaCredential,
-  BotivaTokenTransport,
+  MekikAuthContext,
+  MekikAuthDecision,
+  MekikAuthError,
+  MekikAuthProvider,
+  MekikCredential,
+  MekikTokenTransport,
   CookieAuthOptions,
   TokenAuthOptions,
 } from "./auth";
@@ -43,11 +43,11 @@ function interruptText(payload: Record<string, unknown>): string {
     const v = payload[key];
     if (typeof v === "string" && v) return v;
   }
-  return "Onayınız gerekiyor";
+  return "Approval required";
 }
 
-export interface BotivaConnectorOptions {
-  /** botiva WebSocket endpoint, e.g. "ws://localhost:8790/chat". */
+export interface MekikConnectorOptions {
+  /** mekik WebSocket endpoint, e.g. "ws://localhost:8790/chat". */
   url: string;
   protocols?: string | string[];
   reconnect?: boolean;
@@ -65,12 +65,12 @@ export interface BotivaConnectorOptions {
    * How this client authenticates, for servers that authenticate (PROTOCOL.md
    * §2.1) — the client-side mirror of the server's `Authenticator` port. Pass an
    * adapter: {@link CookieAuth} for a cookie session, {@link TokenAuth} for an
-   * API key or a short-lived JWT, or your own {@link BotivaAuthProvider}.
+   * API key or a short-lived JWT, or your own {@link MekikAuthProvider}.
    * Omit entirely for servers that don't authenticate.
    *
-   * Takes precedence over {@link BotivaConnectorOptions.token}.
+   * Takes precedence over {@link MekikConnectorOptions.token}.
    */
-  auth?: BotivaAuthProvider;
+  auth?: MekikAuthProvider;
   /**
    * Shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })` — a credential
    * sent in the `hello` handshake, with no retry after a rejection.
@@ -78,18 +78,18 @@ export interface BotivaConnectorOptions {
    * @deprecated Prefer `auth`, which also covers cookie sessions, the `query`
    * transport, and refresh-and-retry. This shorthand stays for compatibility.
    */
-  token?: string | ((ctx: BotivaAuthContext) => string | Promise<string>);
+  token?: string | ((ctx: MekikAuthContext) => string | Promise<string>);
   /**
    * Called when the server rejects the connection (an `error` frame + close,
    * WebSocket code 4401). Fires regardless of which `auth` adapter is used, and
    * before any provider-driven retry. Auto-reconnect stays suppressed unless the
    * provider asks to retry, so this is where an app redirects to login.
    */
-  onAuthError?: (error: BotivaAuthError) => void;
+  onAuthError?: (error: MekikAuthError) => void;
 }
 
 /** Identity assigned/confirmed by the server's `welcome` frame. */
-export interface BotivaIdentity {
+export interface MekikIdentity {
   conversationId: string;
   userId: string;
   connectionId: string;
@@ -103,10 +103,10 @@ interface PersistedSession {
 }
 
 /**
- * BotivaConnector — the single Chativa client connector for botiva servers
- * (Botiva Wire Protocol v1; botiva is the server-side sibling of Chativa).
+ * MekikConnector — the single Chativa client connector for mekik servers
+ * (Mekik Wire Protocol v1; mekik is the server-side sibling of Chativa).
  *
- * The wire protocol is identical over every botiva transport:
+ * The wire protocol is identical over every mekik transport:
  *
  * - `{ type: "hello", ... }`      ← sent by us on open: userId / conversationId /
  *   watermark handshake. All fields optional; the server generates missing ids.
@@ -128,7 +128,7 @@ interface PersistedSession {
  *   followed by a close (code 4401); surfaced via `onAuthError`, reconnect off.
  *
  * Authenticated servers (PROTOCOL.md §2.1): pass an `auth` provider — the
- * client-side mirror of botiva's `Authenticator` port. `CookieAuth` for a cookie
+ * client-side mirror of mekik's `Authenticator` port. `CookieAuth` for a cookie
  * session, `TokenAuth` for an API key or short-lived JWT, or your own adapter.
  * The provider is consulted before every socket, so it can mint a fresh
  * credential per attempt and decide whether a rejection is worth retrying.
@@ -137,21 +137,21 @@ interface PersistedSession {
  * hand it back on reconnect, so the server replays only what we missed —
  * DirectLine-style resume, multi-tab and multi-device included.
  */
-export class BotivaConnector implements IConnector {
-  readonly name = "botiva";
+export class MekikConnector implements IConnector {
+  readonly name = "mekik";
   readonly addSentToHistory = true;
 
   private ws: WebSocket | null = null;
   private options: Required<
-    Omit<BotivaConnectorOptions, "userId" | "conversationId" | "auth" | "token" | "onAuthError">
+    Omit<MekikConnectorOptions, "userId" | "conversationId" | "auth" | "token" | "onAuthError">
   > &
     Pick<
-      BotivaConnectorOptions,
+      MekikConnectorOptions,
       "userId" | "conversationId" | "auth" | "token" | "onAuthError"
     >;
 
   /** The `auth` adapter, or one desugared from the legacy `token` option. */
-  private readonly authProvider: BotivaAuthProvider | undefined;
+  private readonly authProvider: MekikAuthProvider | undefined;
 
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectHandler | null = null;
@@ -167,19 +167,19 @@ export class BotivaConnector implements IConnector {
   private queue: Array<{ payload: string; resolve: () => void }> = [];
   private watermark = 0;
   /**
-   * Interrupts the server is parked on (botiva/2 §4). Keyed by the thread-scoped
+   * Interrupts the server is parked on (mekik/2 §4). Keyed by the thread-scoped
    * interrupt `id`, which is how the answer must be routed back in a `resume`
    * frame. Filled by `interrupt` frames (and `welcome.pending` on reconnect),
    * drained by `interrupt_resolved` or by sending the answer.
    */
   private readonly openInterrupts = new Map<string, { ui?: unknown; actions?: MessageAction[] }>();
-  private _identity: BotivaIdentity | null = null;
+  private _identity: MekikIdentity | null = null;
   /** Set when the server rejects auth; suppresses reconnect and is cleared on the next connect(). */
-  private _authError: BotivaAuthError | null = null;
+  private _authError: MekikAuthError | null = null;
   /** Auth attempts for the current connection; reset once the server welcomes us. */
   private authAttempt = 0;
   /** The context handed to the provider for the in-flight attempt (replayed to onReject). */
-  private authContext: BotivaAuthContext | null = null;
+  private authContext: MekikAuthContext | null = null;
   /**
    * Bumped by every connect()/disconnect(). An `authenticate()` call that
    * resolves after its generation is stale belongs to a superseded attempt and
@@ -187,7 +187,7 @@ export class BotivaConnector implements IConnector {
    */
   private generation = 0;
 
-  constructor(options: BotivaConnectorOptions) {
+  constructor(options: MekikConnectorOptions) {
     this.options = {
       protocols: [],
       reconnect: true,
@@ -214,12 +214,12 @@ export class BotivaConnector implements IConnector {
   }
 
   /** Identity from the last `welcome` frame (null before the first connect). */
-  get identity(): BotivaIdentity | null {
+  get identity(): MekikIdentity | null {
     return this._identity;
   }
 
   /** The last auth rejection (null unless the server refused this connection). */
-  get authError(): BotivaAuthError | null {
+  get authError(): MekikAuthError | null {
     return this._authError;
   }
 
@@ -236,7 +236,7 @@ export class BotivaConnector implements IConnector {
    */
   private async connectWithAuth(
     attempt: number,
-    previousError: BotivaAuthError | null,
+    previousError: MekikAuthError | null,
   ): Promise<void> {
     // Re-entrant safe: ChatEngine's auto-reconnect and our own onclose timer
     // can both call connect() after the same drop — tear down whichever
@@ -256,9 +256,9 @@ export class BotivaConnector implements IConnector {
     // onopen fires. A provider that throws fails connect() with its error
     // rather than degrading to an anonymous attempt, which would surface a
     // credential outage as a misleading "unauthorized" from the server.
-    let credential: BotivaCredential = {};
+    let credential: MekikCredential = {};
     if (this.authProvider) {
-      const ctx: BotivaAuthContext = { url: this.options.url, attempt, previousError };
+      const ctx: MekikAuthContext = { url: this.options.url, attempt, previousError };
       this.authContext = ctx;
       credential = await this.authProvider.authenticate(ctx);
     }
@@ -275,7 +275,7 @@ export class BotivaConnector implements IConnector {
       };
 
       ws.onerror = (event) => {
-        reject(new Error(`BotivaConnector WebSocket error: ${JSON.stringify(event)}`));
+        reject(new Error(`MekikConnector WebSocket error: ${JSON.stringify(event)}`));
       };
 
       ws.onmessage = (event: MessageEvent) => {
@@ -337,7 +337,7 @@ export class BotivaConnector implements IConnector {
   }
 
   async sendMessage(message: OutgoingMessage): Promise<void> {
-    // If the server is parked on an interrupt (botiva/2 §4), an answer must go
+    // If the server is parked on an interrupt (mekik/2 §4), an answer must go
     // back as a `resume` frame keyed by the interrupt id — not as a new turn.
     const resume = this.asResume(message);
     if (resume) {
@@ -376,7 +376,7 @@ export class BotivaConnector implements IConnector {
   }
 
   /**
-   * Render an `interrupt` frame (botiva/2 §4). Chips are the reliable answer path
+   * Render an `interrupt` frame (mekik/2 §4). Chips are the reliable answer path
    * (a tap sends a `resume`); a mounted `ui` form is streamed as a GenUI chunk,
    * handed the interrupt id so its submit can round-trip.
    */
@@ -406,7 +406,7 @@ export class BotivaConnector implements IConnector {
   private renderQuickReply(id: string, text: string, chips: MessageAction[]): void {
     const frame = parseChatFrame(
       { type: "text", id: `interrupt-${id}`, from: "bot", data: { text }, actions: chips },
-      { idPrefix: "botiva" },
+      { idPrefix: "mekik" },
     );
     if (frame.kind === "quick_reply") this.messageHandler?.(frame.message);
   }
@@ -459,7 +459,7 @@ export class BotivaConnector implements IConnector {
       data = JSON.parse(raw) as Record<string, unknown>;
     } catch {
       this.messageHandler?.({
-        id: `botiva-${Date.now()}`,
+        id: `mekik-${Date.now()}`,
         type: "text",
         data: { text: raw },
         timestamp: Date.now(),
@@ -485,7 +485,7 @@ export class BotivaConnector implements IConnector {
       const message = typeof d.message === "string" ? d.message : "";
       this.typingHandler?.(false);
       if (code === "unauthorized") {
-        const error: BotivaAuthError = { code, message };
+        const error: MekikAuthError = { code, message };
         this._authError = error;
         this.options.onAuthError?.(error);
         this.disconnectHandler?.(message);
@@ -500,7 +500,7 @@ export class BotivaConnector implements IConnector {
       // A welcome means the server accepted this credential — the only real
       // proof auth succeeded, since a rejection arrives after the socket opens.
       this.authAttempt = 0;
-      const d = (data.data ?? data) as Partial<BotivaIdentity>;
+      const d = (data.data ?? data) as Partial<MekikIdentity>;
       const prevConversationId = this.options.conversationId;
       this._identity = {
         conversationId: String(d.conversationId ?? this.options.conversationId ?? ""),
@@ -526,7 +526,7 @@ export class BotivaConnector implements IConnector {
       }
       if (this.options.resumeConversation) this.saveSession();
 
-      // botiva/2: the server re-announces any open interrupts so a reconnecting
+      // mekik/2: the server re-announces any open interrupts so a reconnecting
       // tab re-renders the approval it was parked on (§3.2).
       const pending = (data.data as Record<string, unknown> | undefined)?.pending;
       if (Array.isArray(pending)) {
@@ -538,7 +538,7 @@ export class BotivaConnector implements IConnector {
     }
 
     // Run lifecycle frame: { type: "run", data: { status } } → typing indicator.
-    // botiva-specific: the shared vocabulary has no `run` frame. Only "started"
+    // mekik-specific: the shared vocabulary has no `run` frame. Only "started"
     // means work is in flight; "finished"/"interrupted"/"error"/"aborted" all
     // clear the indicator.
     if (data?.type === "run") {
@@ -547,7 +547,7 @@ export class BotivaConnector implements IConnector {
       return;
     }
 
-    // botiva/2 human-in-the-loop (§4): a first-class `interrupt` frame the server
+    // mekik/2 human-in-the-loop (§4): a first-class `interrupt` frame the server
     // is parked on. Render it as quick-reply chips (or a mounted form) and
     // remember the id so the answer goes back as a `resume`.
     if (data?.type === "interrupt") {
@@ -562,10 +562,10 @@ export class BotivaConnector implements IConnector {
       return;
     }
 
-    // The frames botiva shares with every other Chativa connector — tool calls,
+    // The frames mekik shares with every other Chativa connector — tool calls,
     // GenUI chunks and the HITL chips — are routed by the one parser in core so
     // the rules can't drift apart between transports.
-    const frame = parseChatFrame(data, { idPrefix: "botiva" });
+    const frame = parseChatFrame(data, { idPrefix: "mekik" });
     switch (frame.kind) {
       case "tool_call":
         this.toolCallHandler?.(frame.toolCall);
@@ -609,7 +609,7 @@ export class BotivaConnector implements IConnector {
     if (this.options.queueOfflineMessages) {
       return new Promise((resolve) => this.queue.push({ payload, resolve }));
     }
-    return Promise.reject(new Error("BotivaConnector: not connected."));
+    return Promise.reject(new Error("MekikConnector: not connected."));
   }
 
   private flushQueue(): void {
@@ -639,7 +639,7 @@ export class BotivaConnector implements IConnector {
    * whether a fresh credential is obtainable, so the retry decision is its call
    * — the connector just carries it out.
    */
-  private async handleAuthRejection(error: BotivaAuthError): Promise<void> {
+  private async handleAuthRejection(error: MekikAuthError): Promise<void> {
     const provider = this.authProvider;
     if (!provider?.onReject) return;
 
@@ -649,7 +649,7 @@ export class BotivaConnector implements IConnector {
       previousError: null,
     };
 
-    let decision: BotivaAuthDecision;
+    let decision: MekikAuthDecision;
     try {
       decision = await provider.onReject(error, ctx);
     } catch {
@@ -663,10 +663,10 @@ export class BotivaConnector implements IConnector {
     });
   }
 
-  /** Send the botiva/1 hello handshake once the socket is open, then resolve connect(). */
+  /** Send the mekik/1 hello handshake once the socket is open, then resolve connect(). */
   private sendHello(ws: WebSocket, token: string | undefined, resolve: () => void): void {
     this.reconnectAttempts = 0;
-    // botiva/1 handshake — all fields optional, server fills the gaps.
+    // mekik/1 handshake — all fields optional, server fills the gaps.
     // `token` is only present when the server authenticates (§2.1).
     ws.send(
       JSON.stringify({
@@ -683,7 +683,7 @@ export class BotivaConnector implements IConnector {
   }
 
   private storageKey(): string {
-    return `chativa:botiva:${this.options.url}`;
+    return `chativa:mekik:${this.options.url}`;
   }
 
   private loadSession(): PersistedSession | null {
@@ -713,7 +713,7 @@ export class BotivaConnector implements IConnector {
   }
 }
 
-/** @deprecated Renamed — use {@link BotivaConnector}. */
-export const LineConnector = BotivaConnector;
-/** @deprecated Renamed — use {@link BotivaConnectorOptions}. */
-export type LineConnectorOptions = BotivaConnectorOptions;
+/** @deprecated Renamed — use {@link MekikConnector}. */
+export const LineConnector = MekikConnector;
+/** @deprecated Renamed — use {@link MekikConnectorOptions}. */
+export type LineConnectorOptions = MekikConnectorOptions;
