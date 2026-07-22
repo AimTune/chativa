@@ -47,7 +47,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 
 | Capability | Details |
 |---|---|
-| **Pluggable connectors** | [Dummy, WebSocket, SignalR, DirectLine, SSE, HTTP](docs/connectors/overview.md) — or write your own. |
+| **Pluggable connectors** | [Dummy, WebSocket, SignalR, DirectLine, Mekik, SSE, HTTP](docs/connectors/overview.md) — or write your own. |
 | **Rich messages** | [text, image, card, buttons, quick-reply, carousel, file, video](docs/message-types/built-in.md) — register custom types. |
 | **Generative UI** | [Stream LitElement components inline](docs/genui/overview.md) — forms, charts, tables, your own widgets. |
 | **Extensions** | [Middleware lifecycle](docs/extensions.md) for analytics, transformers, and slash commands. |
@@ -87,6 +87,7 @@ packages/
   connector-websocket/   @chativa/connector-websocket
   connector-signalr/     @chativa/connector-signalr
   connector-directline/  @chativa/connector-directline
+  connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
 

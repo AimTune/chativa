@@ -15,6 +15,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/chativa-core.global.js"
+    },
+    "./frames": {
+      "types": "./dist/frames.d.ts",
+      "import": "./dist/frames.js",
+      "require": "./dist/frames.cjs"
     }
   },
   "files": [

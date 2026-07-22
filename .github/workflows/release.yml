@@ -70,9 +70,9 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Publish @chativa/connector-botiva
+      - name: Publish @chativa/connector-mekik
         run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-botiva
+        working-directory: packages/connector-mekik
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

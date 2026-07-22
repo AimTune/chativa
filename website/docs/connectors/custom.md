@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 10
 title: Custom
 description: Write your own connector — the IConnector contract, optional capability hooks, and the publishing checklist.
 ---
@@ -57,6 +57,7 @@ Each optional method automatically advertises a feature to the widget:
 | `onMessageStatus(cb)` | Sending / sent / read tick indicators. |
 | `sendFeedback(id, "like" \| "dislike")` | Like/dislike on bot messages. |
 | `sendSurvey(payload)` | End-of-conversation survey. |
+| `onToolCall(cb)` | Tool-call activity rows (upserted by `id`). |
 | `onGenUIChunk(cb)` | Streaming GenUI components. |
 | `receiveComponentEvent(streamId, name, payload)` | Echo GenUI events back to the bot. |
 | `listConversations` / `createConversation` / `switchConversation` / `closeConversation` / `onConversationUpdate` | Multi-conversation mode. |
@@ -106,6 +107,131 @@ export class MyConnector implements IConnector {
 }
 ```
 
+## Handling tool calls, GenUI and HITL
+
+If your backend speaks JSON, **don't hand-roll these rules** — reuse the parser the built-in connectors use. Tool-call traces, GenUI streams and human-in-the-loop chips are the same frames on every transport, so `parseChatFrame` classifies one decoded payload and you decide what to do with it. See [Rich frames](./frames.md) for the wire format itself.
+
+```ts
+import type {
+  IConnector,
+  IncomingMessage,
+  MessageHandler,
+  TypingHandler,
+  ToolCallHandler,
+  GenUIChunkHandler,
+} from "@chativa/core";
+import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
+
+export class MyConnector implements IConnector {
+  readonly name = "my-api";
+
+  private messageHandler: MessageHandler | null = null;
+  private typingHandler: TypingHandler | null = null;
+  private toolCallHandler: ToolCallHandler | null = null;
+  private genUIChunkHandler: GenUIChunkHandler | null = null;
+
+  /** Call this for every payload your transport delivers. */
+  private handlePayload(data: unknown): void {
+    if (this.routeFrame(data)) return;
+    this.messageHandler?.(data as IncomingMessage); // your own handling
+  }
+
+  /** Returns true when the frame was handled and is not a chat message. */
+  private routeFrame(data: unknown): boolean {
+    const frame = parseChatFrame(data, { idPrefix: this.name });
+    switch (frame.kind) {
+      case "tool_call":
+        this.toolCallHandler?.(frame.toolCall);
+        return true;
+      case "genui":
+        this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return true;
+      case "typing":
+        this.typingHandler?.(frame.isTyping);
+        return true;
+      case "quick_reply":
+        this.messageHandler?.(frame.message);
+        return true;
+      case "other":
+        return false; // not a rich frame — your connector decides
+    }
+  }
+
+  onTyping(cb: TypingHandler): void { this.typingHandler = cb; }
+  onToolCall(cb: ToolCallHandler): void { this.toolCallHandler = cb; }
+  onGenUIChunk(cb: GenUIChunkHandler): void { this.genUIChunkHandler = cb; }
+
+  /** The outbound half: a mounted component fired an event. */
+  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+    void fetch("/api/chat/genui-event", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(createGenUIEventFrame(streamId, eventType, payload)),
+    }).catch(() => {}); // fire-and-forget: a UI event must not block the chat
+  }
+}
+```
+
+That's the whole integration — the four `case` arms are all a connector adds. Anything the parser doesn't recognise comes back as `other`, so your existing message handling stays untouched.
+
+> **Import from `@chativa/core/frames`, not `@chativa/core`.** The subpath is a pure, dependency-free module. The package root pulls in the store, i18n and the Lit elements: importing `parseChatFrame` from there inflated a connector's standalone CDN bundle from **2.4 kB to 64 kB**. Type-only imports (`import type { ... } from "@chativa/core"`) stay on the root — those are erased at compile time and cost nothing.
+
+Two bits of plumbing that go with the value import:
+
+```ts
+// tsconfig.json — resolve the subpath from source
+{ "compilerOptions": { "paths": {
+  "@chativa/core":        ["../core/src/index.ts"],
+  "@chativa/core/frames": ["../core/src/frames.ts"]
+} } }
+```
+
+```ts
+// vite.config.ts — externalise every @chativa/core subpath, not just the root
+export default defineConfig({
+  build: { rollupOptions: { external: [/^@chativa\/core/] } },
+});
+```
+
+In `vitest.config.ts`, alias the subpath **before** the bare package name (array form, which preserves order) so tests exercise core's source instead of a stale `dist`:
+
+```ts
+resolve: {
+  alias: [
+    { find: "@chativa/core/frames", replacement: path.resolve(__dirname, "../core/src/frames.ts") },
+    { find: "@chativa/core",        replacement: path.resolve(__dirname, "../core/src/index.ts") },
+  ],
+},
+```
+
+### If your backend doesn't speak these frames
+
+Map your own wire format onto the same handlers — the parser is a convenience, not a requirement. The handlers are the actual contract:
+
+```ts
+// Your backend's shape → Chativa's tool-call lifecycle
+if (payload.event === "function_started") {
+  this.toolCallHandler?.({ id: payload.callId, name: payload.fn, status: "running", params: payload.args });
+}
+if (payload.event === "function_done") {
+  // Same id as "running" → the row is upserted in place, not appended.
+  this.toolCallHandler?.({ id: payload.callId, name: payload.fn, status: "completed", result: payload.output });
+}
+
+// Your backend's suggestions → native HITL chips
+if (payload.suggestions?.length) {
+  this.messageHandler?.({
+    id: payload.id,
+    type: "quick-reply",
+    data: {
+      text: payload.text,
+      actions: payload.suggestions.map((s) => ({ label: s.title, value: s.payload })),
+      keepActions: true, // leave the chips visible after the tap
+    },
+  });
+}
+```
+
 ## Use `setContext` to read/write Chativa state from the connector
 
 ```ts
@@ -134,11 +260,8 @@ export class MyConnector implements IConnector {
 2. `Options` interface exported alongside the class.
 3. Schema in `schemas/connectors/<name>.schema.json` matching the options 1:1.
 4. Tests in `src/__tests__/<Name>Connector.test.ts` (use the registry tests as templates).
-5. Doc page under `website/docs/connectors/<name>.md` (this folder).
-6. Row added to the capability matrix in [overview](./overview.md).
+5. Doc page under `docs/connectors/<name>.md` (this folder).
+6. Row added to the capability matrix in [overview.md](./overview.md).
+7. If it speaks JSON: route payloads through `parseChatFrame` rather than re-deriving the rules, importing it from `@chativa/core/frames`.
 
-See [AGENTS.md](https://github.com/AimTune/chativa/blob/main/AGENTS.md) for the full conventions.
-
-## Tip — use the scaffolder
-
-The `/new-connector` slash command in [`.claude/commands/new-connector.md`](https://github.com/AimTune/chativa/blob/main/.claude/commands/new-connector.md) creates the package directory, package.json, vite/vitest configs, source file, and tests in one go. The [`chativa-scaffolder`](https://github.com/AimTune/chativa/blob/main/.claude/agents/chativa-scaffolder.md) Claude subagent does the same for AI-driven workflows.
+See the [AGENTS.md](https://github.com/AimTune/chativa/blob/main/AGENTS.md) for the full conventions.

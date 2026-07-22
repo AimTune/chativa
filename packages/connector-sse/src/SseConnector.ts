@@ -6,8 +6,13 @@ import type {
   TypingHandler,
   HistoryResult,
   SurveyPayload,
+  ToolCallHandler,
+  GenUIChunkHandler,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
+// Value import — deliberately from the `frames` subpath, not the package root:
+// the root would inline all of core into this connector's standalone bundle.
+import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
 
 export interface SseConnectorOptions {
   /**
@@ -63,6 +68,8 @@ export class SseConnector implements IConnector {
   private connectHandler: ConnectHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
   private typingHandler: TypingHandler | null = null;
+  private toolCallHandler: ToolCallHandler | null = null;
+  private genUIChunkHandler: GenUIChunkHandler | null = null;
 
   constructor(options: SseConnectorOptions) {
     this.options = {
@@ -210,17 +217,36 @@ export class SseConnector implements IConnector {
     this.typingHandler = callback;
   }
 
+  onToolCall(callback: ToolCallHandler): void {
+    this.toolCallHandler = callback;
+  }
+
+  onGenUIChunk(callback: GenUIChunkHandler): void {
+    this.genUIChunkHandler = callback;
+  }
+
+  /**
+   * Forward a GenUI component event (form submit, card action, …) to the server
+   * by POSTing the `genui_event` frame to `sendUrl` — the outbound counterpart
+   * of the inbound `genui` frame, since an SSE stream is receive-only.
+   */
+  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+    // Fire-and-forget: a UI event must not block on the POST, and a failed send
+    // is not worth tearing the conversation down over.
+    void fetch(this.options.sendUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...this.options.headers },
+      body: JSON.stringify(createGenUIEventFrame(streamId, eventType, payload)),
+    }).catch(() => {});
+  }
+
   // ── Private helpers ─────────────────────────────────────────────────────────
 
   private _handleServerEvent(data: Record<string, unknown>): void {
-    const type = data.type as string | undefined;
+    // Rich frames first — tool calls, GenUI chunks, typing and HITL chips.
+    if (this._routeFrame(data)) return;
 
-    if (type === "typing") {
-      this.typingHandler?.((data.isTyping as boolean | undefined) ?? false);
-      return;
-    }
-
-    if (type === "connected") {
+    if (data.type === "connected") {
       this.connectHandler?.();
       return;
     }
@@ -228,6 +254,30 @@ export class SseConnector implements IConnector {
     // Default: treat as an IncomingMessage
     if (data.id && data.type) {
       this.messageHandler?.(data as unknown as Parameters<MessageHandler>[0]);
+    }
+  }
+
+  /**
+   * Route a rich frame (tool call, GenUI chunk, typing, HITL chips).
+   * Returns true when the frame was handled and is not a chat message.
+   */
+  private _routeFrame(data: unknown): boolean {
+    const frame = parseChatFrame(data, { idPrefix: "sse" });
+    switch (frame.kind) {
+      case "tool_call":
+        this.toolCallHandler?.(frame.toolCall);
+        return true;
+      case "genui":
+        this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return true;
+      case "typing":
+        this.typingHandler?.(frame.isTyping);
+        return true;
+      case "quick_reply":
+        this.messageHandler?.(frame.message);
+        return true;
+      case "other":
+        return false;
     }
   }
 }

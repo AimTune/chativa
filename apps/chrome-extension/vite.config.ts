@@ -28,6 +28,9 @@ export default defineConfig({
   plugins: [copyManifestPlugin()],
   resolve: {
     alias: {
+      // More-specific subpath must precede the bare "@chativa/core" entry, or
+      // the string alias rewrites "@chativa/core/frames" to ".../index.ts/frames".
+      "@chativa/core/frames": resolve(__dirname, "../../packages/core/src/frames.ts"),
       "@chativa/core": resolve(__dirname, "../../packages/core/src/index.ts"),
       "@chativa/ui": resolve(__dirname, "../../packages/ui/src/index.ts"),
       "@chativa/genui": resolve(__dirname, "../../packages/genui/src/index.ts"),

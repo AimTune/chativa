@@ -42,6 +42,7 @@ Each connector's constructor `Options` interface:
 | [connectors/directline.schema.json](./connectors/directline.schema.json) | `connector-directline/src/DirectLineConnector.ts` → `DirectLineConnectorOptions` |
 | [connectors/sse.schema.json](./connectors/sse.schema.json) | `connector-sse/src/SseConnector.ts` → `SseConnectorOptions` |
 | [connectors/http.schema.json](./connectors/http.schema.json) | `connector-http/src/HttpConnector.ts` → `HttpConnectorOptions` |
+| [connectors/mekik.schema.json](./connectors/mekik.schema.json) | `connector-mekik/src/index.ts` → `MekikConnectorOptions` |
 
 ## How to use a schema in your editor
 

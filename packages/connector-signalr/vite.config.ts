@@ -10,7 +10,7 @@ export default defineConfig({
       fileName: (fmt) => `index.${fmt === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
-      external: ["@chativa/core", "@microsoft/signalr"],
+      external: [/^@chativa\/core/, "@microsoft/signalr"],
     },
     sourcemap: true,
   },

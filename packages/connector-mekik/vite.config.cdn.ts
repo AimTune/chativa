@@ -6,8 +6,8 @@ export default defineConfig({
     lib: {
       entry: resolve(__dirname, "src/index.ts"),
       formats: ["iife"],
-      name: "ChativaBotiva",
-      fileName: () => "chativa-botiva.global.js",
+      name: "ChativaMekik",
+      fileName: () => "chativa-mekik.global.js",
     },
     outDir: "dist",
     emptyOutDir: false,

@@ -9,9 +9,10 @@
   "properties": {
     "url":                { "type": "string", "format": "uri", "description": "SignalR hub URL.", "examples": ["https://my-server.example.com/chathub"] },
     "hubName":            { "type": "string", "default": "chat", "description": "Logical hub name — informational, not sent on the wire." },
-    "receiveMethod":      { "type": "string", "default": "ReceiveMessage", "description": "Hub method name the server invokes when delivering a message." },
+    "receiveMethod":      { "type": "string", "default": "ReceiveMessage", "description": "Hub method name the server invokes when delivering a message or a rich frame (tool_call, genui, typing, HITL chips)." },
     "sendMethod":         { "type": "string", "default": "SendMessage",    "description": "Hub method invoked by sendMessage()." },
     "surveyMethod":       { "type": "string", "default": "SendSurvey",     "description": "Hub method invoked by sendSurvey()." },
+    "genUIEventMethod":   { "type": "string", "default": "SendGenUIEvent", "description": "Hub method invoked to send a GenUI component event back to the server, with the genui_event frame." },
     "accessTokenFactory": { "description": "Function returning a bearer token (or Promise of one). Cannot be serialised — set programmatically.", "type": ["null", "object"] }
   }
 }
