@@ -76,6 +76,24 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Publish @chativa/connector-http
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-http
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @chativa/connector-sse
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-sse
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish @chativa/genui
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/genui
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish @chativa/ui
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/ui

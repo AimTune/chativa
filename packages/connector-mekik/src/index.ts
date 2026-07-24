@@ -53,6 +53,23 @@ export interface MekikConnectorOptions {
   reconnect?: boolean;
   reconnectDelay?: number;
   maxReconnectAttempts?: number;
+  /**
+   * Reconnect pacing. `"fixed"` (default) waits `reconnectDelay` every time —
+   * unchanged legacy behaviour. `"exponential"` grows the wait geometrically up
+   * to `reconnectMaxDelay` and applies full jitter, so a whole fleet reconnecting
+   * after a node dies doesn't thunder back in lockstep (docs/SCALING.md).
+   */
+  reconnectBackoff?: "fixed" | "exponential";
+  /** Ceiling for `"exponential"` backoff, in ms. Default 30000. */
+  reconnectMaxDelay?: number;
+  /**
+   * Put `conversationId` (and `userId`) in the connect URL query string, so a
+   * sticky-by-conversation load balancer can route the WebSocket upgrade to the
+   * owning node — the `hello` frame carries them too, but only arrives after the
+   * handshake, too late for L7 routing. Off by default (they stay out of URLs /
+   * server logs); turn on only when running a mekik fleet with affinity routing.
+   */
+  routeInUrl?: boolean;
   /** Queue outgoing messages while the socket is down and flush on (re)connect. */
   queueOfflineMessages?: boolean;
   /** Stable user identity. Omit to let the server mint one (announced via `welcome`). */
@@ -166,6 +183,8 @@ export class MekikConnector implements IConnector {
   private closedByUser = false;
   private queue: Array<{ payload: string; resolve: () => void }> = [];
   private watermark = 0;
+  /** The app-configured userId (not a server-minted one) — scopes the storage key. */
+  private readonly configuredUserId?: string;
   /**
    * Interrupts the server is parked on (mekik/2 §4). Keyed by the thread-scoped
    * interrupt `id`, which is how the answer must be routed back in a `resume`
@@ -193,10 +212,16 @@ export class MekikConnector implements IConnector {
       reconnect: true,
       reconnectDelay: 2000,
       maxReconnectAttempts: 5,
+      reconnectBackoff: "fixed",
+      reconnectMaxDelay: 30000,
+      routeInUrl: false,
       queueOfflineMessages: true,
       resumeConversation: false,
       ...options,
     };
+    // Captured before `welcome` can adopt a server-minted id: only an
+    // app-configured userId scopes the storage key (see storageKey()).
+    this.configuredUserId = options.userId;
     // `token` is the legacy spelling of the same idea: hello-frame transport,
     // and no retry — re-sending a rejected credential the app never refreshed
     // would just be refused again, which is what it did before `auth` existed.
@@ -304,7 +329,7 @@ export class MekikConnector implements IConnector {
             this.reconnectTimer = null;
             if (this.closedByUser) return;
             this.connect().catch(() => {});
-          }, this.options.reconnectDelay);
+          }, this.nextReconnectDelay());
         }
       };
     });
@@ -626,12 +651,31 @@ export class MekikConnector implements IConnector {
    * the value handed to the provider.
    */
   private buildUrl(query?: Record<string, string>): string {
-    if (!query || Object.keys(query).length === 0) return this.options.url;
+    // Routing keys for a sticky-by-conversation load balancer (opt-in), because
+    // the hello frame that also carries them arrives only after the upgrade. A
+    // query credential wins over these on any key clash.
+    const routing: Record<string, string> = {};
+    if (this.options.routeInUrl) {
+      if (this.options.conversationId) routing.conversationId = this.options.conversationId;
+      if (this.options.userId) routing.userId = this.options.userId;
+    }
+    const merged = { ...routing, ...query };
+    if (Object.keys(merged).length === 0) return this.options.url;
     const url = new URL(this.options.url);
-    for (const [key, value] of Object.entries(query)) {
+    for (const [key, value] of Object.entries(merged)) {
       url.searchParams.set(key, value);
     }
     return url.toString();
+  }
+
+  /** Next reconnect wait — fixed `reconnectDelay`, or jittered exponential when configured. */
+  private nextReconnectDelay(): number {
+    const base = this.options.reconnectDelay;
+    if (this.options.reconnectBackoff !== "exponential") return base;
+    // reconnectAttempts was already incremented for this scheduling, so the first
+    // retry uses `base`. Full jitter over [raw/2, raw] de-correlates a fleet storm.
+    const raw = Math.min(base * 2 ** (this.reconnectAttempts - 1), this.options.reconnectMaxDelay);
+    return raw / 2 + Math.random() * (raw / 2);
   }
 
   /**
@@ -683,7 +727,12 @@ export class MekikConnector implements IConnector {
   }
 
   private storageKey(): string {
-    return `chativa:mekik:${this.options.url}`;
+    // Scope by the app-configured userId so two known users sharing an origin
+    // don't collide on one stored session. A server-minted (anonymous) id is not
+    // used — it isn't known at load time and would strand the session across
+    // reloads; anonymous means one user per browser anyway.
+    const suffix = this.configuredUserId ? `:${this.configuredUserId}` : "";
+    return `chativa:mekik:${this.options.url}${suffix}`;
   }
 
   private loadSession(): PersistedSession | null {
