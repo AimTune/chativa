@@ -35,7 +35,7 @@ Schema: [`schemas/connectors/dummy.schema.json`](https://github.com/AimTune/chat
 | Method | Purpose |
 |---|---|
 | `injectMessage(msg)` | Push a bot message directly into the UI without going through the extension pipeline. |
-| `triggerGenUI(name)` | Fire one of the demo streams: `weather`, `form`, `alert`, `quick-replies`, `list`, `table`, `rating`, `progress`, `date-picker`, `chart`, `steps`, `image-gallery`, `typewriter`. |
+| `triggerGenUI(name)` | Fire one of the demo streams: `weather`, `form`, `alert`, `quick-replies`, `list`, `table`, `rating`, `progress`, `date-picker`, `chart`, `steps`, `image-gallery`. |
 
 ## Built-in slash commands recognised by the connector
 

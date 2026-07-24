@@ -129,7 +129,6 @@ type AIChunk =
 | `genui-chart` | `GenUIChart` | Bar/line/pie chart — SVG, zero deps |
 | `genui-steps` | `GenUISteps` | Step-by-step progress indicator |
 | `genui-image-gallery` | `GenUIImageGallery` | Image grid with lightbox |
-| `genui-typewriter` | `GenUITypewriter` | Character-by-character typewriter animation |
 
 Component events route back to connector via `ChatEngine.receiveComponentEvent()`.
 
@@ -413,7 +412,7 @@ Browser extension (`apps/chrome-extension/`) — Manifest V3, publishes to Chrom
 
 | ID | Feature | Description |
 |---|---|---|
-| **R12** | **`connector-openai`** | OpenAI Responses API / SSE streaming; streams tokens as `genui-typewriter` chunks. |
+| **R12** | **`connector-openai`** | OpenAI Responses API / SSE streaming; streams tokens as genui text chunks (one growing bubble via the default message component). |
 | **R13** | **`connector-langchain`** | LangChain agent streaming via LangServe SSE endpoint. |
 | **R14** | **`connector-firebase`** | Firestore real-time listener for messages; Firebase Storage for file upload. |
 | **R15** | **`connector-mqtt`** | MQTT.js broker connector for IoT/edge chat scenarios. |

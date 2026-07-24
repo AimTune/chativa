@@ -1,7 +1,7 @@
 import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
 import type { ToolCall } from "../domain/entities/ToolCall";
-import type { AIChunk, GenUIStreamState } from "../domain/entities/GenUI";
+import type { AIChunk, AIChunkText, GenUIStreamState } from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
@@ -14,10 +14,22 @@ export class ChatEngine {
   private connector: IConnector;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _destroyed = false;
-  /** Maps GenUI streamId → messageStore message id. */
-  private _genUIStreams = new Map<string, string>();
+  /** Maps GenUI streamId → messageStore message id (the ui/event message). */
+  private readonly _genUIStreams = new Map<string, string>();
   /** Reverse map: messageStore message id → streamId. Used to route component events. */
-  private _msgToStream = new Map<string, string>();
+  private readonly _msgToStream = new Map<string, string>();
+  /**
+   * streamId → the open text-run bubble. Text deltas that share the run's chunk
+   * `id` concatenate into it (one growing `default-text-message`); a new id opens a
+   * fresh bubble. This is what renders token streaming as a normal message rather
+   * than one bubble per token.
+   */
+  private readonly _textRuns = new Map<string, { msgId: string; runId: string | number }>();
+  /**
+   * streamId → the first message the stream created (text bubble or genui message).
+   * The run's tool-call trace attaches here, wherever the stream started.
+   */
+  private readonly _streamHosts = new Map<string, string>();
 
   constructor(connector: IConnector) {
     this.connector = connector;
@@ -250,82 +262,140 @@ export class ChatEngine {
   }
 
   private _handleGenUIChunk(streamId: string, chunk: AIChunk, done: boolean): void {
-    const Component = MessageTypeRegistry.resolve("genui");
-    let msgId = this._genUIStreams.get(streamId);
+    const firstChunk = !this._streamHosts.has(streamId);
 
-    if (!msgId) {
-      // First chunk for this stream — create the message in the store
-      msgId = `genui-${streamId}-${Date.now()}`;
+    // Text deltas render as a normal, growing bot bubble (default-text-message);
+    // ui/event chunks drive the GenUI message. A mekik text run shares one chunk
+    // id (PROTOCOL.md §4.1), so same-id deltas concatenate into one bubble and a
+    // new id opens a fresh one — token streaming reads as a message, not as one
+    // bubble per token.
+    if (chunk.type === "text") {
+      this._appendStreamedText(streamId, chunk);
+    } else {
+      this._appendGenUIComponent(streamId, chunk);
+    }
+
+    if (firstChunk) {
+      EventBus.emit("genui_stream_started", { streamId });
+      if (!chatStore.getState().isOpened) {
+        chatStore.getState().incrementUnread();
+      }
+    }
+
+    if (done) this._finishStream(streamId);
+  }
+
+  /** Grow the stream's open text bubble, or open a fresh one for a new text run. */
+  private _appendStreamedText(streamId: string, chunk: AIChunkText): void {
+    const run = this._textRuns.get(streamId);
+    if (run && run.runId === chunk.id) {
+      const current = messageStore.getState().messages.find((m) => m.id === run.msgId);
+      const prev = (current?.data?.text as string | undefined) ?? "";
+      messageStore.getState().updateById(run.msgId, {
+        data: { ...current?.data, text: prev + chunk.content, streaming: true },
+      });
+      return;
+    }
+    // A new run id → a fresh bot text bubble the default component renders.
+    const msgId = `mekik-text-${streamId}-${chunk.id}`;
+    messageStore.getState().addMessage({
+      id: msgId,
+      type: "text",
+      from: "bot",
+      data: { text: chunk.content, streaming: true },
+      timestamp: Date.now(),
+      component: MessageTypeRegistry.resolve("text"),
+    });
+    this._textRuns.set(streamId, { msgId, runId: chunk.id });
+    this._rememberHost(streamId, msgId);
+  }
+
+  /** Append a ui/event chunk to the stream's GenUI message, creating it on first use. */
+  private _appendGenUIComponent(streamId: string, chunk: AIChunk): void {
+    const existing = this._genUIStreams.get(streamId);
+    if (!existing) {
+      const msgId = `genui-${streamId}-${Date.now()}`;
       this._genUIStreams.set(streamId, msgId);
       this._msgToStream.set(msgId, streamId);
-      const data: GenUIStreamState = { chunks: [chunk], streamingComplete: done };
-      const record = data as unknown as Record<string, unknown>;
-      // A GenUI reply can follow tool calls just like a text reply — attach
-      // the collected trace to the stream's message and reset the buffer.
-      const toolCalls = chatStore.getState().activeToolCalls;
-      if (toolCalls.length > 0) {
-        record.toolCalls = [...toolCalls];
-        chatStore.getState().clearToolCalls();
-      }
+      const data: GenUIStreamState = { chunks: [chunk], streamingComplete: false };
       messageStore.getState().addMessage({
         id: msgId,
         type: "genui",
         from: "bot",
-        data: record,
+        data: data as unknown as Record<string, unknown>,
         timestamp: Date.now(),
-        component: Component,
+        component: MessageTypeRegistry.resolve("genui"),
       });
-      if (!chatStore.getState().isOpened) {
-        chatStore.getState().incrementUnread();
-      }
-      EventBus.emit("genui_stream_started", { streamId });
-    } else {
-      // Subsequent chunk — append to existing message
-      const current = messageStore.getState().messages.find((m) => m.id === msgId);
-      const prevState = (current?.data ?? { chunks: [], streamingComplete: false }) as unknown as GenUIStreamState;
-      const updated: GenUIStreamState = {
-        chunks: chunk.type === "event" ? prevState.chunks : [...prevState.chunks, chunk],
-        streamingComplete: done,
-      };
-      // Always deliver event chunks even if we skip storing them — the
-      // GenUIMessage component reads them via a separate event-chunk array.
-      // Store event chunks too so the component can replay them on re-render.
-      if (chunk.type === "event") {
-        updated.chunks = [...prevState.chunks, chunk];
-      }
-      // Spread the previous data first so extra fields attached at creation
-      // time (e.g. toolCalls) survive chunk updates.
-      messageStore.getState().updateById(msgId, {
-        data: { ...current?.data, ...(updated as unknown as Record<string, unknown>) },
-      });
+      this._rememberHost(streamId, msgId);
+      return;
+    }
+    // Subsequent ui/event chunk — append to the existing GenUI message.
+    const current = messageStore.getState().messages.find((m) => m.id === existing);
+    const prevState = (current?.data ?? { chunks: [], streamingComplete: false }) as unknown as GenUIStreamState;
+    messageStore.getState().updateById(existing, {
+      data: { ...current?.data, chunks: [...prevState.chunks, chunk], streamingComplete: false },
+    });
+  }
+
+  /** Close every message the stream opened and drain its tool-call trace. */
+  private _finishStream(streamId: string): void {
+    const run = this._textRuns.get(streamId);
+    if (run) {
+      const current = messageStore.getState().messages.find((m) => m.id === run.msgId);
+      messageStore.getState().updateById(run.msgId, { data: { ...current?.data, streaming: false } });
+      this._textRuns.delete(streamId);
     }
 
-    if (done) {
-      // Drain calls that started after the first chunk — without this they
-      // would sit in the live buffer after the run ends (stuck activity
-      // strip) and attach to the next unrelated turn's reply.
-      const remaining = chatStore.getState().activeToolCalls;
-      if (remaining.length > 0) {
-        const current = messageStore.getState().messages.find((m) => m.id === msgId);
-        const trace = Array.isArray(current?.data?.toolCalls)
-          ? (current!.data!.toolCalls as ToolCall[])
-          : [];
-        const merged = [
-          ...trace.map((tc) => {
-            const update = remaining.find((r) => r.id === tc.id);
-            return update ? { ...tc, ...update } : tc;
-          }),
-          ...remaining.filter((r) => !trace.some((tc) => tc.id === r.id)),
-        ];
-        messageStore.getState().updateById(msgId, {
-          data: { ...current?.data, toolCalls: merged },
-        });
-        chatStore.getState().clearToolCalls();
-      }
-      EventBus.emit("genui_stream_completed", { streamId });
-      this._genUIStreams.delete(streamId);
-      this._msgToStream.delete(msgId);
+    const genUIMsgId = this._genUIStreams.get(streamId);
+    if (genUIMsgId) {
+      const current = messageStore.getState().messages.find((m) => m.id === genUIMsgId);
+      messageStore.getState().updateById(genUIMsgId, { data: { ...current?.data, streamingComplete: true } });
     }
+
+    // Drain calls that settled after the host was created — otherwise they sit in
+    // the live buffer after the run ends (stuck activity strip) and attach to the
+    // next unrelated turn's reply.
+    const host = this._streamHosts.get(streamId);
+    if (host) this._drainToolCalls(host);
+
+    this._genUIStreams.delete(streamId);
+    if (genUIMsgId) this._msgToStream.delete(genUIMsgId);
+    this._streamHosts.delete(streamId);
+    EventBus.emit("genui_stream_completed", { streamId });
+  }
+
+  /**
+   * Record the stream's first message as its trace host and attach whatever
+   * tool-call trace has been collected for this reply, resetting the buffer. A
+   * connector that already put `toolCalls` on the message wins.
+   */
+  private _rememberHost(streamId: string, msgId: string): void {
+    if (this._streamHosts.has(streamId)) return;
+    this._streamHosts.set(streamId, msgId);
+    const toolCalls = chatStore.getState().activeToolCalls;
+    if (toolCalls.length === 0) return;
+    const current = messageStore.getState().messages.find((m) => m.id === msgId);
+    if (current?.data?.toolCalls !== undefined) return;
+    messageStore.getState().updateById(msgId, { data: { ...current?.data, toolCalls: [...toolCalls] } });
+    chatStore.getState().clearToolCalls();
+  }
+
+  /** Merge any still-buffered tool calls into a message's attached trace. */
+  private _drainToolCalls(msgId: string): void {
+    const remaining = chatStore.getState().activeToolCalls;
+    if (remaining.length === 0) return;
+    const current = messageStore.getState().messages.find((m) => m.id === msgId);
+    const existingTrace = current?.data?.toolCalls;
+    const trace = Array.isArray(existingTrace) ? (existingTrace as ToolCall[]) : [];
+    const merged = [
+      ...trace.map((tc) => {
+        const update = remaining.find((r) => r.id === tc.id);
+        return update ? { ...tc, ...update } : tc;
+      }),
+      ...remaining.filter((r) => !trace.some((tc) => tc.id === r.id)),
+    ];
+    messageStore.getState().updateById(msgId, { data: { ...current?.data, toolCalls: merged } });
+    chatStore.getState().clearToolCalls();
   }
 
   /**

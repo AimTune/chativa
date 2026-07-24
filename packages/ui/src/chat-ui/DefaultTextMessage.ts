@@ -137,6 +137,23 @@ export class DefaultTextMessage extends LitElement {
       border-radius: 16px 4px 16px 16px;
     }
 
+    /* Streaming caret — shown while a bot bubble is still being streamed
+       (data.streaming), so token-by-token output reads as a live message. */
+    .stream-caret {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      margin-left: 1px;
+      vertical-align: text-bottom;
+      background: currentColor;
+      opacity: 0.7;
+      animation: chativa-caret-blink 1s steps(1) infinite;
+    }
+
+    @keyframes chativa-caret-blink {
+      50% { opacity: 0; }
+    }
+
     .meta {
       display: flex;
       align-items: center;
@@ -404,7 +421,9 @@ export class DefaultTextMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
-          <div class="bubble">${bubbleContent}</div>
+          <div class="bubble">${bubbleContent}${!isUser && Boolean(this.messageData?.streaming)
+            ? html`<span class="stream-caret" aria-hidden="true"></span>`
+            : nothing}</div>
           ${this._renderLinkPreviews()}
           ${!isUser ? html`
             <div class="feedback ${this._effectiveFeedback ? "active" : ""}">

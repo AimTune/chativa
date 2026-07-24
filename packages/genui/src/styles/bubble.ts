@@ -4,8 +4,8 @@ import { css } from "lit";
  * Shared chat-bubble look for text content inside GenUI streams.
  *
  * Apply the `chativa-bubble` class to the element that holds the text.
- * Used by the built-in text chunk renderer, `<genui-text-block>` and
- * `<genui-typewriter>`; custom components can opt in the same way:
+ * Used by the built-in text chunk renderer and `<genui-text-block>`; custom
+ * components can opt in the same way:
  *
  * ```ts
  * import { bubbleStyles } from "@chativa/genui";

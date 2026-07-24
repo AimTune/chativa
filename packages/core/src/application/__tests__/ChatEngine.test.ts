@@ -538,11 +538,24 @@ describe("ChatEngine", () => {
 
   // ── GenUI streaming ────────────────────────────────────────────────
 
-  it("creates a genui message on first GenUI chunk", async () => {
+  it("renders a streamed text chunk as a growing bot text message", async () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);
     await engine.init();
     connector.simulateGenUIChunk("stream1", { type: "text", content: "Hello", id: 1 }, false);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].type).toBe("text");
+    expect(msgs[0].from).toBe("bot");
+    expect(msgs[0].data.text).toBe("Hello");
+    expect(msgs[0].data.streaming).toBe(true);
+  });
+
+  it("creates a genui message on first ui chunk", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("stream1", { type: "ui", component: "card", props: {}, id: 1 }, false);
     const msgs = messageStore.getState().messages;
     expect(msgs).toHaveLength(1);
     expect(msgs[0].type).toBe("genui");
@@ -558,17 +571,40 @@ describe("ChatEngine", () => {
     expect(handler).toHaveBeenCalledWith({ streamId: "s1" });
   });
 
-  it("appends to existing genui message on subsequent chunks", async () => {
+  it("concatenates same-id text deltas into one growing bubble", async () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);
     await engine.init();
-    connector.simulateGenUIChunk("s2", { type: "text", content: "A", id: 1 }, false);
-    connector.simulateGenUIChunk("s2", { type: "text", content: "B", id: 2 }, false);
+    connector.simulateGenUIChunk("s2", { type: "text", content: "Hel", id: 1 }, false);
+    connector.simulateGenUIChunk("s2", { type: "text", content: "lo", id: 1 }, false);
     const msgs = messageStore.getState().messages;
     expect(msgs).toHaveLength(1);
-    const data = msgs[0].data as { chunks: Array<{ content: string }> };
+    expect(msgs[0].type).toBe("text");
+    expect(msgs[0].data.text).toBe("Hello");
+  });
+
+  it("opens a fresh text bubble when the text-run id changes", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s2b", { type: "text", content: "A", id: 1 }, false);
+    connector.simulateGenUIChunk("s2b", { type: "text", content: "B", id: 2 }, false);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(2);
+    expect(msgs.map((m) => m.data.text)).toEqual(["A", "B"]);
+  });
+
+  it("appends ui/event chunks into one genui message", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s2c", { type: "ui", component: "card", props: {}, id: 1 }, false);
+    connector.simulateGenUIChunk("s2c", { type: "ui", component: "card2", props: {}, id: 2 }, false);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(1);
+    const data = msgs[0].data as { chunks: Array<{ component: string }> };
     expect(data.chunks).toHaveLength(2);
-    expect(data.chunks[1].content).toBe("B");
+    expect(data.chunks[1].component).toBe("card2");
   });
 
   it("emits genui_stream_completed on done=true", async () => {
@@ -599,11 +635,11 @@ describe("ChatEngine", () => {
     expect(chatStore.getState().unreadCount).toBe(0);
   });
 
-  it("event-type chunk is stored alongside text chunks", async () => {
+  it("stores ui and event chunks together in one genui message", async () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);
     await engine.init();
-    connector.simulateGenUIChunk("s-ev", { type: "text", content: "A", id: 1 }, false);
+    connector.simulateGenUIChunk("s-ev", { type: "ui", component: "card", props: {}, id: 1 }, false);
     connector.simulateGenUIChunk("s-ev", { type: "event", name: "form_submit", payload: {}, id: 2 }, false);
     const data = messageStore.getState().messages[0].data as { chunks: AIChunk[] };
     expect(data.chunks).toHaveLength(2);
@@ -616,7 +652,7 @@ describe("ChatEngine", () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);
     await engine.init();
-    connector.simulateGenUIChunk("stream-ce", { type: "text", content: "x", id: 1 }, false);
+    connector.simulateGenUIChunk("stream-ce", { type: "ui", component: "card", props: {}, id: 1 }, false);
     const msgId = messageStore.getState().messages[0].id;
     engine.receiveComponentEvent(msgId, "click", { value: 42 });
     expect(connector.receiveComponentEvent).toHaveBeenCalledWith("stream-ce", "click", { value: 42 });
@@ -693,7 +729,7 @@ describe("ChatEngine", () => {
     expect(chatStore.getState().activeToolCalls).toEqual([]);
   });
 
-  it("attaches the trace to a GenUI stream message and keeps it across chunks", async () => {
+  it("attaches the trace to the stream's first message and keeps it across chunks", async () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);
     await engine.init();
@@ -705,11 +741,11 @@ describe("ChatEngine", () => {
     expect((data.toolCalls as unknown[])).toHaveLength(1);
     expect(chatStore.getState().activeToolCalls).toEqual([]);
 
-    // Subsequent chunks must not wipe the attached trace
-    connector.simulateGenUIChunk("s-tools", { type: "ui", component: "weather", props: {}, id: 2 }, true);
+    // A same-run delta grows the bubble without wiping the attached trace.
+    connector.simulateGenUIChunk("s-tools", { type: "text", content: " sunny", id: 1 }, false);
     data = messageStore.getState().messages[0].data as Record<string, unknown>;
     expect((data.toolCalls as unknown[])).toHaveLength(1);
-    expect((data.chunks as unknown[])).toHaveLength(2);
+    expect(data.text).toBe("Weather: sunny");
   });
 
   it("patches a trace already attached to a message when the call settles late", async () => {

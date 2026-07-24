@@ -1,6 +1,6 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { sectionStyles, injectMessage } from "../sandboxShared";
+import { sectionStyles, injectMessage, triggerGenUI } from "../sandboxShared";
 
 const DEMO_MESSAGES: Array<{ label: string; msg: Record<string, unknown> }> = [
   {
@@ -94,6 +94,11 @@ const TOOL_DEMOS: Array<{ label: string; scenario: string }> = [
   { label: "🔧 Tools → Weather", scenario: "genui" },
 ];
 
+/** Connector-driven streaming demos — token-by-token text chunks that grow one bubble. */
+const STREAM_DEMOS: Array<{ label: string; command: string }> = [
+  { label: "✍️ Streaming Text", command: "text-stream" },
+];
+
 function triggerToolDemo(scenario: string): void {
   const fn = (window as unknown as Record<string, unknown>).chativaToolDemo;
   if (typeof fn === "function") fn(scenario);
@@ -121,6 +126,9 @@ export class MessagesSection extends LitElement {
             `)}
             ${TOOL_DEMOS.map(({ label, scenario }) => html`
               <button class="msg-btn" type="button" @click=${() => triggerToolDemo(scenario)}>${label}</button>
+            `)}
+            ${STREAM_DEMOS.map(({ label, command }) => html`
+              <button class="msg-btn" type="button" @click=${() => triggerGenUI(command)}>${label}</button>
             `)}
           </div>
         </div>

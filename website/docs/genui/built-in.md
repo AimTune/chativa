@@ -23,7 +23,6 @@ Auto-registered by importing `@chativa/genui`.
 | `genui-chart` | Bar / line / pie chart | `type: "bar" \| "line" \| "pie", title?, labels?, datasets` | — |
 | `genui-steps` | Vertical step list | `steps: { label, status, description? }[]` | — |
 | `genui-image-gallery` | Grid of images | `columns?, images: { src, alt?, caption? }[]` | — |
-| `genui-typewriter` | Animated typewriter text | `content, speed?, cursor?` | — |
 | `genui-appointment-form` | Specialised appointment form | `fields[]` | `form_submit` |
 
 ## Visual reference
@@ -41,7 +40,6 @@ Auto-registered by importing `@chativa/genui`.
 | `genui-progress` | ![genui-progress](/img/screenshots/genui/progress.png) |
 | `genui-steps` | ![genui-steps](/img/screenshots/genui/steps.png) |
 | `genui-image-gallery` | ![genui-image-gallery](/img/screenshots/genui/image-gallery.png) |
-| `genui-typewriter` | ![genui-typewriter](/img/screenshots/genui/typewriter.png) |
 | `genui-date-picker` | ![genui-date-picker](/img/screenshots/genui/date-picker.png) |
 
 > _Screenshots are pending capture from the [sandbox](../sandbox.md)._

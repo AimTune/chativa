@@ -794,31 +794,37 @@ export class DummyConnector implements IConnector {
     });
   }
 
-  private _streamTypewriterDemo(streamId: string): void {
+  /**
+   * Token-by-token text streaming demo. Every chunk shares the same `id`, so
+   * ChatEngine concatenates the deltas into one growing bot bubble (with a
+   * blinking caret) rather than one bubble per token — this is what replaced
+   * the old `<genui-typewriter>` component. The final chunk sets `done: true`,
+   * which clears the caret and marks the message settled.
+   */
+  private _streamTextDemo(streamId: string): void {
     const handler = this.genUIChunkHandler;
     if (!handler) return;
 
-    const chunks: Array<{ chunk: AIChunk; wait: number; done: boolean }> = [
-      {
-        chunk: {
-          type: "ui",
-          component: "genui-typewriter",
-          props: {
-            content: "Welcome to Chativa! I'm your AI assistant, ready to help you with orders, support requests, and anything else you need. Type a message to get started.",
-            speed: 25,
-            cursor: true,
-          },
-          id: 1,
-        },
-        wait: 200,
-        done: true,
-      },
-    ];
+    const fullText =
+      "Sure! Let me explain how **streaming** works in Chativa.\n\n" +
+      "Each token arrives as its own `text` chunk sharing the same `id`, so the " +
+      "engine appends it to the *same* growing bubble. A blinking caret shows " +
+      "while the reply is still in flight and disappears once the stream is " +
+      "marked done — no special component required. ✨";
 
-    let accumulated = 0;
-    chunks.forEach(({ chunk, wait, done }) => {
-      accumulated += wait;
-      setTimeout(() => handler(streamId, chunk, done), accumulated);
+    // Split into word-sized tokens, keeping the trailing whitespace so the
+    // reassembled text reads naturally as it grows.
+    const tokens = fullText.match(/\S+\s*/g) ?? [fullText];
+
+    let accumulated = 200;
+    tokens.forEach((token, i) => {
+      const isLast = i === tokens.length - 1;
+      // A little jitter makes the cadence feel like a real model, not a metronome.
+      accumulated += 30 + Math.floor(Math.random() * 45);
+      setTimeout(
+        () => handler(streamId, { type: "text", content: token, id: 1 }, isLast),
+        accumulated,
+      );
     });
   }
 
@@ -841,7 +847,7 @@ export class DummyConnector implements IConnector {
       case "chart":         this._streamChartDemo(streamId); break;
       case "steps":         this._streamStepsDemo(streamId); break;
       case "image-gallery": this._streamImageGalleryDemo(streamId); break;
-      case "typewriter":    this._streamTypewriterDemo(streamId); break;
+      case "text-stream":   this._streamTextDemo(streamId); break;
       default:              this._streamGenUIDemo(streamId); break;
     }
   }

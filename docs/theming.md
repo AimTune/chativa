@@ -33,9 +33,7 @@ chat-iva {
 }
 ```
 
-Unset, it falls back to the system font stack. Individual components can be
-overridden with their own variable where offered — e.g.
-`--chativa-typewriter-font` for `<genui-typewriter>`.
+Unset, it falls back to the system font stack.
 
 Custom GenUI components inherit the widget font automatically as long as
 they don't set `font-family` themselves (or set it to `inherit`). To render

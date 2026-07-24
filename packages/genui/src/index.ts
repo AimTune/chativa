@@ -34,7 +34,6 @@ export { GenUISteps } from "./components/GenUISteps";
 export type { GenUIStep } from "./components/GenUISteps";
 export { GenUIImageGallery } from "./components/GenUIImageGallery";
 export type { GenUIImage } from "./components/GenUIImageGallery";
-export { GenUITypewriter } from "./components/GenUITypewriter";
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 export { streamFromFetch } from "./utils/streamFromFetch";
@@ -70,7 +69,6 @@ import { GenUIDatePicker } from "./components/GenUIDatePicker";
 import { GenUIChart } from "./components/GenUIChart";
 import { GenUISteps } from "./components/GenUISteps";
 import { GenUIImageGallery } from "./components/GenUIImageGallery";
-import { GenUITypewriter } from "./components/GenUITypewriter";
 
 GenUIRegistry.register("genui-text",          GenUITextBlock as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-card",          GenUICard as unknown as typeof HTMLElement);
@@ -85,4 +83,3 @@ GenUIRegistry.register("genui-date-picker",   GenUIDatePicker as unknown as type
 GenUIRegistry.register("genui-chart",         GenUIChart as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-steps",         GenUISteps as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-image-gallery", GenUIImageGallery as unknown as typeof HTMLElement);
-GenUIRegistry.register("genui-typewriter",    GenUITypewriter as unknown as typeof HTMLElement);

@@ -60,7 +60,6 @@ One file per built-in component, used in [docs/genui/built-in.md](../../genui/bu
 | `progress.png` | `genui-progress` |
 | `steps.png` | `genui-steps` |
 | `image-gallery.png` | `genui-image-gallery` |
-| `typewriter.png` | `genui-typewriter` |
 | `date-picker.png` | `genui-date-picker` |
 
 ## Chrome extension

@@ -15,7 +15,6 @@ const GENUI_DEMOS: Array<{ label: string; command: string }> = [
   { label: "📊 Chart",        command: "chart"         },
   { label: "🪜 Steps",        command: "steps"         },
   { label: "🖼️ Gallery",      command: "image-gallery" },
-  { label: "✍️ Typewriter",   command: "typewriter"    },
   { label: "✨ GenUI Demo",   command: "genui"         },
 ];
 
