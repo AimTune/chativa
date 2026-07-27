@@ -1,6 +1,6 @@
 {
   "name": "@chativa/rn-webview",
-  "version": "0.0.1",
+  "version": "0.9.0",
   "description": "Chativa RN WebView — embeds the Chativa web chat widget in a react-native-webview, bridged to native props/callbacks, so any existing @chativa/connector-* works unmodified. See README.md for architecture and the native-fallback tracking issues.",
   "author": "Hamza Agar",
   "license": "MIT",
