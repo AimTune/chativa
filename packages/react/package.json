@@ -1,20 +1,18 @@
 {
-  "name": "@chativa/ui",
+  "name": "@chativa/react",
   "version": "0.9.0",
-  "description": "Chativa UI — LitElement web components for the chat widget (chat-iva, chat-bot-button).",
+  "description": "Chativa React — typed React components (ChatIva, ChatBotButton, ChativaProvider) wrapping the Chativa chat widget for React/Next.js apps.",
   "author": "Hamza Agar",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "jsdelivr": "./dist/chativa.global.js",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "default": "./dist/chativa.global.js"
+      "require": "./dist/index.cjs"
     }
   },
   "files": [
@@ -23,10 +21,10 @@
   "keywords": [
     "chativa",
     "chat",
+    "react",
+    "nextjs",
     "web-component",
-    "lit-element",
-    "chat-widget",
-    "ui"
+    "wrapper"
   ],
   "homepage": "https://github.com/AimTune/chativa#readme",
   "bugs": {
@@ -37,24 +35,34 @@
     "url": "git+https://github.com/AimTune/chativa.git"
   },
   "scripts": {
-    "build": "vite build && vite build --config vite.config.cdn.ts",
+    "build": "vite build",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@chativa/core": "workspace:*",
-    "@chativa/genui": "workspace:*",
-    "@lit-labs/virtualizer": "^2.1.1",
-    "i18next": "^25.3.2",
-    "i18next-browser-languagedetector": "^8.2.0",
-    "lit": "^3.3.0",
-    "marked": "^13.0.0"
+    "@chativa/ui": "workspace:*",
+    "@lit/react": "^1.0.8"
   },
   "peerDependencies": {
-    "@chativa/core": ">=0.0.1"
+    "@chativa/core": ">=0.0.1",
+    "@chativa/genui": ">=0.0.1",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@chativa/genui": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@chativa/genui": "workspace:*",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
     "jsdom": "^28.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
     "terser": "^5.46.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.3",
