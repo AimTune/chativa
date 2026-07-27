@@ -1,0 +1,28 @@
+{
+  "name": "chativa-example-react-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Living usage doc for @chativa/react — <ChativaProvider> + <ChatIva> wired to @chativa/connector-dummy.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/genui": "workspace:*",
+    "@chativa/react": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^4.7.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3"
+  }
+}

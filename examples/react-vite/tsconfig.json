@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@chativa/react": ["../../packages/react/src/index.ts"],
+      "@chativa/core": ["../../packages/core/src/index.ts"],
+      "@chativa/ui": ["../../packages/ui/src/index.ts"],
+      "@chativa/genui": ["../../packages/genui/src/index.ts"],
+      "@chativa/connector-dummy": ["../../packages/connector-dummy/src/index.ts"]
+    }
+  },
+  "include": ["src"]
+}

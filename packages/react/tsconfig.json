@@ -1,0 +1,20 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "paths": {
+      "@chativa/core": [
+        "../core/src/index.ts"
+      ],
+      "@chativa/ui": [
+        "../ui/src/index.ts"
+      ],
+      "@chativa/genui": [
+        "../genui/src/index.ts"
+      ]
+    }
+  },
+  "include": [
+    "src"
+  ]
+}

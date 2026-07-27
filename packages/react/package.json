@@ -1,0 +1,72 @@
+{
+  "name": "@chativa/react",
+  "version": "0.0.1",
+  "description": "Chativa React — typed React components (ChatIva, ChatBotButton, ChativaProvider) wrapping the Chativa chat widget for React/Next.js apps.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "react",
+    "nextjs",
+    "web-component",
+    "wrapper"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*",
+    "@lit/react": "^1.0.8"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1",
+    "@chativa/genui": ">=0.0.1",
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@chativa/genui": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@chativa/genui": "workspace:*",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "jsdom": "^28.1.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "terser": "^5.46.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18"
+  }
+}
