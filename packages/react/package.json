@@ -1,6 +1,6 @@
 {
   "name": "@chativa/react",
-  "version": "0.0.1",
+  "version": "0.9.0",
   "description": "Chativa React — typed React components (ChatIva, ChatBotButton, ChativaProvider) wrapping the Chativa chat widget for React/Next.js apps.",
   "author": "Hamza Agar",
   "license": "MIT",
