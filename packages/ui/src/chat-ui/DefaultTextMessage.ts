@@ -8,6 +8,9 @@ import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus 
 import type { LinkMetadataFetcher } from "./LinkPreviewCard";
 import "./LinkPreviewCard";
 
+/** Private-use sentinel swapped for the caret span after markdown parsing. */
+const STREAM_CARET_TOKEN = "";
+const STREAM_CARET_HTML = '<span class="stream-caret" aria-hidden="true"></span>';
 
 @customElement("default-text-message")
 export class DefaultTextMessage extends LitElement {
@@ -403,9 +406,23 @@ export class DefaultTextMessage extends LitElement {
   render() {
     const isUser = this.sender === "user";
     const raw = String(this.messageData?.text ?? "");
-    const bubbleContent = isUser && !this.messageData?._markdown
-      ? raw
-      : unsafeHTML(marked.parse(raw, { async: false }) as string);
+    const isStreaming = !isUser && Boolean(this.messageData?.streaming);
+
+    let bubbleContent;
+    if (isUser && !this.messageData?._markdown) {
+      bubbleContent = raw;
+    } else {
+      // Parse with a private-use sentinel appended so the caret lands inline,
+      // right after the last character, instead of after the whole block.
+      const parsed = marked.parse(
+        isStreaming ? raw + STREAM_CARET_TOKEN : raw,
+        { async: false }
+      ) as string;
+      const withCaret = isStreaming
+        ? parsed.replace(STREAM_CARET_TOKEN, STREAM_CARET_HTML)
+        : parsed;
+      bubbleContent = unsafeHTML(withCaret);
+    }
 
     const theme = chatStore.getState().theme;
     const avatarCfg = theme.avatar;
@@ -421,9 +438,7 @@ export class DefaultTextMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
-          <div class="bubble">${bubbleContent}${!isUser && Boolean(this.messageData?.streaming)
-            ? html`<span class="stream-caret" aria-hidden="true"></span>`
-            : nothing}</div>
+          <div class="bubble">${bubbleContent}</div>
           ${this._renderLinkPreviews()}
           ${!isUser ? html`
             <div class="feedback ${this._effectiveFeedback ? "active" : ""}">
