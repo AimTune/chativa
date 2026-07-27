@@ -8,6 +8,9 @@
       "path": "packages/ui"
     },
     {
+      "path": "packages/rn-webview"
+    },
+    {
       "path": "packages/connector-directline"
     },
     {

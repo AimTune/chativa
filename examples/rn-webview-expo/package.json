@@ -1,0 +1,27 @@
+{
+  "name": "chativa-example-rn-webview-expo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Living usage doc for @chativa/rn-webview — <ChativaWebView> wired to @chativa/connector-dummy in an Expo app.",
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*",
+    "@chativa/rn-webview": "workspace:*",
+    "expo": "~57.0.8",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.0",
+    "react-native-webview": "^14.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  }
+}
