@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-native",
+    // No DOM in React Native — override the base config's lib list.
+    // Deliberately NOT aliasing "@chativa/core" to its source (unlike
+    // @chativa/ui / @chativa/genui, which do): those packages roll cross-
+    // package types into one bundled .d.ts via vite-plugin-dts at build
+    // time, but this package's declaration emit goes through
+    // react-native-builder-bob's plain `tsc`, which has no type-rollup step
+    // — aliasing to source there made `tsc` mirror @chativa/core's entire
+    // source tree into this package's own `lib/typescript` output instead
+    // of a clean `src/index.d.ts`. Resolving @chativa/core through its
+    // built `dist/index.d.ts` (normal node_modules resolution) avoids that;
+    // it does mean `@chativa/core` must be built before this package's
+    // typecheck picks up local core changes.
+    "lib": [
+      "ES2022"
+    ],
+    "moduleResolution": "bundler"
+  },
+  "include": [
+    "src"
+  ]
+}

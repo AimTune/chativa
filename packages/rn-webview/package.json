@@ -1,0 +1,89 @@
+{
+  "name": "@chativa/rn-webview",
+  "version": "0.9.0",
+  "description": "Chativa RN WebView — embeds the Chativa web chat widget in a react-native-webview, bridged to native props/callbacks, so any existing @chativa/connector-* works unmodified. See README.md for architecture and the native-fallback tracking issues.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "source": "src/index.ts",
+  "main": "./lib/commonjs/index.js",
+  "module": "./lib/module/index.js",
+  "types": "./lib/typescript/commonjs/index.d.ts",
+  "react-native": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./lib/typescript/module/index.d.ts",
+        "default": "./lib/module/index.js"
+      },
+      "require": {
+        "types": "./lib/typescript/commonjs/index.d.ts",
+        "default": "./lib/commonjs/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/__tests__",
+    "!**/*.test.*"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "react-native",
+    "webview",
+    "expo",
+    "mobile"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "bob build",
+    "test": "echo \"@chativa/rn-webview: no tests yet\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1",
+    "react": ">=18.2.0",
+    "react-native": ">=0.74.0",
+    "react-native-webview": ">=13.0.0"
+  },
+  "devDependencies": {
+    "@react-native/babel-preset": "^0.86.1",
+    "@types/react": "^19.2.17",
+    "react": "^19.2.8",
+    "react-native": "^0.86.0",
+    "react-native-builder-bob": "^0.43.0",
+    "react-native-webview": "^14.0.1",
+    "typescript": "~5.8.3"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "targets": [
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "commonjs",
+        {
+          "esm": true
+        }
+      ],
+      "typescript"
+    ]
+  }
+}

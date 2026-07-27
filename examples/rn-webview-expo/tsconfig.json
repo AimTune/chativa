@@ -1,0 +1,14 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    // Points at source rather than the built `lib/` output — matches how
+    // Metro actually resolves this package at runtime too (via its
+    // package.json "react-native" field, which also points at src/index.ts),
+    // so this isn't just a typecheck convenience.
+    "paths": {
+      "@chativa/rn-webview": ["../../packages/rn-webview/src/index.ts"],
+      "@chativa/core": ["../../packages/core/src/index.ts"]
+    }
+  }
+}

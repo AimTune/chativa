@@ -11,6 +11,9 @@
       "path": "packages/react"
     },
     {
+      "path": "packages/rn-webview"
+    },
+    {
       "path": "packages/connector-directline"
     },
     {
