@@ -8,6 +8,9 @@
       "path": "packages/ui"
     },
     {
+      "path": "packages/react"
+    },
+    {
       "path": "packages/rn-webview"
     },
     {
