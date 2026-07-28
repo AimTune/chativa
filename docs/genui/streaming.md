@@ -8,7 +8,7 @@ A connector advertises GenUI support by implementing `onGenUIChunk(callback)`. T
 type AIChunk =
   | { type: "text";  content: string;       id: number; }
   | { type: "ui";    component: string;     props: Record<string, unknown>; id: number; }
-  | { type: "event"; name: string;          payload: unknown; id: number; for?: number; };
+  | { type: "event"; name: string;          payload?: unknown; id: number; for?: number; };
 ```
 
 Schema: [`schemas/genui/ai-chunk.schema.json`](../../schemas/genui/ai-chunk.schema.json).

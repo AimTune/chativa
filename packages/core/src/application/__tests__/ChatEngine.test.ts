@@ -646,6 +646,34 @@ describe("ChatEngine", () => {
     expect(data.chunks[1].type).toBe("event");
   });
 
+  it("does not open a phantom bubble for the closing stream_done event of a text-only stream", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s-done", { type: "text", content: "Hi", id: 1 }, false);
+    connector.simulateGenUIChunk("s-done", { type: "event", name: "stream_done", id: 2 }, true);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].data.text).toBe("Hi");
+    expect(msgs[0].data.streaming).toBe(false);
+  });
+
+  it("does not append the closing stream_done event into a genui message", async () => {
+    const handler = vi.fn();
+    EventBus.on("genui_stream_completed", handler);
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s-done2", { type: "ui", component: "card", props: {}, id: 1 }, false);
+    connector.simulateGenUIChunk("s-done2", { type: "event", name: "stream_done", id: 2 }, true);
+    const msgs = messageStore.getState().messages;
+    expect(msgs).toHaveLength(1);
+    const data = msgs[0].data as { chunks: AIChunk[]; streamingComplete: boolean };
+    expect(data.chunks).toHaveLength(1);
+    expect(data.streamingComplete).toBe(true);
+    expect(handler).toHaveBeenCalledWith({ streamId: "s-done2" });
+  });
+
   // ── receiveComponentEvent ──────────────────────────────────────────
 
   it("routes component events to connector by stream id", async () => {

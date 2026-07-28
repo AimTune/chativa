@@ -262,6 +262,13 @@ export class ChatEngine {
   }
 
   private _handleGenUIChunk(streamId: string, chunk: AIChunk, done: boolean): void {
+    // The closing `stream_done` event (mekik PROTOCOL.md §4.1) is stream
+    // lifecycle, not content — materializing it would add a phantom empty
+    // message (a text-only stream has no genui host for it to live in).
+    if (chunk.type === "event" && chunk.name === "stream_done") {
+      if (done) this._finishStream(streamId);
+      return;
+    }
     const firstChunk = !this._streamHosts.has(streamId);
 
     // Text deltas render as a normal, growing bot bubble (default-text-message);

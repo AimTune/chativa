@@ -32,8 +32,8 @@ export interface AIChunkEvent {
   type: "event";
   /** Event name (e.g. "form_success"). */
   name: string;
-  /** Arbitrary payload delivered to listeners. */
-  payload: unknown;
+  /** Arbitrary payload delivered to listeners. Omitted for signal-only events. */
+  payload?: unknown;
   /** Unique id of this chunk (for deduplication). */
   id: number;
   /**
