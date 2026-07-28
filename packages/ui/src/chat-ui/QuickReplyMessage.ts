@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { MessageTypeRegistry, type MessageSender, type MessageAction } from "@chativa/core";
+import { MessageTypeRegistry, chatStore, type MessageSender, type MessageAction } from "@chativa/core";
 
 /**
  * Quick-reply message component.
@@ -43,6 +43,13 @@ export class QuickReplyMessage extends LitElement {
     .avatar.hidden { visibility: hidden; }
 
     .avatar svg { width: 16px; height: 16px; color: #7c3aed; }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
 
     .content {
       display: flex;
@@ -174,33 +181,41 @@ export class QuickReplyMessage extends LitElement {
     );
   }
 
+  private _renderBotAvatar(avatarUrl?: string) {
+    return html`
+      <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
+        ${avatarUrl
+          ? html`<img src=${avatarUrl} alt="bot avatar" />`
+          : html`
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="8" width="14" height="12" rx="2.5" />
+                <circle cx="9.5" cy="13" r="1.5" fill="white" />
+                <circle cx="14.5" cy="13" r="1.5" fill="white" />
+                <path
+                  d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
+                  stroke="white"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+              </svg>
+            `}
+      </div>
+    `;
+  }
+
   render() {
     const isUser = this.sender === "user";
     const actions = this.messageData?.actions as MessageAction[] | undefined;
     const keepActions = Boolean(this.messageData?.keepActions);
     const showChips =
       actions && actions.length > 0 && (!this._used || (keepActions && this._selectedValue !== null));
+    const avatarCfg = chatStore.getState().theme.avatar;
+    const showBotAvatar = avatarCfg?.showBot !== false;
 
     return html`
       <div class="message ${isUser ? "user" : "bot"}">
-        ${!isUser
-          ? html`
-              <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
-                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="5" y="8" width="14" height="12" rx="2.5" />
-                  <circle cx="9.5" cy="13" r="1.5" fill="white" />
-                  <circle cx="14.5" cy="13" r="1.5" fill="white" />
-                  <path
-                    d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
-                    stroke="white"
-                    stroke-width="1.2"
-                    stroke-linecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            `
-          : nothing}
+        ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         <div class="content">
           ${this.messageData?.text
             ? html`<div class="bubble">${this.messageData.text as string}</div>`

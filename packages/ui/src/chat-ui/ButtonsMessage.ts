@@ -2,7 +2,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
-import { MessageTypeRegistry, type MessageSender, type MessageAction } from "@chativa/core";
+import { MessageTypeRegistry, chatStore, type MessageSender, type MessageAction } from "@chativa/core";
 
 /** Strip the wrapping <p>…</p> that marked adds for inline content. */
 function renderInlineMarkdown(text: string): ReturnType<typeof unsafeHTML> {
@@ -60,6 +60,13 @@ export class ButtonsMessage extends LitElement {
 
     .avatar.hidden { visibility: hidden; }
     .avatar svg { width: 16px; height: 16px; color: #7c3aed; }
+    .avatar img {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
 
     .content {
       display: flex;
@@ -104,6 +111,19 @@ export class ButtonsMessage extends LitElement {
       color: #ffffff;
     }
 
+    /* Markdown list labels (e.g. 1. Option) should not add browser default indent. */
+    .action-btn ol,
+    .action-btn ul {
+      margin: 0;
+      padding: 0;
+      list-style-position: inside;
+    }
+
+    .action-btn li {
+      margin: 0;
+      padding: 0;
+    }
+
     .action-btn:active:not(:disabled) {
       opacity: 0.85;
     }
@@ -121,9 +141,22 @@ export class ButtonsMessage extends LitElement {
     }
 
     .selected-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-size: 0.8125rem;
       color: #64748b;
       padding: 2px 4px;
+    }
+
+    .selected-label ol,
+    .selected-label ul,
+    .selected-label li,
+    .selected-value {
+      display: inline;
+      margin: 0;
+      padding: 0;
+      list-style-position: inside;
     }
 
     .time {
@@ -180,38 +213,51 @@ export class ButtonsMessage extends LitElement {
     );
   }
 
+  private _renderBotAvatar(avatarUrl?: string) {
+    return html`
+      <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
+        ${avatarUrl
+          ? html`<img src=${avatarUrl} alt="bot avatar" />`
+          : html`
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <rect x="5" y="8" width="14" height="12" rx="2.5" />
+                <circle cx="9.5" cy="13" r="1.5" fill="white" />
+                <circle cx="14.5" cy="13" r="1.5" fill="white" />
+                <path
+                  d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
+                  stroke="white"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  fill="none"
+                />
+              </svg>
+            `}
+      </div>
+    `;
+  }
+
   render() {
     const isUser = this.sender === "user";
     const text = this.messageData?.text ? String(this.messageData.text) : null;
     const buttons = (this.messageData?.buttons ?? []) as MessageAction[];
     const persistent = this._persistent;
+    const avatarCfg = chatStore.getState().theme.avatar;
+    const showBotAvatar = avatarCfg?.showBot !== false;
 
     return html`
       <div class="message ${isUser ? "user" : "bot"}">
-        ${!isUser
-          ? html`
-              <div class="avatar ${this.hideAvatar ? "hidden" : ""}">
-                <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="5" y="8" width="14" height="12" rx="2.5" />
-                  <circle cx="9.5" cy="13" r="1.5" fill="white" />
-                  <circle cx="14.5" cy="13" r="1.5" fill="white" />
-                  <path
-                    d="M9.5 17c.5.5 1.4.8 2.5.8s2-.3 2.5-.8"
-                    stroke="white"
-                    stroke-width="1.2"
-                    stroke-linecap="round"
-                    fill="none"
-                  />
-                </svg>
-              </div>
-            `
-          : nothing}
+        ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         <div class="content">
           ${text ? html`<div class="bubble">${text}</div>` : nothing}
 
           ${!persistent && this._selected !== null
             /* One-time mode: replace buttons with confirmation label */
-            ? html`<span class="selected-label">✓ ${renderInlineMarkdown(this._selected!)}</span>`
+            ? html`
+                <span class="selected-label">
+                  <span aria-hidden="true">✓</span>
+                  <span class="selected-value">${renderInlineMarkdown(this._selected!)}</span>
+                </span>
+              `
             /* Persistent mode or pre-selection: show full button list */
             : html`
                 <div class="btn-list">
