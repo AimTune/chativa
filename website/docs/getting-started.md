@@ -137,6 +137,10 @@ The dynamic `import()` keeps the chat bundle out of your initial JavaScript payl
 > }
 > ```
 
+### React Native
+
+Native apps embed the same widget through a WebView bridge — `@chativa/rn-webview`'s `<ChativaWebView>` gets full web feature parity (every message type, GenUI, every connector) with no UI code to port. See [React Native](./react-native.md).
+
 ### Vue 3
 
 Vue treats unknown tags with hyphens as custom elements out of the box, but you should opt in explicitly so it doesn't try to create components for them:

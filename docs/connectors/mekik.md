@@ -266,3 +266,7 @@ With `queueOfflineMessages: true` (the default) a send that happens while the so
 Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`.
 
 Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation.
+
+## React Native
+
+The connector runs unmodified inside `@chativa/rn-webview`'s WebView embedding — pass `connector: { type: "mekik", options }` with a JSON-safe `auth` spec (`{ kind: "token", ... }` or `{ kind: "cookie" }`) instead of a live `TokenAuth` / `CookieAuth` instance. See [React Native](../react-native.md).

@@ -477,3 +477,9 @@ Types: `feat | fix | test | docs | refactor | chore | style`
 - Do NOT make `ChatStore` or `MessageStore` non-singleton without an explicit architectural decision (multi-session support is a planned future feature)
 - Do NOT import `@lit-labs/virtualizer` with the bare package name — always use `@lit-labs/virtualizer/virtualize.js`
 - Do NOT add named `tFn` as `translate` in GenUI components — `HTMLElement.translate` conflicts
+
+---
+
+## Documentation (CRITICAL)
+
+Any user-facing feature or behavior change MUST update the web docs in the **same PR**: `website/docs/` (the published Docusaurus site) and its `docs/` markdown mirror. Docs are part of the definition of done — a feature is not finished until it is documented where a reader would look. Register new pages in `website/sidebars.ts`, and use real API names taken from the source, never invented ones.
