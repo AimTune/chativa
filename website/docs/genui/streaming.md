@@ -1,4 +1,8 @@
 ---
+sidebar_position: 2
+title: Streaming protocol
+description: The GenUI chunk protocol — text, ui and event chunks, in-place updates by chunk id, and events back from a component.
+---
 # GenUI streaming protocol
 
 A connector advertises GenUI support by implementing `onGenUIChunk(callback)`. The engine then renders any chunks the connector emits as a single synthetic `genui` message.
