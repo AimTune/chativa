@@ -6,9 +6,25 @@ import "./i18n/index";
 // ── Registry ──────────────────────────────────────────────────────────────────
 export { GenUIRegistry } from "./registry/GenUIRegistry";
 export type { GenUIEntry, GenUISchema } from "./registry/GenUIRegistry";
+export {
+  registerServerComponent,
+  subscribeServerComponents,
+  clearServerComponents,
+  setServerComponentPolicy,
+  getServerComponentPolicy,
+} from "./registry/serverComponents";
+export type { ServerComponentPolicy } from "./registry/serverComponents";
 
 // ── Shared types ──────────────────────────────────────────────────────────────
 export type { GenUIComponentAPI } from "./types";
+
+// ── Base class for custom components ──────────────────────────────────────────
+// Lives in @chativa/core (so core owns the contract); re-exported here so a
+// custom component only needs one import.
+export { GenUIElement, GENUI_COMPONENT_EVENT } from "@chativa/core";
+export type { GenUIComponentEventDetail } from "@chativa/core";
+export { GenUIHtmlElement, sanitizeHtml, defineGenUIComponent, renderTemplate, genUIDefinitionStore } from "@chativa/core";
+export type { GenUIComponentDefinition } from "@chativa/core";
 
 // ── Components (side-effects: registers custom elements) ──────────────────────
 export { GenUIMessage } from "./components/GenUIMessage";
@@ -56,6 +72,8 @@ export type {
 // ── Register built-in components in GenUIRegistry ─────────────────────────────
 // These are available out-of-the-box without any additional registration.
 import { GenUIRegistry } from "./registry/GenUIRegistry";
+import { GenUIHtmlElement } from "@chativa/core";
+import { subscribeServerComponents } from "./registry/serverComponents";
 import { GenUITextBlock } from "./components/GenUITextBlock";
 import { GenUICard } from "./components/GenUICard";
 import { GenUIForm } from "./components/GenUIForm";
@@ -83,3 +101,14 @@ GenUIRegistry.register("genui-date-picker",   GenUIDatePicker as unknown as type
 GenUIRegistry.register("genui-chart",         GenUIChart as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-steps",         GenUISteps as unknown as typeof HTMLElement);
 GenUIRegistry.register("genui-image-gallery", GenUIImageGallery as unknown as typeof HTMLElement);
+
+// Raw-markup escape hatch: the backend ships the HTML itself, no client build
+// step. Registered under both names — `html` is what most bots will send.
+GenUIRegistry.register("genui-html",          GenUIHtmlElement as unknown as typeof HTMLElement);
+GenUIRegistry.register("html",                GenUIHtmlElement as unknown as typeof HTMLElement);
+
+// ── Server-defined components ─────────────────────────────────────────────────
+// A backend that authors its own components announces them on connect; this
+// subscription turns each definition into a custom element and registers it.
+// Replays anything published before this bundle loaded.
+subscribeServerComponents();

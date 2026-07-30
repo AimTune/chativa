@@ -17,3 +17,14 @@
 
 export type { ChatFrame, ParseChatFrameOptions } from "./domain/entities/ChatFrame";
 export { parseChatFrame, createGenUIEventFrame } from "./domain/entities/ChatFrame";
+
+// The component-catalog cache: pure logic plus an injectable storage adapter, so
+// a connector can do the ETag handshake without pulling in the package root.
+export { createGenUIComponentCache } from "./domain/entities/GenUIComponentCache";
+export type {
+  GenUIComponentCache,
+  GenUIComponentCacheOptions,
+  GenUIComponentCacheStorage,
+  CachedGenUIComponents,
+} from "./domain/entities/GenUIComponentCache";
+export type { GenUIComponentDefinition } from "./domain/entities/GenUI";

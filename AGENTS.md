@@ -200,7 +200,14 @@ export class MyConnector implements IConnector {
     this.genUICallback = callback;
   }
 
-  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void { }
+  // `opts` carries the interaction's routing metadata (`scope`, `component`) for
+  // protocols that model it; ignoring it is fine.
+  receiveComponentEvent(
+    streamId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions,
+  ): void { }
 }
 ```
 
@@ -288,54 +295,47 @@ MessageTypeRegistry.register("my-type", MyMessage);
 ## When Creating a New GenUI Component
 
 1. Create `packages/genui/src/components/[Name].ts`
-2. Extend `LitElement` (not ChatbotMixin — GenUI components are standalone)
-3. Declare optional `GenUIComponentAPI` properties to receive injected methods
-4. Self-register in `GenUIRegistry`
-5. Add tests
+2. Extend `GenUIElement` from `@chativa/core` (not ChatbotMixin — GenUI components are standalone)
+3. Self-register in `GenUIRegistry`
+4. Add tests
+
+`GenUIElement` extends `ChativaElement` (i18n + auto re-render on locale switch) and implements the full
+`GenUIComponentAPI` with working defaults, so `this.sendEvent(...)`, `this.listenEvent(...)` and
+`this.tFn(...)` are always callable. `GenUIMessage` shadows them with message-scoped versions at mount
+time. Do NOT redeclare those four as class fields — that shadows the defaults with `undefined`.
 
 **Template:**
 ```ts
-import { LitElement, html, css } from "lit";
+import { html, css } from "lit";
 import { customElement, property } from "lit/decorators.js";
+import { GenUIElement } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
-import type { GenUIComponentAPI } from "../types";
 
 @customElement("my-genui-widget")
-export class MyGenUIWidget extends LitElement {
-  // Injected by GenUIMessage at render time
-  sendEvent?: GenUIComponentAPI["sendEvent"];
-  listenEvent?: GenUIComponentAPI["listenEvent"];
-  tFn?: GenUIComponentAPI["tFn"];
-  onLangChange?: GenUIComponentAPI["onLangChange"];
-
-  @property({ type: String }) title = "";
-
-  private _unsubLang?: () => void;
-
-  connectedCallback() {
-    super.connectedCallback();
-    this._unsubLang = this.onLangChange?.(() => this.requestUpdate());
-  }
-
-  disconnectedCallback() {
-    super.disconnectedCallback();
-    this._unsubLang?.();
-  }
-
-  static styles = css`
+export class MyGenUIWidget extends GenUIElement {
+  static override styles = css`
     :host { display: block; }
   `;
 
-  private _handleAction() {
-    this.sendEvent?.("widget_action", { title: this.title });
+  @property({ type: String }) title = "";
+
+  override connectedCallback() {
+    super.connectedCallback();
+    // Server-pushed event chunks targeting this component
+    this.listenEvent("widget_updated", (payload) => {
+      this.title = (payload as { title: string }).title;
+    });
   }
 
-  render() {
-    const label = this.tFn?.("widget.submit", "Submit") ?? "Submit";
+  private _handleAction() {
+    this.sendEvent("widget_action", { title: this.title });
+  }
+
+  override render() {
     return html`
       <div>
         <h3>${this.title}</h3>
-        <button @click=${this._handleAction}>${label}</button>
+        <button @click=${this._handleAction}>${this.tFn("widget.submit", "Submit")}</button>
       </div>
     `;
   }
@@ -344,6 +344,25 @@ export class MyGenUIWidget extends LitElement {
 // Self-register
 GenUIRegistry.register("my-widget", MyGenUIWidget);
 ```
+
+### Backend-authored components — `<chativa-html>`
+
+When the markup should come from the backend instead of a compiled widget, stream the built-in
+`GenUIHtmlElement` (registered as both `genui-html` and `html`):
+
+```json
+{ "type": "ui", "component": "html",
+  "props": { "html": "<button data-event='track' data-payload='{\"id\":1}'>Track</button>",
+             "css":  "button { border-radius: 8px; }" } }
+```
+
+Markup is sanitized by default (`sanitizeHtml` — drops `<script>`/`<iframe>`, `on*` attributes and
+`javascript:` URLs); the `unsafe` prop opts out. Clicks and form submits round-trip to
+`IConnector.receiveComponentEvent`. Three attributes trigger one, and which one you write says who
+the interaction is addressed to: `component-event` (scope `"component"` — the widget's own
+conversation with the backend node that mounted it), `mekik-event` (scope `"graph"` — the app),
+`data-event` (no scope — the backend decides). Most specific wins. Outside a `GenUIMessage` the
+element dispatches a bubbling, composed `genui-component-event` instead.
 
 ---
 

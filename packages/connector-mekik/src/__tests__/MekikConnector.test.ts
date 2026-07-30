@@ -325,6 +325,31 @@ describe("MekikConnector socket lifecycle", () => {
       eventType: "form_submit",
       payload: { answer: 42 },
     });
+    // No routing metadata declared → the frame is exactly what it always was.
+    expect(frame.scope).toBeUndefined();
+    expect(frame.component).toBeUndefined();
+  });
+
+  it("puts the interaction's scope and component on the genui_event frame", async () => {
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
+    const p = connector.connect();
+    const ws = MockWebSocket.instances[0];
+    ws.open();
+    await p;
+
+    connector.receiveComponentEvent("s1", "rate_delivery", { stars: 5 }, {
+      scope: "component",
+      component: "delivery-card",
+    });
+
+    expect(JSON.parse(ws.sent[ws.sent.length - 1])).toMatchObject({
+      type: "genui_event",
+      streamId: "s1",
+      eventType: "rate_delivery",
+      scope: "component",
+      component: "delivery-card",
+      payload: { stars: 5 },
+    });
   });
 
   it("sends a static token in the hello handshake", async () => {
@@ -682,6 +707,29 @@ describe("MekikConnector mekik/2 human-in-the-loop", () => {
     });
   });
 
+  it("renders nothing for a pause that is waiting on a component event", () => {
+    const { messages, route } = makeConnector();
+    route({
+      type: "interrupt",
+      seq: 6,
+      id: "wait:event:rate_delivery",
+      // No `actions`, no `ui` — but `event` says a widget already on screen
+      // answers this one, so default Approve/Cancel chips would be a dead end.
+      data: { payload: {}, event: "rate_delivery" },
+    });
+
+    expect(messages).toEqual([]);
+  });
+
+  it("still shows default chips for a pause with no actions, ui or event", () => {
+    const { messages, route } = makeConnector();
+    route({ type: "interrupt", seq: 6, id: "gate:interrupt#0", data: { payload: { title: "Proceed?" } } });
+
+    expect(messages).toHaveLength(1);
+    const data = messages[0].data as Record<string, unknown>;
+    expect((data.actions as Array<{ label: string }>).map((a) => a.label)).toEqual(["Approve", "Cancel"]);
+  });
+
   it("stops treating messages as resumes once interrupt_resolved arrives", () => {
     const { connector, route } = makeConnector();
     route({ type: "interrupt", id: "x:interrupt#0", data: { actions: [{ label: "OK", value: true }] } });
@@ -709,5 +757,114 @@ describe("MekikConnector mekik/2 human-in-the-loop", () => {
     expect(messages).toHaveLength(1);
     expect(messages[0].type).toBe("quick-reply");
     expect((messages[0].data as Record<string, unknown>).text).toBe("Still pending?");
+  });
+});
+
+describe("MekikConnector server-defined components", () => {
+  const CARD = { name: "order-card", template: "<p>{{title}}</p>", props: { title: "" } };
+  const key = "chativa:genui-components:ws://test";
+
+  /** In-memory localStorage — the cache reads it through globalThis. */
+  function stubStorage(seed?: Record<string, string>) {
+    const map = new Map<string, string>(Object.entries(seed ?? {}));
+    vi.stubGlobal("localStorage", {
+      getItem: (k: string) => map.get(k) ?? null,
+      setItem: (k: string, v: string) => { map.set(k, v); },
+      removeItem: (k: string) => { map.delete(k); },
+    });
+    return map;
+  }
+
+  beforeEach(() => {
+    MockWebSocket.instances = [];
+    vi.stubGlobal("WebSocket", MockWebSocket);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("registers a catalog frame and caches it under its hash", () => {
+    const map = stubStorage();
+    const { connector, route } = makeConnector();
+    const seen: unknown[] = [];
+    connector.onGenUIComponents((defs) => seen.push(defs));
+
+    route({ type: "genui_components", hash: "h1", components: [CARD] });
+
+    expect(seen).toEqual([[CARD]]);
+    expect(JSON.parse(map.get(key)!)).toEqual({ hash: "h1", components: [CARD] });
+  });
+
+  it("replays the catalog to a handler that registers late", () => {
+    stubStorage();
+    const { connector, route } = makeConnector();
+    route({ type: "genui_components", hash: "h1", components: [CARD] });
+
+    const seen: unknown[] = [];
+    connector.onGenUIComponents((defs) => seen.push(defs));
+
+    expect(seen).toEqual([[CARD]]);
+  });
+
+  it("ignores an unchanged frame — the cached catalog stands", () => {
+    const map = stubStorage({ [key]: JSON.stringify({ hash: "h1", components: [CARD] }) });
+    const { connector, route } = makeConnector();
+    const seen: unknown[] = [];
+    connector.onGenUIComponents((defs) => seen.push(defs));
+
+    route({ type: "genui_components", hash: "h1", unchanged: true });
+
+    expect(seen).toEqual([]);
+    expect(JSON.parse(map.get(key)!).hash).toBe("h1");
+  });
+
+  it("never renders a catalog frame as a chat bubble", () => {
+    stubStorage();
+    const { messages, route } = makeConnector();
+    route({ type: "genui_components", hash: "h1", components: [CARD] });
+    expect(messages).toHaveLength(0);
+  });
+
+  it("sends the cached hash in hello and publishes the cache before the server answers", async () => {
+    stubStorage({ [key]: JSON.stringify({ hash: "h1", components: [CARD] }) });
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
+    const seen: unknown[] = [];
+    connector.onGenUIComponents((defs) => seen.push(defs));
+
+    const p = connector.connect();
+    MockWebSocket.instances[0].open();
+    await p;
+
+    const hello = JSON.parse(MockWebSocket.instances[0].sent[0]);
+    expect(hello.type).toBe("hello");
+    expect(hello.componentsHash).toBe("h1");
+    // Cached widgets render without waiting for the server.
+    expect(seen).toEqual([[CARD]]);
+  });
+
+  it("omits componentsHash when nothing is cached", async () => {
+    stubStorage();
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false });
+
+    const p = connector.connect();
+    MockWebSocket.instances[0].open();
+    await p;
+
+    const hello = JSON.parse(MockWebSocket.instances[0].sent[0]);
+    expect(hello.componentsHash).toBeUndefined();
+  });
+
+  it("replaces the cache when the server ships a new hash", () => {
+    const map = stubStorage({ [key]: JSON.stringify({ hash: "h1", components: [CARD] }) });
+    const { connector, route } = makeConnector();
+    const seen: unknown[][] = [];
+    connector.onGenUIComponents((defs) => seen.push(defs as unknown[]));
+
+    const v2 = { ...CARD, version: "2", template: "<h3>{{title}}</h3>" };
+    route({ type: "genui_components", hash: "h2", components: [v2] });
+
+    const stored = JSON.parse(map.get(key)!);
+    expect(stored.hash).toBe("h2");
+    expect(stored.components[0].template).toBe("<h3>{{title}}</h3>");
+    expect(seen[seen.length - 1]).toEqual([v2]);
   });
 });

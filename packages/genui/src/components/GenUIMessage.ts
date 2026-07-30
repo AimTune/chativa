@@ -1,6 +1,13 @@
 import { html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
-import type { GenUIStreamState, AIChunk, AIChunkText, AIChunkUI, AIChunkEvent } from "@chativa/core";
+import type {
+  GenUIStreamState,
+  AIChunk,
+  AIChunkText,
+  AIChunkUI,
+  AIChunkEvent,
+  GenUIEventOptions,
+} from "@chativa/core";
 import { ChativaElement, MessageTypeRegistry, chatStore, i18next, t } from "@chativa/core";
 import { GenUIRegistry } from "../registry/GenUIRegistry";
 import { bubbleStyles } from "../styles/bubble";
@@ -176,7 +183,12 @@ export class GenUIMessage extends ChativaElement {
 
   // ── Event bus API (injected into child components) ────────────────────────
 
-  private _sendEvent = (type: string, payload: unknown, sourceId?: number): void => {
+  private _sendEvent = (
+    type: string,
+    payload: unknown,
+    sourceId?: number,
+    opts?: GenUIEventOptions
+  ): void => {
     // 1. Deliver to internal listeners within this message (e.g. form_success → form component)
     const listeners = this._listeners.get(type);
     if (listeners) {
@@ -189,7 +201,7 @@ export class GenUIMessage extends ChativaElement {
     // 2. Bubble up to ChatWidget so it can be forwarded to the connector
     this.dispatchEvent(
       new CustomEvent("genui-send-event", {
-        detail: { msgId: this.messageId, eventType: type, payload, sourceId },
+        detail: { msgId: this.messageId, eventType: type, payload, sourceId, ...opts },
         bubbles: true,
         composed: true,
       })
@@ -240,8 +252,15 @@ export class GenUIMessage extends ChativaElement {
       }
     }
 
-    // Retrieve or create the element instance
+    // Retrieve or create the element instance. A cached instance of a different
+    // class means the stream reused this id for another component — keep the id
+    // (so the element stays in place) but rebuild it, rather than assigning one
+    // component's props onto another's element.
     let el = this._instances.get(chunk.id);
+    if (el && !(el instanceof entry.component)) {
+      this._instances.delete(chunk.id);
+      el = undefined;
+    }
     if (!el) {
       el = new entry.component() as HTMLElement;
       this._instances.set(chunk.id, el);
@@ -249,8 +268,10 @@ export class GenUIMessage extends ChativaElement {
       // Inject scoped event + i18n API so custom components
       // don't need to depend on i18next directly.
       const elAny = el as unknown as Record<string, unknown>;
-      elAny["sendEvent"] = (type: string, payload: unknown) =>
-        this._sendEvent(type, payload, chunk.id);
+      // The component name is stamped here, not by the component: an interaction
+      // should always say which widget it came from, and only the chunk knows.
+      elAny["sendEvent"] = (type: string, payload: unknown, opts?: GenUIEventOptions) =>
+        this._sendEvent(type, payload, chunk.id, { component: chunk.component, ...opts });
       elAny["listenEvent"] = (type: string, cb: (p: unknown) => void) =>
         this._listenEvent(type, cb, chunk.id);
       elAny["tFn"] = (key: string, fallback?: string) =>

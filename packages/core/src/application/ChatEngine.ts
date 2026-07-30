@@ -1,13 +1,19 @@
 import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
 import type { ToolCall } from "../domain/entities/ToolCall";
-import type { AIChunk, AIChunkText, GenUIStreamState } from "../domain/entities/GenUI";
+import type {
+  AIChunk,
+  AIChunkText,
+  GenUIEventOptions,
+  GenUIStreamState,
+} from "../domain/entities/GenUI";
 import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
 import chatStore from "./stores/ChatStore";
 import type { ConnectorStatus } from "./stores/ChatStore";
 import { EventBus } from "./EventBus";
+import { genUIDefinitionStore } from "./GenUIDefinitionStore";
 import { createChativaContext } from "./createChativaContext";
 
 export class ChatEngine {
@@ -104,6 +110,17 @@ export class ChatEngine {
 
     this.connector.onGenUIChunk?.((streamId, chunk, done) => {
       this._handleGenUIChunk(streamId, chunk, done);
+    });
+
+    // Server-defined components. The engine only forwards them — turning a
+    // definition into a custom element is `@chativa/genui`'s job, and it
+    // subscribes to the same store (see GenUIDefinitionStore for why the call
+    // can't be direct).
+    this.connector.onGenUIComponents?.((definitions) => {
+      const fresh = genUIDefinitionStore.publish(definitions);
+      if (fresh.length > 0) {
+        EventBus.emit("genui_components_registered", { definitions: fresh });
+      }
     });
 
     // Tool-call lifecycle events accumulate in the store until the reply
@@ -336,12 +353,35 @@ export class ChatEngine {
       this._rememberHost(streamId, msgId);
       return;
     }
-    // Subsequent ui/event chunk — append to the existing GenUI message.
+    // Subsequent ui/event chunk.
     const current = messageStore.getState().messages.find((m) => m.id === existing);
     const prevState = (current?.data ?? { chunks: [], streamingComplete: false }) as unknown as GenUIStreamState;
     messageStore.getState().updateById(existing, {
-      data: { ...current?.data, chunks: [...prevState.chunks, chunk], streamingComplete: false },
+      data: { ...current?.data, chunks: this._mergeChunk(prevState.chunks, chunk), streamingComplete: false },
     });
+  }
+
+  /**
+   * Place one chunk in the stream's chunk list.
+   *
+   * A `ui` chunk re-sent under an id already in the list **replaces** it — that
+   * is the in-place update a connector means by reusing an id (a progress bar
+   * advancing, a form flipping to its success state). Appending instead would
+   * leave two entries for one element, and since the renderer keys element
+   * instances by chunk id, the same DOM node would be asked to occupy two
+   * positions at once — it can only be in the last one, so the earlier slot
+   * renders empty and the widget appears to vanish.
+   *
+   * Event chunks always append: they are a log of what happened, deduplicated at
+   * dispatch time by the renderer, not a thing on screen.
+   */
+  private _mergeChunk(chunks: AIChunk[], chunk: AIChunk): AIChunk[] {
+    if (chunk.type !== "ui") return [...chunks, chunk];
+    const index = chunks.findIndex((c) => c.type === "ui" && c.id === chunk.id);
+    if (index === -1) return [...chunks, chunk];
+    const next = [...chunks];
+    next[index] = chunk;
+    return next;
   }
 
   /** Close every message the stream opened and drain its tool-call trace. */
@@ -408,11 +448,19 @@ export class ChatEngine {
   /**
    * Called by ChatWidget when a GenUI component fires `sendEvent`.
    * Translates the message id back to the connector's stream id and forwards.
+   *
+   * `opts` carries the interaction's routing metadata — which attribute fired it,
+   * which component it came from — for connectors whose protocol models it.
    */
-  receiveComponentEvent(msgId: string, eventType: string, payload: unknown): void {
+  receiveComponentEvent(
+    msgId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions
+  ): void {
     const streamId = this._msgToStream.get(msgId);
     if (!streamId) return; // stream already complete or unknown
-    this.connector.receiveComponentEvent?.(streamId, eventType, payload);
+    this.connector.receiveComponentEvent?.(streamId, eventType, payload, opts);
   }
 
   async destroy(): Promise<void> {

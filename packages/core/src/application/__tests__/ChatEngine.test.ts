@@ -683,7 +683,32 @@ describe("ChatEngine", () => {
     connector.simulateGenUIChunk("stream-ce", { type: "ui", component: "card", props: {}, id: 1 }, false);
     const msgId = messageStore.getState().messages[0].id;
     engine.receiveComponentEvent(msgId, "click", { value: 42 });
-    expect(connector.receiveComponentEvent).toHaveBeenCalledWith("stream-ce", "click", { value: 42 });
+    expect(connector.receiveComponentEvent).toHaveBeenCalledWith(
+      "stream-ce",
+      "click",
+      { value: 42 },
+      undefined,
+    );
+  });
+
+  it("forwards the interaction's routing metadata to the connector", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("stream-ce", { type: "ui", component: "card", props: {}, id: 1 }, false);
+    const msgId = messageStore.getState().messages[0].id;
+
+    engine.receiveComponentEvent(msgId, "rate", { stars: 5 }, {
+      scope: "component",
+      component: "delivery-card",
+    });
+
+    expect(connector.receiveComponentEvent).toHaveBeenCalledWith(
+      "stream-ce",
+      "rate",
+      { stars: 5 },
+      { scope: "component", component: "delivery-card" },
+    );
   });
 
   it("ignores receiveComponentEvent for unknown msgId", async () => {
