@@ -11,6 +11,7 @@ import {
   createOutgoingMessage,
   applyGlobalSettings,
   type EndOfConversationSurveyConfig,
+  type GenUIEventOptions,
   type SurveyPayload,
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
@@ -465,8 +466,11 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       .catch((err: unknown) => console.error("[ChatWidget] loadHistory failed:", err));
   };
 
-  private _onGenUISendEvent = (e: CustomEvent<{ msgId: string; eventType: string; payload: unknown }>) => {
-    this._engine.receiveComponentEvent(e.detail.msgId, e.detail.eventType, e.detail.payload);
+  private _onGenUISendEvent = (
+    e: CustomEvent<{ msgId: string; eventType: string; payload: unknown } & GenUIEventOptions>
+  ) => {
+    const { msgId, eventType, payload, scope, component } = e.detail;
+    this._engine.receiveComponentEvent(msgId, eventType, payload, { scope, component });
   };
 
   // ── Multi-conversation handlers ───────────────────────────────────────

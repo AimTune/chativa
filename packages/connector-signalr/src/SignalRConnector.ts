@@ -8,6 +8,7 @@ import type {
   SurveyPayload,
   ToolCallHandler,
   GenUIChunkHandler,
+  GenUIEventOptions,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
@@ -156,11 +157,16 @@ export class SignalRConnector implements IConnector {
    * invoking `genUIEventMethod` with the `genui_event` frame — the outbound
    * counterpart of the inbound `genui` frame.
    */
-  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+  receiveComponentEvent(
+    streamId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions,
+  ): void {
     // Fire-and-forget: the UI event must not block on the hub round-trip, and
     // a failed send is not worth tearing the conversation down over.
     void this.connection
-      ?.invoke(this.options.genUIEventMethod, createGenUIEventFrame(streamId, eventType, payload))
+      ?.invoke(this.options.genUIEventMethod, createGenUIEventFrame(streamId, eventType, payload, opts))
       .catch(() => {});
   }
 
@@ -176,6 +182,11 @@ export class SignalRConnector implements IConnector {
         return true;
       case "genui":
         this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return true;
+      case "genui_components":
+        // Server-defined component catalogs are a mekik feature
+        // (PROTOCOL.md §10). Swallow the frame rather than letting it fall
+        // through and render as a chat bubble.
         return true;
       case "typing":
         this.typingHandler?.(frame.isTyping);

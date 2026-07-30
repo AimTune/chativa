@@ -6,6 +6,7 @@ import {
   messageStore,
   conversationStore,
   createOutgoingMessage,
+  type GenUIEventOptions,
 } from "@chativa/core";
 import { registerCommand } from "../commands/index";
 import "./ConversationList";
@@ -219,13 +220,10 @@ export class AgentPanel extends LitElement {
   };
 
   private _onGenUISendEvent = (
-    e: CustomEvent<{ msgId: string; eventType: string; payload: unknown }>
+    e: CustomEvent<{ msgId: string; eventType: string; payload: unknown } & GenUIEventOptions>
   ) => {
-    this._engine.chatEngine.receiveComponentEvent(
-      e.detail.msgId,
-      e.detail.eventType,
-      e.detail.payload
-    );
+    const { msgId, eventType, payload, scope, component } = e.detail;
+    this._engine.chatEngine.receiveComponentEvent(msgId, eventType, payload, { scope, component });
   };
 
   // ── Render ────────────────────────────────────────────────────────────

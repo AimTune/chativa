@@ -18,6 +18,7 @@ import type { OutgoingMessage, IncomingMessage } from "../domain/entities/Messag
 import type { ToolCall } from "../domain/entities/ToolCall";
 import type { ConnectorStatus } from "./stores/ChatStore";
 import type { SurveyPayload } from "../domain/ports/IConnector";
+import type { GenUIComponentDefinition } from "../domain/entities/GenUI";
 
 // ── Event payload map ──────────────────────────────────────────────────────────
 
@@ -44,6 +45,8 @@ export interface EventBusPayloadMap {
   search_query_changed: { query: string };
   /** User submitted an end-of-conversation survey. */
   survey_submitted: SurveyPayload;
+  /** The server announced GenUI components and they were registered. */
+  genui_components_registered: { definitions: GenUIComponentDefinition[] };
   /** A connector tool call started or changed state (upsert by `id`). */
   tool_call_updated: ToolCall;
 }

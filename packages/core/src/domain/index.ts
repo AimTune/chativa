@@ -1,9 +1,11 @@
 // Domain — pure types and interfaces
 export type { IncomingMessage, OutgoingMessage, MessageSender, MessageAction, MessageStatus, HistoryResult } from "./entities/Message";
-export type { AIChunk, AIChunkText, AIChunkUI, AIChunkEvent, GenUIStreamState, GenUIChunkHandler } from "./entities/GenUI";
+export type { AIChunk, AIChunkText, AIChunkUI, AIChunkEvent, GenUIStreamState, GenUIChunkHandler, GenUIComponentAPI, GenUIComponentDefinition, GenUIComponentsHandler, GenUIEventOptions, GenUIEventScope } from "./entities/GenUI";
 export type { ToolCall, ToolCallStatus, ToolCallHandler } from "./entities/ToolCall";
 export type { ChatFrame, ParseChatFrameOptions } from "./entities/ChatFrame";
 export { parseChatFrame, createGenUIEventFrame } from "./entities/ChatFrame";
+export { createGenUIComponentCache } from "./entities/GenUIComponentCache";
+export type { GenUIComponentCache, GenUIComponentCacheOptions, GenUIComponentCacheStorage, CachedGenUIComponents } from "./entities/GenUIComponentCache";
 export { createOutgoingMessage } from "./entities/Message";
 export type { Conversation, ConversationStatus } from "./entities/Conversation";
 export type {

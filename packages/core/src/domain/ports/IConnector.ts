@@ -8,7 +8,11 @@
  */
 
 import type { IncomingMessage, OutgoingMessage, HistoryResult, MessageStatus } from "../entities/Message";
-import type { GenUIChunkHandler } from "../entities/GenUI";
+import type {
+  GenUIChunkHandler,
+  GenUIComponentsHandler,
+  GenUIEventOptions,
+} from "../entities/GenUI";
 import type { ToolCallHandler } from "../entities/ToolCall";
 import type { Conversation } from "../entities/Conversation";
 import type { ChativaContext } from "../../application/ChativaContext";
@@ -95,6 +99,20 @@ export interface IConnector {
   onGenUIChunk?(callback: GenUIChunkHandler): void;
 
   /**
+   * Optional: register a callback for server-defined GenUI components.
+   *
+   * A backend that authors its own components announces them once the session
+   * is established (mekik sends a `genui_components` frame right after
+   * `welcome`). ChatEngine forwards them to `genUIDefinitionStore`, where
+   * `@chativa/genui` picks them up and registers them — so a `{ type: "ui" }`
+   * chunk naming one of them mounts with no client-side build step.
+   *
+   * May fire more than once (reconnect, hot reload); later definitions of the
+   * same `name` + `version` are ignored.
+   */
+  onGenUIComponents?(callback: GenUIComponentsHandler): void;
+
+  /**
    * Optional: register a callback for tool-call lifecycle events.
    * Connectors report each invocation as it progresses by emitting the same
    * ToolCall `id` with updated fields (running → completed/error).
@@ -107,8 +125,16 @@ export interface IConnector {
    * @param streamId  Original connector stream id (from `onGenUIChunk`).
    * @param eventType The event type string (e.g. "form_submit").
    * @param payload   Arbitrary payload from the UI component.
+   * @param opts      Routing metadata — which attribute fired the interaction and
+   *                  which component it came from. Only protocols that model the
+   *                  distinction use it; ignoring it is fine.
    */
-  receiveComponentEvent?(streamId: string, eventType: string, payload: unknown): void;
+  receiveComponentEvent?(
+    streamId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions
+  ): void;
 
   // ── Multi-conversation / Agent-panel support (all optional) ──────────
 

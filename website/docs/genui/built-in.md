@@ -24,6 +24,7 @@ Auto-registered by importing `@chativa/genui`.
 | `genui-steps` | Vertical step list | `steps: { label, status, description? }[]` | — |
 | `genui-image-gallery` | Grid of images | `columns?, images: { src, alt?, caption? }[]` | — |
 | `genui-appointment-form` | Specialised appointment form | `fields[]` | `form_submit` |
+| `genui-html` / `html` | Backend-authored raw markup ([details](./custom-component.md)) | `html: string, css?: string, unsafe?: boolean` | any `data-event` on a clicked element or submitted `<form>` |
 
 ## Visual reference
 
