@@ -420,6 +420,9 @@ importers:
         specifier: workspace:*
         version: link:../core
     devDependencies:
+      '@chativa/connector-mekik':
+        specifier: workspace:*
+        version: link:../connector-mekik
       '@react-native/babel-preset':
         specifier: ^0.86.1
         version: 0.86.1(@babel/core@7.29.0)
@@ -441,6 +444,9 @@ importers:
       typescript:
         specifier: ~5.8.3
         version: 5.8.3
+      vitest:
+        specifier: ^4.0.18
+        version: 4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0)
 
   packages/ui:
     dependencies:

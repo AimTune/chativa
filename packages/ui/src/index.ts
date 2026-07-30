@@ -11,6 +11,9 @@ export type { LocalizedCommandConfig, CommandTranslations } from "./commands/ind
 export { render } from "./render";
 export type { RenderOptions } from "./render";
 export { GenUIRegistry } from "@chativa/genui";
+// Singletons the rn-webview bootstrap bridges against — the CDN (IIFE) build
+// bundles core, so these are the same instances <chat-iva> itself uses.
+export { EventBus, chatStore } from "@chativa/core";
 
 // Side-effect registrations (registers custom elements)
 // @chativa/genui: registers genui-message custom element + MessageTypeRegistry.register("genui", ...)
