@@ -21,5 +21,10 @@
   },
   "include": [
     "src"
+  ],
+  // The mekik drift guard needs the DOM lib and source-resolved workspace
+  // packages — it runs in its own pass, see tsconfig.compat.json.
+  "exclude": [
+    "src/bridge/__tests__/mekikSpecCompat.test.ts"
   ]
 }

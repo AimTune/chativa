@@ -30,9 +30,33 @@ auto-detects the pnpm workspace root from `pnpm-workspace.yaml` — no manual
   for the web, completely unmodified.
 - `onMessage` / `onMessageSent` / `onConnect` / `onReady` / `onError` — the
   bridge surfaces the same event shape `@chativa/react`'s `<ChatIva>` does.
-- `sendToChativaWebView(ref, { type: "set_theme", payload })` — pushing a
-  live update into an already-mounted WebView, rather than relying on a prop
-  change (which would reload the page and reconnect).
+- `sendToChativaWebView(ref, ...)` — pushing live commands into an
+  already-mounted WebView (`set_theme`, `send_message`, `open_widget`,
+  `close_widget`), rather than relying on a prop change (which would reload
+  the page and reconnect).
+- GenUI observability callbacks (`onGenUIComponentsRegistered`,
+  `onGenUIStreamStarted/Completed`, `onToolCallUpdated`, `onAuthError`) —
+  logged to the console; they fire when a server streams GenUI.
+
+## Mekik smoke test (server-defined GenUI components)
+
+Set `USE_MEKIK = true` at the top of `App.tsx` and point `MEKIK_URL` at a
+running mekik dev server. A device/emulator can't reach your machine's
+`localhost` — use your LAN IP, or `10.0.2.2` from the Android emulator.
+
+Expected console sequence after connecting and sending a prompt that streams
+a server-defined component:
+
+1. `genui catalog registered: [{name, version, tag}, ...]` — the server's
+   `genui_components` frame was registered as custom elements.
+2. `genui stream started: <streamId>` → the component renders in the chat →
+   `genui stream completed: <streamId>`.
+3. Tapping a `component-event`/`mekik-event` button inside the rendered
+   component round-trips to the server entirely inside the WebView (watch
+   the server logs for the `genui_event` frame).
+4. On an app reload, the catalog comes from the WebView's localStorage cache
+   (the `hello` frame carries `componentsHash`; the server replies
+   `unchanged: true`).
 
 ## Not verified by an automated check
 

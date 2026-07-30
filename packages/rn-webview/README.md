@@ -27,12 +27,16 @@ out to be insufficient in a real app" — not committed work.
 `<ChativaWebView>` renders a `react-native-webview` pointed at a
 self-contained HTML document built by `buildBootstrapHtml()`. That document:
 
-1. Loads `@chativa/core`, `@chativa/ui` (which itself pulls in
-   `@chativa/genui`), and whichever connector script the `connector` prop
-   asks for — each from that package's own CDN/global (IIFE) build, via
-   jsdelivr by default (`https://cdn.jsdelivr.net/npm/<pkg>@latest/dist/...`).
+1. Loads `@chativa/ui` (which bundles `@chativa/core` + `@chativa/genui`)
+   and whichever connector script the `connector` prop asks for — each from
+   that package's own CDN/global (IIFE) build, via jsdelivr by default
+   (`https://cdn.jsdelivr.net/npm/<pkg>@latest/dist/...`).
    Override `cdnBaseUrl`/`versions` to pin exact versions or point at bundled
-   local assets for offline use.
+   local assets for offline use. **Requires `@chativa/ui` >= 0.10** — the
+   bridge binds to `window.Chativa.EventBus`/`window.Chativa.chatStore` (the
+   singletons *inside* the ui bundle, i.e. the exact instances `<chat-iva>`
+   uses); older ui builds don't expose them and the bridge reports a loud
+   `error` instead of silently observing a second, disconnected copy of core.
 2. Constructs the connector (`new window.<Global>.<ClassName>(options)`) and
    assigns `window.chativaSettings` — the *same* global-config convention
    `@chativa/core`'s `applyGlobalSettings()` already reads on the web, just
@@ -45,15 +49,16 @@ self-contained HTML document built by `buildBootstrapHtml()`. That document:
    `ReactNativeWebView.postMessage`, which `<ChativaWebView>` turns back into
    the same event props `@chativa/react`'s `<ChatIva>` exposes: `onMessage`,
    `onMessageSent`, `onConnect`, `onDisconnect`, `onSurveySubmit`,
-   `onWidgetOpen`, `onWidgetClose`.
+   `onWidgetOpen`, `onWidgetClose` — plus GenUI observability:
+   `onGenUIComponentsRegistered`, `onGenUIStreamStarted`,
+   `onGenUIStreamCompleted`, `onToolCallUpdated`, and `onAuthError`.
 
 Because the widget's JS (core + connector + UI) genuinely runs inside the
 WebView's browser engine, **every existing `@chativa/connector-*` package
 works completely unmodified** — `connector-websocket`, `-signalr`,
-`-directline`, `-sse`, `-http` all already have CDN builds (see each
-package's `jsdelivr` field / `vite.config.cdn.ts`). A connector without one
-(e.g. `@chativa/connector-mekik`, or a private connector) still works via
-`{ type: "custom", scriptUrl, globalName, className, options }`.
+`-directline`, `-sse`, `-http`, `-mekik` all already have CDN builds (see
+each package's `jsdelivr` field / `vite.config.cdn.ts`). A private connector
+still works via `{ type: "custom", scriptUrl, globalName, className, options }`.
 
 ```tsx
 import { ChativaWebView } from "@chativa/rn-webview";
@@ -65,15 +70,91 @@ import { ChativaWebView } from "@chativa/rn-webview";
 />;
 ```
 
-Live theme updates after mount go through the bridge rather than a prop
-change (changing `connector`/`theme` props doesn't re-render the HTML — that
-would fully reload the WebView and reconnect):
+Live commands after mount go through the bridge rather than a prop change
+(changing `connector`/`theme` props doesn't re-render the HTML — that would
+fully reload the WebView and reconnect):
 
 ```tsx
 import { sendToChativaWebView } from "@chativa/rn-webview";
 
 sendToChativaWebView(webViewRef, { type: "set_theme", payload: { colors: { primary: "#000" } } });
+sendToChativaWebView(webViewRef, { type: "send_message", payload: { text: "Hello" } });
+sendToChativaWebView(webViewRef, { type: "open_widget" });
+sendToChativaWebView(webViewRef, { type: "close_widget" });
 ```
+
+## Mekik connector + server-defined GenUI components
+
+`connector: { type: "mekik", options }` connects the WebView-hosted widget
+straight to a mekik server. Server-defined GenUI components — the
+`genui_components` catalog frames (`{name, template, css, props, version}`)
+— render inside the WebView exactly as on the web: the widget registers each
+definition as a custom element and streamed `genui` chunks instantiate them.
+RN observes the flow through the GenUI callbacks:
+
+```tsx
+<ChativaWebView
+  connector={{
+    type: "mekik",
+    options: {
+      url: "ws://192.168.1.10:8790/chat", // a device can't reach your machine's `localhost`
+      resumeConversation: true,
+      auth: { kind: "token", token: "my-api-key" },
+    },
+  }}
+  onGenUIComponentsRegistered={({ components }) => console.log("catalog:", components)}
+  onGenUIStreamStarted={({ streamId }) => console.log("stream started", streamId)}
+  onGenUIStreamCompleted={({ streamId }) => console.log("stream done", streamId)}
+  onAuthError={({ code, message }) => console.warn("auth rejected:", code, message)}
+  style={{ flex: 1 }}
+/>
+```
+
+`onGenUIComponentsRegistered` delivers **summaries only** (`name`/`version`/
+`tag`) — the full template stays inside the WebView where it renders.
+Component events (`component-event`/`mekik-event`/`data-event` buttons in a
+rendered widget) round-trip to the server entirely inside the WebView; RN
+doesn't need to participate.
+
+**Auth is described, not passed.** `MekikConnectorOptions.auth` normally takes
+a live `TokenAuth`/`CookieAuth` instance, but a class instance can't cross the
+JSON bridge. The spec's `auth` field is a plain object rebuilt into the real
+adapter inside the WebView:
+
+- `auth: { kind: "token", token, transport?, queryParam?, maxRetries? }` →
+  `new TokenAuth({...})`. Only a *string* token — a token-minting function
+  can't be serialized (use `@chativa/react` or a `custom` connector script if
+  you need one).
+- `auth: { kind: "cookie" }` → `new CookieAuth()`. The `refresh` callback is
+  likewise unsupported over the bridge.
+- `onAuthError` can't be passed either; the bootstrap wires it and surfaces
+  rejections as the `onAuthError` prop.
+
+## Bridge message reference
+
+Outbound (WebView → RN), delivered as the matching callback prop:
+
+| message | payload | prop |
+|---|---|---|
+| `ready` | — | `onReady` |
+| `message_received` | `IncomingMessage` | `onMessage` |
+| `message_sent` | `OutgoingMessage` | `onMessageSent` |
+| `connector_status_changed` | `{status}` | `onConnect` / `onDisconnect` |
+| `survey_submitted` | `SurveyPayload` | `onSurveySubmit` |
+| `widget_opened` / `widget_closed` | — | `onWidgetOpen` / `onWidgetClose` |
+| `genui_components_registered` | `{components: [{name, version?, tag?}]}` | `onGenUIComponentsRegistered` |
+| `genui_stream_started` / `genui_stream_completed` | `{streamId}` | `onGenUIStreamStarted` / `onGenUIStreamCompleted` |
+| `tool_call_updated` | `ToolCall` | `onToolCallUpdated` |
+| `auth_error` | `{code, message}` | `onAuthError` |
+| `error` | `{message}` | `onError` |
+
+Inbound (RN → WebView), via `sendToChativaWebView(ref, msg)`:
+
+| message | payload | effect |
+|---|---|---|
+| `set_theme` | `DeepPartial<ThemeConfig>` | live theme update |
+| `send_message` | `{text, markdown?}` | sends a user message (same path as typing it) |
+| `open_widget` / `close_widget` | — | `chatStore.open()` / `.close()` |
 
 ## Building
 
@@ -107,7 +188,11 @@ builds packages in dependency order.
   `file://` base in principle, but nothing here packages `dist/*.global.js`
   files as RN assets; today this requires the device to have network access
   to jsdelivr (or an override URL).
-- No tests yet.
+- **No RN-originated GenUI component events** — a rendered widget's buttons
+  round-trip inside the WebView, but native code can't synthesize a
+  component event (there's no `msgId` on the RN side to target). Part of the
+  native-renderer follow-up (#29/#30) along with bridging full
+  `GenUIComponentDefinition` payloads for true native rendering.
 
 ## `DOM` leaks in `@chativa/core`
 

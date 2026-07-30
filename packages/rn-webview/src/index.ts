@@ -15,6 +15,9 @@ export type {
   BuiltinConnectorType,
   ChativaConnectorSpec,
   ChativaWebViewSettings,
+  GenUIComponentSummary,
+  MekikAuthSpec,
+  MekikConnectorSpecOptions,
 } from "./bridge/types";
 
 // Re-export core types so consumers don't need a separate `@chativa/core`
