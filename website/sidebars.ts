@@ -5,6 +5,7 @@ const sidebars: SidebarsConfig = {
     "intro",
     "getting-started",
     "concepts",
+    "react-native",
     {
       type: "category",
       label: "Architecture",

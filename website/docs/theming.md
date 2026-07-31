@@ -82,6 +82,8 @@ chatStore.getState().setTheme({
 
 Omit any URL to fall back to the default SVG.
 
+`avatar.bot` and `showBot` apply to every bot-authored bubble — including the `buttons` and `quick-reply` [message types](./message-types/built-in.md), which render the configured image (or the default robot SVG when no URL is set) next to their button list. `showBot: false` hides the avatar there too.
+
 ## Custom launcher button
 
 The launcher accepts both a slot and a `::part(launcher)` selector:
