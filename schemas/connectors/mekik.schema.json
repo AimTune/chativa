@@ -12,12 +12,17 @@
     "reconnect":            { "type": "boolean", "default": true,  "description": "Auto-reconnect when the socket closes. Suppressed after an auth rejection (close code 4401)." },
     "reconnectDelay":       { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait between reconnect attempts." },
     "maxReconnectAttempts": { "type": "integer", "minimum": 0, "default": 5,    "description": "Stop reconnecting after this many consecutive failures. Reset on a successful handshake." },
+    "reconnectBackoff":     { "type": "string", "enum": ["fixed", "exponential"], "default": "fixed", "description": "Reconnect pacing: \"fixed\" waits reconnectDelay every time; \"exponential\" grows the wait geometrically up to reconnectMaxDelay with full jitter." },
+    "reconnectMaxDelay":    { "type": "integer", "minimum": 0, "default": 30000, "description": "Ceiling for \"exponential\" backoff, in milliseconds." },
+    "routeInUrl":           { "type": "boolean", "default": false, "description": "Put conversationId (and userId) in the connect URL query string so a sticky-by-conversation load balancer can route the upgrade. Off by default (they stay out of URLs / server logs)." },
     "queueOfflineMessages": { "type": "boolean", "default": true,  "description": "Queue outgoing messages while the socket is down and flush them on (re)connect." },
     "userId":               { "type": "string", "description": "Stable user identity sent in the hello handshake. Omit to let the server mint one (announced via the welcome frame). An authenticating server may override this with the verified identity." },
     "conversationId":       { "type": "string", "description": "Conversation to resume. Omit to start a new one." },
     "resumeConversation":   { "type": "boolean", "default": false, "description": "Persist identity + watermark in localStorage and resume across page reloads." },
     "auth":                 { "type": "object", "description": "MekikAuthProvider adapter deciding what credential this client presents (CookieAuth, TokenAuth, or a custom provider). Cannot be serialised — set programmatically. Takes precedence over `token`." },
     "token":                { "type": "string", "description": "Deprecated — shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })`: a credential sent in the hello handshake with no retry on rejection. A function returning a fresh token per attempt is also accepted, but cannot be serialised — set that programmatically. Not needed for cookie-based auth.", "deprecated": true },
-    "onAuthError":          { "type": "object", "description": "Callback invoked when the server rejects the connection (error frame + close code 4401). Cannot be serialised — set programmatically." }
+    "onAuthError":          { "type": "object", "description": "Callback invoked when the server rejects the connection (error frame + close code 4401). Cannot be serialised — set programmatically." },
+    "tools":                { "type": "array", "items": { "type": "object" }, "description": "Client tools declared to the server (mekik PROTOCOL.md §11): {name, description?, parameters?, tags?, mode?, handler}. Each entry carries a handler function, so the option cannot be serialised — set programmatically. Ignored by servers that did not opt in." },
+    "allowDynamicTools":    { "type": "boolean", "default": false, "description": "Allow registerTool()/unregisterTool() after construction. Off by default: with the default the toolset is sealed at construction and held in true-private fields, so injected script cannot rewire what the server-side model may trigger." }
   }
 }

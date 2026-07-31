@@ -65,6 +65,11 @@ export interface MekikConnectorSpecOptions {
    * the bridge; prefer `auth: { kind: "token", ... }`.
    */
   token?: string;
+  // `tools` / `allowDynamicTools` (client tools, mekik PROTOCOL.md §11) are
+  // deliberately absent: each tool carries a handler function, which can't
+  // cross the native/web bridge. Apps needing client tools should host the
+  // widget with `@chativa/react` or supply a `custom` connector script that
+  // constructs its own MekikConnector with tools.
 }
 
 /**

@@ -868,3 +868,222 @@ describe("MekikConnector server-defined components", () => {
     expect(seen[seen.length - 1]).toEqual([v2]);
   });
 });
+
+describe("MekikConnector client tools (mekik/1 §11)", () => {
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  function makeToolConnector(
+    tools: ConstructorParameters<typeof MekikConnector>[0]["tools"],
+    extra?: Partial<ConstructorParameters<typeof MekikConnector>[0]>,
+  ) {
+    const connector = new MekikConnector({ url: "ws://test", reconnect: false, tools, ...extra });
+    const messages: Array<Record<string, unknown>> = [];
+    const chunks: Array<{ streamId: string; chunk: unknown }> = [];
+    connector.onMessage((m) => messages.push(m as unknown as Record<string, unknown>));
+    connector.onGenUIChunk((streamId, chunk) => chunks.push({ streamId, chunk }));
+    const route = (frame: Record<string, unknown>) =>
+      (connector as unknown as { routeFrame(raw: string): void }).routeFrame(JSON.stringify(frame));
+    const queue = () => (connector as unknown as { queue: Array<{ payload: string }> }).queue;
+    return { connector, messages, chunks, route, queue };
+  }
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    MockWebSocket.instances = [];
+  });
+
+  it("declares the tool definitions (never the handlers) in the hello handshake", async () => {
+    vi.stubGlobal("WebSocket", MockWebSocket);
+    const connector = new MekikConnector({
+      url: "ws://test",
+      reconnect: false,
+      tools: [
+        {
+          name: "pick_date",
+          description: "Open the date picker",
+          parameters: { type: "object", properties: { min: { type: "string" } } },
+          tags: ["scheduling"],
+          handler: () => ({ date: "2026-08-15" }),
+        },
+        { name: "show_confetti", mode: "notify", handler: () => {} },
+      ],
+    });
+    const connecting = connector.connect();
+    MockWebSocket.instances[0].open();
+    await connecting;
+
+    const hello = JSON.parse(MockWebSocket.instances[0].sent[0]) as Record<string, unknown>;
+    expect(hello.type).toBe("hello");
+    expect(hello.tools).toEqual([
+      {
+        name: "pick_date",
+        description: "Open the date picker",
+        parameters: { type: "object", properties: { min: { type: "string" } } },
+        tags: ["scheduling"],
+      },
+      { name: "show_confetti", mode: "notify" },
+    ]);
+    await connector.disconnect();
+  });
+
+  it("executes a live tool interrupt and answers with the {ok:true, result} envelope", async () => {
+    const handler = vi.fn(() => ({ date: "2026-08-15" }));
+    const { messages, route, queue } = makeToolConnector([{ name: "pick_date", handler }]);
+
+    route({
+      type: "interrupt",
+      seq: 5,
+      id: "call:tool:pick_date",
+      data: { payload: {}, tool: { name: "pick_date", params: { min: "2026-08-01" } } },
+    });
+    await flush();
+
+    expect(handler).toHaveBeenCalledWith({ min: "2026-08-01" });
+    expect(messages).toEqual([]); // a tool pause renders nothing — no chips, no form
+    expect(queue()).toHaveLength(1);
+    expect(JSON.parse(queue()[0].payload)).toEqual({
+      type: "resume",
+      answers: { "call:tool:pick_date": { ok: true, result: { date: "2026-08-15" } } },
+    });
+  });
+
+  it("answers {ok:false, error} when the handler throws", async () => {
+    const { route, queue } = makeToolConnector([
+      { name: "pick_date", handler: () => Promise.reject(new Error("picker dismissed")) },
+    ]);
+
+    route({ type: "interrupt", seq: 5, id: "i1", data: { payload: {}, tool: { name: "pick_date" } } });
+    await flush();
+
+    expect(JSON.parse(queue()[0].payload)).toEqual({
+      type: "resume",
+      answers: { i1: { ok: false, error: "picker dismissed" } },
+    });
+  });
+
+  it("leaves a tool pause standing when no handler is registered here", async () => {
+    const { messages, route, queue } = makeToolConnector([]);
+
+    route({ type: "interrupt", seq: 5, id: "i1", data: { payload: {}, tool: { name: "someone_elses" } } });
+    await flush();
+
+    expect(messages).toEqual([]);
+    expect(queue()).toHaveLength(0);
+  });
+
+  it("does not re-execute replayed historic tool interrupts, but does execute welcome.pending ones", async () => {
+    const handler = vi.fn(() => "ok");
+    const { route, queue } = makeToolConnector([{ name: "confirm", handler }]);
+
+    route({
+      type: "welcome",
+      data: {
+        conversationId: "c1",
+        userId: "u1",
+        connectionId: "cx",
+        watermark: 10,
+        pending: [{ id: "open:tool:confirm", data: { payload: {}, tool: { name: "confirm" } } }],
+      },
+    });
+    // A replayed (historic, long-resolved) interrupt: seq ≤ the welcome watermark.
+    route({ type: "interrupt", seq: 7, id: "old:tool:confirm", data: { payload: {}, tool: { name: "confirm" } } });
+    await flush();
+
+    expect(handler).toHaveBeenCalledTimes(1); // the pending one only
+    expect(queue()).toHaveLength(1);
+    expect(JSON.parse(queue()[0].payload).answers).toEqual({ "open:tool:confirm": { ok: true, result: "ok" } });
+  });
+
+  it("executes each tool interrupt at most once per session", async () => {
+    const handler = vi.fn(() => "ok");
+    const { route, queue } = makeToolConnector([{ name: "confirm", handler }]);
+
+    route({ type: "interrupt", seq: 5, id: "i1", data: { payload: {}, tool: { name: "confirm" } } });
+    route({ type: "interrupt", seq: 5, id: "i1", data: { payload: {}, tool: { name: "confirm" } } });
+    await flush();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(queue()).toHaveLength(1);
+  });
+
+  it("routes a notify client_tool event chunk to the handler, not to the GenUI layer, deduped by chunk id", async () => {
+    const handler = vi.fn();
+    const { chunks, route } = makeToolConnector([{ name: "show_confetti", mode: "notify", handler }]);
+
+    const frame = {
+      type: "genui",
+      seq: 9,
+      streamId: "stream-1",
+      done: false,
+      chunk: { type: "event", name: "client_tool", payload: { name: "show_confetti", params: { level: 3 } }, id: "t0" },
+    };
+    route(frame);
+    route(frame); // replay/duplicate — must not fire twice
+    await flush();
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(handler).toHaveBeenCalledWith({ level: 3 });
+    expect(chunks).toEqual([]); // swallowed: it addresses the tool registry
+
+    // An ordinary event chunk still reaches the GenUI layer untouched.
+    route({
+      type: "genui",
+      seq: 10,
+      streamId: "stream-1",
+      done: false,
+      chunk: { type: "event", name: "highlight", payload: {}, id: 2 },
+    });
+    expect(chunks).toHaveLength(1);
+  });
+
+  it("seals the toolset by default: registerTool/unregisterTool throw", () => {
+    const { connector } = makeToolConnector([{ name: "a", handler: () => {} }]);
+    expect(() => connector.registerTool({ name: "b", handler: () => {} })).toThrow(/sealed/);
+    expect(() => connector.unregisterTool("a")).toThrow(/sealed/);
+    expect(connector.clientTools.map((t) => t.name)).toEqual(["a"]);
+  });
+
+  it("with allowDynamicTools, register/unregister re-announce the full set via a client_tools frame", async () => {
+    vi.stubGlobal("WebSocket", MockWebSocket);
+    const connector = new MekikConnector({
+      url: "ws://test",
+      reconnect: false,
+      allowDynamicTools: true,
+      tools: [{ name: "a", handler: () => {} }],
+    });
+    const connecting = connector.connect();
+    const ws = MockWebSocket.instances[0];
+    ws.open();
+    await connecting;
+
+    connector.registerTool({ name: "b", tags: ["x"], handler: () => {} });
+    let announce = JSON.parse(ws.sent[ws.sent.length - 1]) as Record<string, unknown>;
+    expect(announce.type).toBe("client_tools");
+    expect(announce.tools).toEqual([{ name: "a" }, { name: "b", tags: ["x"] }]);
+
+    connector.unregisterTool("a");
+    announce = JSON.parse(ws.sent[ws.sent.length - 1]) as Record<string, unknown>;
+    expect(announce.tools).toEqual([{ name: "b", tags: ["x"] }]);
+    await connector.disconnect();
+  });
+
+  it("freezes cloned definitions: later mutation of the caller's object changes nothing", () => {
+    const def = { name: "a", tags: ["one"], handler: () => {} };
+    const { connector } = makeToolConnector([def]);
+    def.tags.push("two");
+    (def as { name: string }).name = "renamed";
+
+    expect(connector.clientTools).toEqual([{ name: "a", tags: ["one"] }]);
+    expect(Object.isFrozen(connector.clientTools[0])).toBe(true);
+    expect(Object.isFrozen(connector.clientTools[0].tags)).toBe(true);
+  });
+
+  it("rejects a tool without a name or handler at construction", () => {
+    expect(
+      () => new MekikConnector({ url: "ws://test", tools: [{ name: "", handler: () => {} }] }),
+    ).toThrow(/non-empty name/);
+    expect(
+      () => new MekikConnector({ url: "ws://test", tools: [{ name: "x" } as never] }),
+    ).toThrow(/handler function/);
+  });
+});
