@@ -8,7 +8,7 @@ Chativa is shipped as a Web Component. You drop one `<script>` and one element i
 <!DOCTYPE html>
 <html>
 <body>
-  <script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js"></script>
   <chat-bot-button></chat-bot-button>
   <chat-iva></chat-iva>
 </body>
@@ -16,6 +16,8 @@ Chativa is shipped as a Web Component. You drop one `<script>` and one element i
 ```
 
 Open the page — the launcher button shows up in the bottom-right. Click it. The default `dummy` connector echoes whatever you type.
+
+`chativa.global.js` is self-contained: it bundles `@chativa/core`, `@chativa/ui` and `@chativa/genui`, and exposes them as `window.Chativa`. Because core is *inside* it, don't also load `chativa-core.global.js` on the same page — the second copy has its own stores, so anything bound to it would silently never fire. For a bundler-based setup, import from `@chativa/ui` instead; the npm build leaves `lit`, `i18next` and `@chativa/core` as normal imports so your bundler resolves one copy of each.
 
 ![Hero — widget closed and open](./assets/screenshots/hero/hero-closed-open.png)
 > _Screenshot placeholder._
@@ -60,7 +62,7 @@ Set `window.chativaSettings` **before** the script tag is parsed. Chativa picks 
     },
   };
 </script>
-<script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js"></script>
 <chat-iva></chat-iva>
 ```
 

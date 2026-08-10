@@ -116,4 +116,4 @@ sequenceDiagram
 ## Limitations
 
 - Some pages (`chrome://`, `chrome.google.com/webstore`, the Web Store itself) block content-script injection — the popup will display "Cannot inject on this page."
-- The injected widget loads `@chativa/ui` from `unpkg.com`. If the host page has a strict CSP that blocks `unpkg.com`, injection fails. There's no workaround besides relaxing the CSP on a page you control.
+- The injected widget bundles `@chativa/ui` into `inject-main.js` and is injected into the page's MAIN world by the extension, so it loads nothing from a CDN and the host page's CSP does not apply to it.

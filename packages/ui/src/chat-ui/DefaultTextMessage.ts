@@ -2,7 +2,7 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
 import type { LinkMetadataFetcher } from "./LinkPreviewCard";

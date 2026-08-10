@@ -13,6 +13,17 @@ afterEach(() => {
   cleanup();
 });
 
+/**
+ * Wait for the lazily-imported `<chat-iva>` to mount. The first mount in a file
+ * pays for the dynamic `import("@chativa/ui")`, which regularly overruns
+ * `waitFor`'s 1s default in a cold Vitest worker — hence the explicit timeout.
+ */
+function waitForWidget() {
+  return waitFor(() => {
+    expect(document.querySelector("chat-iva")).not.toBeNull();
+  }, { timeout: 15000 });
+}
+
 function makeFakeConnector(name: string): IConnector {
   return {
     name,
@@ -35,9 +46,7 @@ describe("ChatIva", () => {
 
     render(<ChatIva connector={connector} />);
 
-    await waitFor(() => {
-      expect(document.querySelector("chat-iva")).not.toBeNull();
-    });
+    await waitForWidget();
 
     expect(ConnectorRegistry.has("chativa-test-connector-2")).toBe(true);
     // `ChatWidget.connectedCallback` reads `chatStore.activeConnector` (in
@@ -53,13 +62,34 @@ describe("ChatIva", () => {
 
     render(<ChatIva connector="chativa-test-connector-3" />);
 
-    await waitFor(() => {
-      expect(document.querySelector("chat-iva")).not.toBeNull();
-    });
+    await waitForWidget();
 
     expect(chatStore.getState().activeConnector).toBe("chativa-test-connector-3");
 
     ConnectorRegistry.unregister("chativa-test-connector-3");
+  });
+
+  it("applies fullscreenOnly before the element connects, and treats false as no opinion", () => {
+    chatStore.getState().setFullscreen(false);
+    chatStore.getState().setAllowFullscreen(true);
+
+    // Asserted synchronously, without waiting for the element to mount: that is
+    // the point of routing this through the store rather than through a
+    // `fullscreenOnly` element property, which `@lit/react` would only assign
+    // after `<chat-iva>` has already connected and picked a window mode.
+    const { unmount } = render(
+      <ChatIva connector={makeFakeConnector("chativa-test-connector-fs-1")} fullscreenOnly={false} />,
+    );
+    expect(chatStore.getState().isFullscreen).toBe(false);
+    expect(chatStore.getState().allowFullscreen).toBe(true);
+    unmount();
+
+    render(<ChatIva connector={makeFakeConnector("chativa-test-connector-fs-2")} fullscreenOnly />);
+    expect(chatStore.getState().isFullscreen).toBe(true);
+    expect(chatStore.getState().allowFullscreen).toBe(false);
+
+    chatStore.getState().setFullscreen(false);
+    chatStore.getState().setAllowFullscreen(true);
   });
 
   it("maps EventBus events to onMessage / onWidgetOpen / onWidgetClose props", async () => {
@@ -77,9 +107,7 @@ describe("ChatIva", () => {
       />,
     );
 
-    await waitFor(() => {
-      expect(document.querySelector("chat-iva")).not.toBeNull();
-    });
+    await waitForWidget();
 
     const message: IncomingMessage = {
       id: "m1",
@@ -103,9 +131,7 @@ describe("ChatIva", () => {
 
     render(<ChatIva connector={connector} onConnect={onConnect} onDisconnect={onDisconnect} />);
 
-    await waitFor(() => {
-      expect(document.querySelector("chat-iva")).not.toBeNull();
-    });
+    await waitForWidget();
 
     EventBus.emit("connector_status_changed", { status: "connected" });
     EventBus.emit("connector_status_changed", { status: "disconnected" });
