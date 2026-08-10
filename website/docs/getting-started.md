@@ -23,7 +23,7 @@ The fastest way to see Chativa in action:
     <h1>My website</h1>
     <p>Click the chat button in the bottom-right.</p>
 
-    <script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js"></script>
     <chat-bot-button></chat-bot-button>
     <chat-iva></chat-iva>
   </body>
@@ -34,8 +34,9 @@ That's it. Open the file in a browser. The launcher button appears in the bottom
 
 ### What just happened?
 
-- `chativa.js` is an **ESM bundle** that registers two custom elements: `<chat-bot-button>` (the launcher) and `<chat-iva>` (the panel itself).
-- The bundle includes `@chativa/core`, `@chativa/ui`, and `@chativa/genui` — but **not** any connector. The `dummy` connector is part of `@chativa/core` and registered automatically as a fallback.
+- `chativa.global.js` is a **self-contained script** that registers two custom elements: `<chat-bot-button>` (the launcher) and `<chat-iva>` (the panel itself). It also exposes `window.Chativa`.
+- The bundle includes `@chativa/core`, `@chativa/ui`, and `@chativa/genui` — but **not** any connector. The `dummy` connector is part of `@chativa/core` and registered automatically as a fallback. Because core is *inside* this bundle, don't also load `chativa-core.global.js` on the same page: the second copy has its own stores, and anything bound to it (event handlers, `chatStore`) would silently never fire. Reach the singletons through `window.Chativa` instead.
+- For a bundler-based setup, import from `@chativa/ui` instead — the npm build leaves `lit`, `i18next` and `@chativa/core` as normal imports so your bundler resolves one copy of each.
 - Both elements use **Shadow DOM**, so the host page's CSS can't leak in. You theme via CSS variables, not by overriding internal classes.
 
 ## Step 2 — Install via npm (recommended for production)
@@ -238,7 +239,7 @@ If you'd rather not write any imperative wiring code, set `window.chativaSetting
     },
   };
 </script>
-<script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js"></script>
 <chat-iva></chat-iva>
 ```
 
@@ -264,13 +265,13 @@ Use it to test theme presets, switch connectors, trigger every message type, fir
 ## Troubleshooting
 
 **The widget doesn't appear.**
-Check the browser console. The most common cause is a Content Security Policy that blocks ESM modules from `unpkg.com`. Either copy `chativa.js` into your own bundle or extend the CSP with `script-src https://unpkg.com`.
+Check the browser console. The most common cause is a Content Security Policy that blocks the script from `cdn.jsdelivr.net`. Either copy `chativa.global.js` into your own bundle or extend the CSP with `script-src https://cdn.jsdelivr.net`.
 
 **Custom elements show up as plain text in React/Vue/Angular.**
 You forgot to opt in. See the framework-specific snippets above (`CUSTOM_ELEMENTS_SCHEMA` for Angular, `compilerOptions.isCustomElement` for Vue, JSX intrinsic-element augmentation for React).
 
 **My theme isn't applied.**
-You're probably calling `setTheme()` after the widget has rendered with the default. That's fine — `setTheme()` patches at runtime via `mergeTheme()`. But if you rely on `window.chativaSettings.theme`, make sure that script runs **before** `chativa.js`.
+You're probably calling `setTheme()` after the widget has rendered with the default. That's fine — `setTheme()` patches at runtime via `mergeTheme()`. But if you rely on `window.chativaSettings.theme`, make sure that script runs **before** `chativa.global.js`.
 
 **The dummy connector keeps replying instead of my real backend.**
 You registered your real connector but never called `chatStore.getState().setConnector("name")`. Or you set `window.chativaSettings.connector` to a string for which no connector with that name has been registered.

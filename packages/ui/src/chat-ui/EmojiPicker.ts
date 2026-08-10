@@ -1,6 +1,6 @@
 import { LitElement, html, css } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
 
 interface EmojiCategory {

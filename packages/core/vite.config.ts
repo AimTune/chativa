@@ -14,7 +14,17 @@ export default defineConfig({
       formats: ["es", "cjs"],
       fileName: (fmt, entryName) => `${entryName}.${fmt === "es" ? "js" : "cjs"}`,
     },
-    rollupOptions: {},
+    rollupOptions: {
+      // Every runtime dependency stays external so consumers resolve ONE copy
+      // of it. Bundling them here gave `@chativa/core` a private i18next while
+      // `@chativa/ui` initialised its own: `applyGlobalSettings` wrote the
+      // host's `locale`/`i18n` overrides into an instance no component read
+      // from, so bot-name and language settings silently did nothing. The same
+      // duplication would give the two packages separate `lit` registries.
+      // (The CDN build in vite.config.cdn.ts still bundles everything — that
+      // artifact is meant to be self-contained.)
+      external: ["lit", /^lit\//, "i18next", "zustand", /^zustand\//],
+    },
     sourcemap: true,
   },
   plugins: [dts({ rollupTypes: true })],

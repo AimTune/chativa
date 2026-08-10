@@ -32,6 +32,12 @@ export class ChatEngine {
    */
   private readonly _textRuns = new Map<string, { msgId: string; runId: string | number }>();
   /**
+   * streamId → every text bubble the stream has opened. `_textRuns` only ever
+   * holds the newest run, so this is what lets `_finishStream` guarantee no
+   * earlier bubble is left with its blinking cursor on.
+   */
+  private readonly _streamTextMsgIds = new Map<string, Set<string>>();
+  /**
    * streamId → the first message the stream created (text bubble or genui message).
    * The run's tool-call trace attaches here, wherever the stream started.
    */
@@ -288,6 +294,10 @@ export class ChatEngine {
     }
     const firstChunk = !this._streamHosts.has(streamId);
 
+    // The reply has started arriving, so the "…" indicator has done its job —
+    // leaving it up would show three dots next to an already-growing bubble.
+    chatStore.getState().setTyping(false);
+
     // Text deltas render as a normal, growing bot bubble (default-text-message);
     // ui/event chunks drive the GenUI message. A mekik text run shares one chunk
     // id (PROTOCOL.md §4.1), so same-id deltas concatenate into one bubble and a
@@ -321,6 +331,12 @@ export class ChatEngine {
       return;
     }
     // A new run id → a fresh bot text bubble the default component renders.
+    // The run it supersedes is finished, so close it here: `_textRuns` holds one
+    // entry per stream, and without this the overwritten run would keep
+    // `streaming: true` forever — a bubble stuck mid-sentence with a blinking
+    // cursor whenever a reply interleaves text → ui → text.
+    if (run) this._closeTextRun(run.msgId);
+
     const msgId = `mekik-text-${streamId}-${chunk.id}`;
     messageStore.getState().addMessage({
       id: msgId,
@@ -331,7 +347,17 @@ export class ChatEngine {
       component: MessageTypeRegistry.resolve("text"),
     });
     this._textRuns.set(streamId, { msgId, runId: chunk.id });
+    const opened = this._streamTextMsgIds.get(streamId);
+    if (opened) opened.add(msgId);
+    else this._streamTextMsgIds.set(streamId, new Set([msgId]));
     this._rememberHost(streamId, msgId);
+  }
+
+  /** Drop the streaming (blinking-cursor) flag from a text bubble. */
+  private _closeTextRun(msgId: string): void {
+    const current = messageStore.getState().messages.find((m) => m.id === msgId);
+    if (!current || current.data?.streaming !== true) return;
+    messageStore.getState().updateById(msgId, { data: { ...current.data, streaming: false } });
   }
 
   /** Append a ui/event chunk to the stream's GenUI message, creating it on first use. */
@@ -386,12 +412,12 @@ export class ChatEngine {
 
   /** Close every message the stream opened and drain its tool-call trace. */
   private _finishStream(streamId: string): void {
-    const run = this._textRuns.get(streamId);
-    if (run) {
-      const current = messageStore.getState().messages.find((m) => m.id === run.msgId);
-      messageStore.getState().updateById(run.msgId, { data: { ...current?.data, streaming: false } });
-      this._textRuns.delete(streamId);
-    }
+    // Sweep every bubble the stream opened, not just the newest run — a run
+    // that was superseded mid-stream is already closed, but a stream that ends
+    // in an unexpected shape must never leave one blinking.
+    for (const msgId of this._streamTextMsgIds.get(streamId) ?? []) this._closeTextRun(msgId);
+    this._streamTextMsgIds.delete(streamId);
+    this._textRuns.delete(streamId);
 
     const genUIMsgId = this._genUIStreams.get(streamId);
     if (genUIMsgId) {
@@ -470,6 +496,14 @@ export class ChatEngine {
       this._reconnectTimer = null;
     }
     chatStore.getState().setReconnectAttempt(0);
+    // A stream cut short by teardown never reaches `_finishStream`, so close its
+    // bubbles here — otherwise the transcript keeps a blinking cursor for a
+    // reply that can no longer arrive.
+    for (const opened of this._streamTextMsgIds.values()) {
+      for (const msgId of opened) this._closeTextRun(msgId);
+    }
+    this._streamTextMsgIds.clear();
+    this._textRuns.clear();
     await this.connector.disconnect();
     this._setStatus("disconnected");
   }

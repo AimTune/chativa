@@ -594,6 +594,49 @@ describe("ChatEngine", () => {
     expect(msgs.map((m) => m.data.text)).toEqual(["A", "B"]);
   });
 
+  it("closes the previous text bubble when a new text run opens", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s2d", { type: "text", content: "before", id: 1 }, false);
+    connector.simulateGenUIChunk("s2d", { type: "ui", component: "chart", props: {}, id: 2 }, false);
+    connector.simulateGenUIChunk("s2d", { type: "text", content: "after", id: 3 }, false);
+    const msgs = messageStore.getState().messages;
+    expect(msgs.map((m) => m.data.streaming)).toEqual([false, undefined, true]);
+  });
+
+  it("leaves no text bubble streaming once a multi-run stream is done", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s2e", { type: "text", content: "intro", id: 1 }, false);
+    connector.simulateGenUIChunk("s2e", { type: "ui", component: "chart", props: {}, id: 2 }, false);
+    connector.simulateGenUIChunk("s2e", { type: "text", content: "outro", id: 3 }, false);
+    connector.simulateGenUIChunk("s2e", { type: "event", name: "stream_done", id: 4 }, true);
+    const texts = messageStore.getState().messages.filter((m) => m.type === "text");
+    expect(texts).toHaveLength(2);
+    expect(texts.every((m) => m.data.streaming === false)).toBe(true);
+  });
+
+  it("clears the typing indicator once stream content starts arriving", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateTyping(true);
+    expect(chatStore.getState().isTyping).toBe(true);
+    connector.simulateGenUIChunk("s-typing", { type: "text", content: "Hi", id: 1 }, false);
+    expect(chatStore.getState().isTyping).toBe(false);
+  });
+
+  it("closes an in-flight text bubble when the engine is destroyed", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    connector.simulateGenUIChunk("s-destroy", { type: "text", content: "cut", id: 1 }, false);
+    await engine.destroy();
+    expect(messageStore.getState().messages[0].data.streaming).toBe(false);
+  });
+
   it("appends ui/event chunks into one genui message", async () => {
     const connector = createMockConnector();
     const engine = new ChatEngine(connector);

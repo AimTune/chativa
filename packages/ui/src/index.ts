@@ -11,9 +11,25 @@ export type { LocalizedCommandConfig, CommandTranslations } from "./commands/ind
 export { render } from "./render";
 export type { RenderOptions } from "./render";
 export { GenUIRegistry } from "@chativa/genui";
+// Server-defined GenUI components (mekik PROTOCOL §10). Re-exported here so a
+// host that only depends on @chativa/ui can inspect or extend the registration
+// this bundle already performs — adding `@chativa/genui` alongside it just to
+// reach these would load a second copy of the same custom elements.
+export {
+  registerServerComponent,
+  subscribeServerComponents,
+  clearServerComponents,
+  setServerComponentPolicy,
+  getServerComponentPolicy,
+} from "@chativa/genui";
+export type { ServerComponentPolicy, GenUIComponentDefinition } from "@chativa/genui";
 // Singletons the rn-webview bootstrap bridges against — the CDN (IIFE) build
 // bundles core, so these are the same instances <chat-iva> itself uses.
 export { EventBus, chatStore } from "@chativa/core";
+// The i18n docs have always told readers to `import { i18next } from
+// "@chativa/ui"` — this is the export that makes that true. It is core's
+// instance, the same one `./i18n/i18n` initialises and every component reads.
+export { i18next, t } from "@chativa/core";
 
 // Side-effect registrations (registers custom elements)
 // @chativa/genui: registers genui-message custom element + MessageTypeRegistry.register("genui", ...)

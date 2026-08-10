@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 
 const SIZE_PX: Record<string, number> = { small: 44, medium: 56, large: 68 };

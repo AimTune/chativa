@@ -10,7 +10,7 @@ export default defineConfig({
       fileName: (fmt) => `index.${fmt === "es" ? "js" : "cjs"}`,
     },
     rollupOptions: {
-      external: ["lit", "lit/decorators.js", "lit/directives/unsafe-html.js", "@chativa/core", "@chativa/ui", "marked"],
+      external: ["lit", /^lit\//, "@chativa/core", /^@chativa\/core\//, "@chativa/ui", "marked"],
     },
     sourcemap: true,
   },

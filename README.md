@@ -13,7 +13,7 @@
 ## Quick start
 
 ```html
-<script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js"></script>
 
 <chat-bot-button></chat-bot-button>
 <chat-iva></chat-iva>

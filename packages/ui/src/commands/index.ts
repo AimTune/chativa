@@ -1,4 +1,4 @@
-import i18next, { t } from "i18next";
+import { i18next, t } from "@chativa/core";
 import { SlashCommandRegistry } from "@chativa/core";
 import type { CommandContext } from "@chativa/core";
 

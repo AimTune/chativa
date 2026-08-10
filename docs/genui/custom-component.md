@@ -10,6 +10,13 @@ Two ways to get your own UI into a chat bubble:
 
 Both live in `@chativa/core`, so a widget package doesn't have to depend on `@chativa/genui`.
 
+> **Which package do I import the registry from?** `GenUIRegistry`,
+> `registerServerComponent`, `subscribeServerComponents` and
+> `setServerComponentPolicy` are re-exported by `@chativa/ui`, so an app that
+> already depends on the widget can import them from there and skip the extra
+> dependency. Both paths reach the same registry — `@chativa/ui` does not carry
+> its own copy of the GenUI components.
+
 ## 1. Extend `GenUIElement`
 
 `GenUIElement` extends `ChativaElement` (i18n + auto re-render on locale switch) and implements the whole `GenUIComponentAPI` with working defaults. You call `this.sendEvent(...)` / `this.listenEvent(...)` / `this.tFn(...)` directly — no optional chaining, no injected-property boilerplate.

@@ -2,7 +2,7 @@ import { LitElement, html, css } from "lit";
 import { customElement } from "lit/decorators.js";
 import { unsafeStatic } from "lit/static-html.js";
 import { html as staticHtml } from "lit/static-html.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
 
 import { messageStore, chatStore, type StoredMessage, type ToolCall } from "@chativa/core";

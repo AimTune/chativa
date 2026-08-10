@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import "../i18n/i18n";
 import type { ToolCall } from "@chativa/core";
 import "./ToolCallCard";
