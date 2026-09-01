@@ -102,7 +102,8 @@ const EXPECTED_DISCLAIMER: {
   [K in keyof Required<DisclaimerConfig>]: true;
 } = {
   enabled: true,
-  text: true,
+  bottomText: true,
+  conversationStartText: true,
 };
 
 const EXPECTED_ICONS: { [K in IconName]: true } = {

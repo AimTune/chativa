@@ -7,6 +7,7 @@ import i18next from "../i18n/i18n";
 
 import { messageStore, chatStore, type StoredMessage, type ToolCall } from "@chativa/core";
 import "./ToolCallActivity";
+import { resolveDisclaimerContent } from "./disclaimerContent";
 
 function resolveTag(component: typeof HTMLElement): string {
   const name = customElements.getName?.(component);
@@ -57,6 +58,24 @@ class ChatMessageList extends LitElement {
     }
     .list::-webkit-scrollbar-thumb:hover {
       background: #cbd5e1;
+    }
+
+    /* Introductory AI notice — part of the scrollable conversation flow. */
+    .conversation-disclaimer {
+      flex: 0 0 auto;
+      align-self: center;
+      box-sizing: border-box;
+      width: min(100%, 52rem);
+      margin: 0 auto 14px;
+      padding: 2px clamp(1rem, 4vw, 2rem) 12px;
+      color: var(--chativa-disclaimer-color, var(--chativa-text-tertiary, #94a3b8));
+      font-size: var(--font-size-small, 0.75rem);
+      font-weight: 400;
+      line-height: 1.55;
+      letter-spacing: 0.005em;
+      text-align: center;
+      text-wrap: pretty;
+      user-select: text;
     }
 
     /* Search result bar */
@@ -500,6 +519,21 @@ class ChatMessageList extends LitElement {
     `;
   }
 
+  private _renderConversationDisclaimer() {
+    const { conversationStartText } = resolveDisclaimerContent(
+      chatStore.getState().theme.disclaimer,
+    );
+    if (!conversationStartText) {
+      return null;
+    }
+
+    return html`
+      <aside class="conversation-disclaimer" role="note">
+        ${conversationStartText}
+      </aside>
+    `;
+  }
+
   render() {
     const messages = messageStore.getState().messages;
     const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls } = chatStore.getState();
@@ -518,6 +552,7 @@ class ChatMessageList extends LitElement {
     if (connectorStatus === "error") {
       return html`
         <div class="list">
+          ${this._renderConversationDisclaimer()}
           <div class="error-state">
             <div class="error-icon">
               <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -536,6 +571,7 @@ class ChatMessageList extends LitElement {
     if ((connectorStatus === "connecting" || connectorStatus === "idle") && messages.length === 0) {
       return html`
         <div class="list">
+          ${this._renderConversationDisclaimer()}
           <div class="connecting" role="status" aria-label="${t("messageList.connecting")}">
             <div class="spinner" aria-hidden="true"></div>
             <p class="connecting-text" aria-hidden="true">${t("messageList.connecting")}</p>
@@ -552,6 +588,8 @@ class ChatMessageList extends LitElement {
         aria-label="${t("messageList.ariaLabel")}"
         aria-relevant="additions"
       >
+        ${this._renderConversationDisclaimer()}
+
         ${connectorStatus === "connecting" && messages.length > 0 ? html`
           <div class="reconnecting-banner" role="status">
             <div class="mini-spinner" aria-hidden="true"></div>

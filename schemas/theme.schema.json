@@ -108,11 +108,12 @@
 
     "disclaimer": {
       "type": "object",
-      "description": "Persistent, low-emphasis footer note shown under the chat input (e.g. an AI-generated-content disclaimer).",
+      "description": "Low-emphasis notice shown under the chat input or at the beginning of the scrollable conversation (e.g. an AI-generated-content disclaimer).",
       "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean", "default": false, "description": "Show the disclaimer note." },
-        "text":    { "type": "string", "description": "Note text. Falls back to the widget.disclaimer i18n key when omitted." }
+        "bottomText": { "type": "string", "description": "Fixed note shown below the chat input." },
+        "conversationStartText": { "type": "string", "description": "Note shown as the first item in the scrollable conversation." }
       }
     },
 
