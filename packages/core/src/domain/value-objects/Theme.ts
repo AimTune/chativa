@@ -111,14 +111,17 @@ export interface EndOfConversationSurveyConfig {
 }
 
 /**
- * Persistent, low-emphasis footer note shown under the chat input
- * (e.g. an AI-generated-content disclaimer). Disabled by default.
+ * Low-emphasis notice shown either under the chat input or at the beginning
+ * of the scrollable conversation (e.g. an AI-generated-content disclaimer).
+ * Disabled by default.
  */
 export interface DisclaimerConfig {
     /** Show the disclaimer note. Default: `false`. */
     enabled?: boolean;
-    /** Note text. Falls back to the `widget.disclaimer` i18n key when omitted. */
-    text?: string;
+    /** Fixed note shown below the chat input. */
+    bottomText?: string;
+    /** Note shown as the first item in the scrollable conversation. */
+    conversationStartText?: string;
 }
 
 /**
@@ -177,7 +180,7 @@ export interface ThemeConfig {
     hideButtonOnOpen?: boolean;
     /** End-of-conversation survey configuration. Default: disabled. */
     endOfConversationSurvey?: EndOfConversationSurveyConfig;
-    /** Persistent footer disclaimer note (e.g. AI-content warning). Default: disabled. */
+    /** Low-emphasis disclaimer note (e.g. AI-content warning). Default: disabled. */
     disclaimer?: DisclaimerConfig;
     /** Custom SVG markup overrides for built-in icons, keyed by IconName. */
     icons?: IconsConfig;

@@ -16,6 +16,7 @@ import {
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { registerCommand } from "../commands/index";
+import { resolveDisclaimerContent } from "./disclaimerContent";
 
 import "./DefaultTextMessage";
 import "./QuickReplyMessage";
@@ -180,16 +181,19 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       color: rgba(79, 70, 229, 0.65);
     }
 
-    /* ── Persistent AI disclaimer footer note ──────────────── */
+    /* ── Optional persistent AI disclaimer footer note ─────── */
     .ai-disclaimer {
       flex-shrink: 0;
-      padding: 4px 12px 6px;
+      padding: 7px 14px 9px;
+      border-top: 1px solid var(--chativa-border, #e2e8f0);
       text-align: center;
       font-size: var(--font-size-small, 0.75em);
-      line-height: 1.3;
-      color: var(--chativa-disclaimer-color, var(--chativa-text-muted, #94a3b8));
-      background: var(--chativa-background, #ffffff);
-      user-select: none;
+      font-weight: 400;
+      line-height: 1.45;
+      letter-spacing: 0.0025em;
+      color: var(--chativa-disclaimer-color, var(--chativa-text-tertiary, #94a3b8));
+      background: var(--chativa-surface, var(--chativa-background, #ffffff));
+      user-select: text;
     }
 
   `;
@@ -862,6 +866,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       mode === "side-panel" && isFromLeft ? "from-left" : "",
       mode === "inline" ? "inline-mode" : "",
     ].filter(Boolean).join(" ");
+    const { bottomText } = resolveDisclaimerContent(this.theme.disclaimer);
 
     return html`
       <div
@@ -884,8 +889,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
           <chat-header .showConvToggle=${this.theme.enableMultiConversation === true}></chat-header>
           <chat-message-list></chat-message-list>
           <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>
-          ${this.theme.disclaimer?.enabled ? html`
-            <div class="ai-disclaimer">${this.theme.disclaimer.text || t("widget.disclaimer")}</div>
+          ${bottomText ? html`
+            <aside class="ai-disclaimer" role="note">${bottomText}</aside>
           ` : nothing}
         `}
 
