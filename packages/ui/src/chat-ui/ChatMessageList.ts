@@ -61,13 +61,13 @@ class ChatMessageList extends LitElement {
     }
 
     /* Introductory AI notice — part of the scrollable conversation flow. */
-.conversation-disclaimer {
-  flex: 0 0 auto;
-  align-self: center;
-  box-sizing: border-box;
-  width: min(100%, 52rem);
-  margin: 0 auto 14px;
-  padding: 2px clamp(1rem, 4vw, 2rem) 12px;
+    .conversation-disclaimer {
+      flex: 0 0 auto;
+      align-self: center;
+      box-sizing: border-box;
+      width: min(100%, 52rem);
+      margin: 0 auto 14px;
+      padding: 2px clamp(1rem, 4vw, 2rem) 12px;
       color: var(--chativa-disclaimer-color, var(--chativa-text-tertiary, #94a3b8));
       font-size: var(--font-size-small, 0.75rem);
       font-weight: 400;
