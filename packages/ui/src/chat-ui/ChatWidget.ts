@@ -185,7 +185,6 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     .ai-disclaimer {
       flex-shrink: 0;
       padding: 7px 14px 9px;
-      border-top: 1px solid var(--chativa-border, #e2e8f0);
       text-align: center;
       font-size: var(--font-size-small, 0.75em);
       font-weight: 400;
