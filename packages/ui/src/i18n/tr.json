@@ -67,7 +67,8 @@
     "close": "Sohbeti kapat"
   },
   "widget": {
-    "title": "Sohbet"
+    "title": "Sohbet",
+    "disclaimer": "Yapay zeka tarafından oluşturulan içerikler hatalı olabilir."
   },
   "survey": {
     "title": "Görüşmemizi değerlendirir misiniz?",

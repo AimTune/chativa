@@ -129,14 +129,14 @@ export class DefaultTextMessage extends LitElement {
     }
 
     .message.bot .bubble {
-      background: #f1f5f9;
-      color: #0f172a;
+      background: var(--chativa-bubble-bot-bg, #f1f5f9);
+      color: var(--chativa-bubble-bot-color, #0f172a);
       border-radius: 4px 16px 16px 16px;
     }
 
     .message.user .bubble {
-      background: var(--chativa-primary-color, #4f46e5);
-      color: #ffffff;
+      background: var(--chativa-bubble-user-bg, var(--chativa-primary-color, #4f46e5));
+      color: var(--chativa-bubble-user-color, #ffffff);
       border-radius: 16px 4px 16px 16px;
     }
 

@@ -16,7 +16,15 @@
         "secondary":  { "type": "string", "default": "#6c757d", "description": "Header gradient end, hover states." },
         "background": { "type": "string", "default": "#ffffff", "description": "Widget panel background." },
         "text":       { "type": "string", "default": "#212529", "description": "Primary text color." },
-        "border":     { "type": "string", "default": "#dee2e6", "description": "Borders and dividers." }
+        "border":     { "type": "string", "default": "#dee2e6", "description": "Borders and dividers." },
+        "accent":        { "type": "string", "description": "Accent/highlight color (e.g. warnings, secondary CTAs). Optional." },
+        "surface":       { "type": "string", "description": "Surface color for cards/panels distinct from the base background. Optional." },
+        "textSecondary": { "type": "string", "description": "Secondary body text color. Optional." },
+        "textTertiary":  { "type": "string", "description": "Tertiary/muted text color (e.g. timestamps, disclaimers). Optional." },
+        "success":       { "type": "string", "description": "Success state color. Optional." },
+        "error":         { "type": "string", "description": "Error state color. Optional." },
+        "warning":       { "type": "string", "description": "Warning state color. Optional." },
+        "info":          { "type": "string", "description": "Informational state color. Optional." }
       }
     },
 
@@ -95,6 +103,33 @@
         "requireCommentBelow": { "type": "integer", "minimum": 0, "default": 3, "description": "Require a comment when the rating is at or below this value. Set 0 to never require." },
         "kind":                { "oneOf": [{ "type": "string" }, { "type": "number" }], "default": 1, "description": "Opaque identifier forwarded to the connector as SurveyPayload.kind." },
         "resetOnSubmit":       { "type": "boolean", "default": true, "description": "Tear down the engine + connector after submit/skip so the next open starts fresh." }
+      }
+    },
+
+    "disclaimer": {
+      "type": "object",
+      "description": "Persistent, low-emphasis footer note shown under the chat input (e.g. an AI-generated-content disclaimer).",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean", "default": false, "description": "Show the disclaimer note." },
+        "text":    { "type": "string", "description": "Note text. Falls back to the widget.disclaimer i18n key when omitted." }
+      }
+    },
+
+    "icons": {
+      "type": "object",
+      "description": "Custom icon overrides. Each value is inner SVG markup (e.g. '<path d=\"...\"/>') rendered inside chativa's own <svg> wrapper (fill/stroke=currentColor) \u2014 do not include an outer <svg> tag.",
+      "additionalProperties": false,
+      "properties": {
+        "chatLauncher":        { "type": "string", "description": "Launcher button icon (closed state)." },
+        "close":               { "type": "string", "description": "Close / X icon (launcher open state, header close, search toggle, file chip remove)." },
+        "minimize":            { "type": "string", "description": "Header minimize icon." },
+        "search":              { "type": "string", "description": "Header search toggle icon." },
+        "send":                { "type": "string", "description": "Chat input send button icon." },
+        "emoji":               { "type": "string", "description": "Chat input emoji picker toggle icon." },
+        "attach":              { "type": "string", "description": "Chat input file attach icon." },
+        "maximizeFullscreen":  { "type": "string", "description": "Header \u201center fullscreen\u201d icon." },
+        "minimizeFullscreen":  { "type": "string", "description": "Header \u201cexit fullscreen\u201d icon." }
       }
     }
 

@@ -179,6 +179,18 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       color: rgba(79, 70, 229, 0.65);
     }
 
+    /* ── Persistent AI disclaimer footer note ──────────────── */
+    .ai-disclaimer {
+      flex-shrink: 0;
+      padding: 4px 12px 6px;
+      text-align: center;
+      font-size: var(--font-size-small, 0.75em);
+      line-height: 1.3;
+      color: var(--chativa-disclaimer-color, var(--chativa-text-muted, #94a3b8));
+      background: var(--chativa-background, #ffffff);
+      user-select: none;
+    }
+
   `;
 
   @property({ type: String }) connector = "dummy";
@@ -855,6 +867,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
           <chat-header .showConvToggle=${this.theme.enableMultiConversation === true}></chat-header>
           <chat-message-list></chat-message-list>
           <chat-input @send-message=${this.handleSendMessage.bind(this)}></chat-input>
+          ${this.theme.disclaimer?.enabled ? html`
+            <div class="ai-disclaimer">${this.theme.disclaimer.text || t("widget.disclaimer")}</div>
+          ` : nothing}
         `}
 
         ${this._showDropOverlay ? html`
