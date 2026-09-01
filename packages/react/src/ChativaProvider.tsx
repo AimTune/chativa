@@ -64,16 +64,33 @@ export function ChativaProvider({
 
   React.useEffect(() => {
     if (!locale) return;
-    const apply = () => i18next.changeLanguage(locale);
-    if (i18next.isInitialized) apply();
-    else i18next.on("initialized", apply);
+    const apply = () => { void i18next.changeLanguage(locale); };
+    if (i18next.isInitialized) {
+      apply();
+      return;
+    }
+    i18next.on("initialized", apply);
+    return () => { i18next.off("initialized", apply); };
   }, [locale]);
 
   React.useEffect(() => {
     if (!i18n) return;
-    for (const lng of Object.keys(i18next.store.data)) {
+    // `i18next.store` only exists once the instance is initialised, and the
+    // instance is initialised by `@chativa/ui`, which this provider loads
+    // lazily — so on the first render there is nothing to write into yet.
+    const applyToLng = (lng: string) => {
       i18next.addResourceBundle(lng, "translation", i18n, true, true);
-    }
+    };
+    const applyToAll = () => Object.keys(i18next.store.data).forEach(applyToLng);
+    if (i18next.isInitialized) applyToAll();
+    else i18next.on("initialized", applyToAll);
+    // Overrides sit on top of a language's own bundle, so switching language
+    // would otherwise fall back to the shipped strings.
+    i18next.on("languageChanged", applyToLng);
+    return () => {
+      i18next.off("initialized", applyToAll);
+      i18next.off("languageChanged", applyToLng);
+    };
   }, [i18n]);
 
   return <>{children}</>;

@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { chatStore, SlashCommandRegistry, resolveText, type ISlashCommand } from "@chativa/core";
 import { renderIcon } from "../utils/icons";

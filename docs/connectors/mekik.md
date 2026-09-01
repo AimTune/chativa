@@ -28,6 +28,9 @@ Schema: [`schemas/connectors/mekik.schema.json`](../../schemas/connectors/mekik.
 | `reconnect` | `true` | Auto-reconnect when the socket drops. Suppressed after an auth rejection. |
 | `reconnectDelay` | `2000` | Milliseconds between reconnect attempts. |
 | `maxReconnectAttempts` | `5` | Give up after this many consecutive failures. Reset on a successful handshake. |
+| `reconnectBackoff` | `"fixed"` | `"fixed"` waits `reconnectDelay` every time; `"exponential"` grows the wait up to `reconnectMaxDelay` with full jitter. |
+| `reconnectMaxDelay` | `30000` | Ceiling for `"exponential"` backoff, in ms. |
+| `routeInUrl` | `false` | Put `conversationId`/`userId` in the connect URL query string for sticky-by-conversation load balancing. |
 | `queueOfflineMessages` | `true` | Hold outgoing messages while the socket is down and flush them on (re)connect. |
 | `userId` | server-minted | Stable user identity. Omit to let the server generate one (announced via `welcome`). |
 | `conversationId` | server-minted | Conversation to resume. Omit to start a new one. |
@@ -35,6 +38,8 @@ Schema: [`schemas/connectors/mekik.schema.json`](../../schemas/connectors/mekik.
 | `auth` | — | How this client authenticates — a `MekikAuthProvider` adapter (`CookieAuth`, `TokenAuth`, or your own). Omit for servers that don't authenticate. See [Authentication](#authentication). |
 | `token` | — | **Deprecated** — shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })`. Still works. |
 | `onAuthError` | — | Called when the server rejects the connection, whichever adapter is in use. |
+| `tools` | — | Client tools this page can execute for the server's model (mekik PROTOCOL.md §11): `{name, description?, parameters?, tags?, mode?, handler}`. See [Client tools](#client-tools). |
+| `allowDynamicTools` | `false` | Unlock `registerTool()` / `unregisterTool()` after construction. Off by default so injected script can't rewire the toolset. |
 
 ## Frame mapping
 
@@ -42,7 +47,7 @@ Every mekik transport carries the same JSON frames. The connector routes them li
 
 | mekik frame | Direction | Becomes |
 |---|---|---|
-| `hello` | client → server | Sent on open — `userId` / `conversationId` / `watermark` / `token`. All fields optional. |
+| `hello` | client → server | Sent on open — `userId` / `conversationId` / `watermark` / `token` / `componentsHash` / `tools` (client tool definitions, handlers stay local). All fields optional. |
 | `welcome` | server → client | Identity + current watermark. Captured on `connector.identity`, never rendered as a message. |
 | `text` (bot) | server → client | `text` message bubble. |
 | `text` + `actions` | server → client | `quick-reply` message — chips render natively; tapping one answers the bot. |
@@ -51,6 +56,10 @@ Every mekik transport carries the same JSON frames. The connector routes them li
 | `run` `{ status }` | server → client | Typing indicator: `started` → on, `finished` → off. |
 | `genui` | server → client | `onGenUIChunk` — mounts a GenUI component inline. |
 | `genui_event` | client → server | Sent when a mounted GenUI component fires an event (form submit, card action…). |
+| `interrupt` `{ data.tool }` | server → client | A [client tool](#client-tools) invocation — the registered handler runs and the result goes back as a `resume` with `{ok, result?\|error?}`. Renders nothing. |
+| `interrupt` / `interrupt_resolved` | server → client | Human-in-the-loop pause / its close — chips, a mounted form, or a widget-answered wait. |
+| `genui` event chunk `client_tool` | server → client | A fire-and-forget (`mode: "notify"`) tool invocation — routed to the tool registry, never to mounted components. |
+| `client_tools` | client → server | Sent by `registerTool()` / `unregisterTool()` — replaces this connection's declared toolset. |
 | `error` | server → client | Auth rejection — surfaced via `onAuthError`, followed by close code 4401. |
 | `survey` | client → server | `sendSurvey()` payload. |
 
@@ -257,12 +266,83 @@ connector.receiveComponentEvent("stream-1", "submit", { email: "a@b.com" });
 // → { "type": "genui_event", "streamId": "stream-1", "eventType": "submit", "payload": {...} }
 ```
 
+## Client tools
+
+The page can declare its own capabilities — render one of its UI cards, open a
+native picker, read the device — as **tools** the mekik server's model may call
+(mekik `PROTOCOL.md §11`). The definition travels in the `hello` handshake; the
+handler stays local and runs when the server invokes the tool:
+
+```ts
+const connector = new MekikConnector({
+  url: "wss://bot.example.com/chat",
+  tools: [
+    {
+      name: "pick_date",
+      description: "Open the in-app date picker and let the user choose a date.",
+      parameters: {
+        type: "object",
+        properties: { min: { type: "string", description: "Earliest selectable ISO date" } },
+        required: ["min"],
+      },
+      // Optional: the server only offers this tool to graph nodes that ask for
+      // an intersecting tag; untagged tools are visible to every node.
+      tags: ["scheduling"],
+      handler: async (params) => ({ date: await openDatePicker(params?.min as string) }),
+    },
+    {
+      name: "show_confetti",
+      mode: "notify", // fire-and-forget: arrives as a stream event, result discarded
+      handler: () => fireConfetti(),
+    },
+  ],
+});
+```
+
+How an invocation flows:
+
+- **`"call"` (default)** — the server parks its run on an `interrupt` frame
+  carrying `data.tool = { name, params }`. The connector runs the handler and
+  answers with a `resume` carrying `{ ok: true, result }` — or
+  `{ ok: false, error }` when the handler throws, which makes the server-side
+  `await` throw. Nothing is rendered in the chat for a tool pause. The pause is
+  durable: a still-open call re-announced in `welcome.pending` after a
+  reconnect is executed again, so keep handlers idempotent or cheap. Replayed
+  *historic* interrupts (transcript replay on a fresh tab) are never executed.
+- **`"notify"`** — the invocation arrives as a `genui` event chunk under the
+  reserved name `client_tool`, is routed to the handler (deduped by chunk id
+  within a session), and never reaches the mounted components.
+
+Servers ignore declarations unless they opt in (`MekikOptions.clientTools`) and
+may allowlist which names/tags they accept — a declaration is capability, not
+authority.
+
+### Security: the registry is sealed
+
+Tool definitions and handlers are held in **true-private (`#`) fields** — they
+cannot be read or replaced through the connector instance from the console or
+by injected script. Definitions are deep-cloned and frozen at registration
+(mutating the object you passed changes nothing), and the toolset is fixed at
+construction: `registerTool` / `unregisterTool` throw unless the app opted in
+with `allowDynamicTools: true`:
+
+```ts
+const connector = new MekikConnector({ url, tools, allowDynamicTools: true });
+connector.registerTool({ name: "route_scoped", handler });  // re-announces via a client_tools frame
+connector.unregisterTool("route_scoped");
+connector.clientTools;                                      // frozen definitions, no handlers
+```
+
 ## Offline queue
 
 With `queueOfflineMessages: true` (the default) a send that happens while the socket is down is queued and flushed on the next connect. The promise resolves **only when the payload actually reaches the wire**, so the bubble stays on "sending" instead of being stamped "sent" for a message the server never received.
 
 ## Capabilities
 
-Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`.
+Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`, client tools (`tools`, `registerTool` / `unregisterTool` behind `allowDynamicTools`).
 
 Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation.
+
+## React Native
+
+The connector runs unmodified inside `@chativa/rn-webview`'s WebView embedding — pass `connector: { type: "mekik", options }` with a JSON-safe `auth` spec (`{ kind: "token", ... }` or `{ kind: "cookie" }`) instead of a live `TokenAuth` / `CookieAuth` instance. `tools` cannot cross the bridge (each entry carries a handler function) — apps needing client tools should host the widget with `@chativa/react` or a `custom` connector script. See [React Native](../react-native.md).

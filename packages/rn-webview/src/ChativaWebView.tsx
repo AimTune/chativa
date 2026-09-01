@@ -8,9 +8,10 @@ import type {
   OutgoingMessage,
   SurveyPayload,
   ThemeConfig,
+  ToolCall,
 } from "@chativa/core";
 import { buildBootstrapHtml, type BuildBootstrapHtmlOptions } from "./bridge/bootstrapHtml";
-import type { BridgeOutMessage, ChativaConnectorSpec } from "./bridge/types";
+import type { BridgeOutMessage, ChativaConnectorSpec, GenUIComponentSummary } from "./bridge/types";
 
 // `react-native-webview`'s default export is `class WebView<P = undefined>
 // extends Component<WebViewProps & P>` — used bare (no type argument),
@@ -46,6 +47,20 @@ export interface ChativaWebViewProps {
   /** The chat panel opened. Fires once immediately — the embedded widget has no launcher and opens on load. */
   onWidgetOpen?: () => void;
   onWidgetClose?: () => void;
+  /**
+   * The server announced GenUI component definitions and the widget registered
+   * them as custom elements. Summaries only (name/version/tag) — the full
+   * template renders inside the WebView.
+   */
+  onGenUIComponentsRegistered?: (payload: { components: GenUIComponentSummary[] }) => void;
+  /** A GenUI stream started (first chunk received). */
+  onGenUIStreamStarted?: (payload: { streamId: string }) => void;
+  /** A GenUI stream completed. */
+  onGenUIStreamCompleted?: (payload: { streamId: string }) => void;
+  /** A connector tool call started or changed state (upsert by `id`). */
+  onToolCallUpdated?: (toolCall: ToolCall) => void;
+  /** The server rejected the connection (mekik connector's `onAuthError`). */
+  onAuthError?: (payload: { code: string; message: string }) => void;
   /** An error was thrown while wiring up the bridge inside the WebView. */
   onError?: (message: string) => void;
 }
@@ -82,6 +97,11 @@ export const ChativaWebView = React.forwardRef<RNWebView, ChativaWebViewProps>(f
     onSurveySubmit,
     onWidgetOpen,
     onWidgetClose,
+    onGenUIComponentsRegistered,
+    onGenUIStreamStarted,
+    onGenUIStreamCompleted,
+    onToolCallUpdated,
+    onAuthError,
     onError,
   },
   ref,
@@ -127,12 +147,42 @@ export const ChativaWebView = React.forwardRef<RNWebView, ChativaWebViewProps>(f
         case "widget_closed":
           onWidgetClose?.();
           break;
+        case "genui_components_registered":
+          onGenUIComponentsRegistered?.(data.payload);
+          break;
+        case "genui_stream_started":
+          onGenUIStreamStarted?.(data.payload);
+          break;
+        case "genui_stream_completed":
+          onGenUIStreamCompleted?.(data.payload);
+          break;
+        case "tool_call_updated":
+          onToolCallUpdated?.(data.payload);
+          break;
+        case "auth_error":
+          onAuthError?.(data.payload);
+          break;
         case "error":
           onError?.(data.payload.message);
           break;
       }
     },
-    [onReady, onMessage, onMessageSent, onConnect, onDisconnect, onSurveySubmit, onWidgetOpen, onWidgetClose, onError],
+    [
+      onReady,
+      onMessage,
+      onMessageSent,
+      onConnect,
+      onDisconnect,
+      onSurveySubmit,
+      onWidgetOpen,
+      onWidgetClose,
+      onGenUIComponentsRegistered,
+      onGenUIStreamStarted,
+      onGenUIStreamCompleted,
+      onToolCallUpdated,
+      onAuthError,
+      onError,
+    ],
   );
 
   return (

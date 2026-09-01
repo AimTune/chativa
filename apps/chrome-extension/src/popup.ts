@@ -4,11 +4,14 @@ import { DEFAULT_THEME, mergeTheme, type ThemeConfig, type DeepPartial, type Lay
 import type { ButtonPosition, ButtonSize, SpaceLevel, WindowMode, ThemeColors } from "@chativa/core";
 
 // CDN URL used only in the Export snippet (not for actual injection)
-const CDN_PROD_URL = "https://unpkg.com/@chativa/ui/dist/chativa.js";
+// The self-contained IIFE build (the package's `jsdelivr` entry). `dist/index.js`
+// is the bundler build and leaves `lit`/`i18next`/`@chativa/core` as bare
+// imports, so it can't be dropped into a page with a plain <script>.
+const CDN_PROD_URL = "https://cdn.jsdelivr.net/npm/@chativa/ui/dist/chativa.global.js";
 
 // ── Export generators ──────────────────────────────────────────────────────
 function generateCdnSnippet(): string {
-  return `<script type="module" src="${CDN_PROD_URL}"><\\/script>\n<chat-bot-button></chat-bot-button>\n<chat-iva connector="YOUR_CONNECTOR"></chat-iva>`;
+  return `<script src="${CDN_PROD_URL}"><\\/script>\n<chat-bot-button></chat-bot-button>\n<chat-iva connector="YOUR_CONNECTOR"></chat-iva>`;
 }
 
 function generateThemeBuilderCode(theme: ThemeConfig): string {

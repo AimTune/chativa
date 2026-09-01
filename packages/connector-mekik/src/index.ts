@@ -7,11 +7,15 @@ import type {
   SurveyPayload,
   ToolCallHandler,
   GenUIChunkHandler,
+  GenUIComponentsHandler,
+  GenUIComponentDefinition,
+  GenUIEventOptions,
 } from "@chativa/core";
 import type { OutgoingMessage, MessageAction } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
 // the root would inline all of core into this connector's standalone bundle.
-import { parseChatFrame, createGenUIEventFrame } from "@chativa/core/frames";
+import { parseChatFrame, createGenUIEventFrame, createGenUIComponentCache } from "@chativa/core/frames";
+import type { GenUIComponentCache } from "@chativa/core/frames";
 import type {
   MekikAuthContext,
   MekikAuthDecision,
@@ -44,6 +48,58 @@ function interruptText(payload: Record<string, unknown>): string {
     if (typeof v === "string" && v) return v;
   }
   return "Approval required";
+}
+
+/** What a client tool handler receives: the `params` the server-side caller passed. */
+export type MekikClientToolHandler = (
+  params: Record<string, unknown> | undefined,
+) => unknown | Promise<unknown>;
+
+/**
+ * One tool this client declares to the mekik server (mekik PROTOCOL.md §11):
+ * a UI capability — render a card, open a picker, read the device — described
+ * well enough for a server-side model to call it. The definition (everything
+ * but `handler`) travels in the `hello` handshake; the handler stays local and
+ * runs when the server invokes the tool.
+ *
+ * Security note: the definition is deep-cloned and frozen at registration, and
+ * both definitions and handlers live in true-private (`#`) fields — page-level
+ * script cannot reach or rewire them through the connector instance. Servers
+ * additionally opt in and allowlist declarations on their side.
+ */
+export interface MekikClientTool {
+  /** Unique tool name; a redeclared name replaces the earlier one. */
+  name: string;
+  /** What the tool does — this is what the server-side model reads. */
+  description?: string;
+  /** JSON Schema for the tool's parameters (the model's input_schema). */
+  parameters?: Record<string, unknown>;
+  /**
+   * Server-side filter labels (§11.2): the server exposes tagged tools only to
+   * graph nodes that ask for an intersecting tag; untagged tools are
+   * unrestricted.
+   */
+  tags?: string[];
+  /**
+   * `"call"` (default): the server parks its run until {@link handler} answers;
+   * the result (or thrown error) is sent back in a `resume` frame.
+   * `"notify"`: fire-and-forget — the invocation arrives as a stream event and
+   * the handler's return value is discarded.
+   */
+  mode?: "call" | "notify";
+  /** Runs when the server invokes the tool. */
+  handler: MekikClientToolHandler;
+}
+
+/** The wire shape of a declaration — {@link MekikClientTool} minus the handler. */
+type ClientToolDefinition = Omit<MekikClientTool, "handler">;
+
+function deepFreeze<T>(value: T): T {
+  if (typeof value === "object" && value !== null) {
+    for (const v of Object.values(value)) deepFreeze(v);
+    Object.freeze(value);
+  }
+  return value;
 }
 
 export interface MekikConnectorOptions {
@@ -103,6 +159,22 @@ export interface MekikConnectorOptions {
    * provider asks to retry, so this is where an app redirects to login.
    */
   onAuthError?: (error: MekikAuthError) => void;
+  /**
+   * Tools this client can execute on the server's behalf (mekik PROTOCOL.md
+   * §11). Declared in the `hello` handshake; when the server invokes one, the
+   * matching {@link MekikClientTool.handler} runs and its result round-trips
+   * back automatically. Ignored by servers that did not opt in.
+   */
+  tools?: MekikClientTool[];
+  /**
+   * Allow {@link MekikConnector.registerTool} / {@link MekikConnector.unregisterTool}
+   * after construction. **Off by default on purpose**: with the default, the
+   * tool set is fixed at construction and held in true-private fields, so
+   * console access or an injected script cannot add or replace tools at
+   * runtime. Enable only when the app legitimately changes its toolset while
+   * running (e.g. route-scoped tools in a SPA).
+   */
+  allowDynamicTools?: boolean;
 }
 
 /** Identity assigned/confirmed by the server's `welcome` frame. */
@@ -139,8 +211,11 @@ interface PersistedSession {
  *   indicator (`started` → typing on, `finished` → typing off).
  * - `{ type: "genui", streamId, chunk, done }` → Generative UI chunk; mounts a
  *   GenUIRegistry component inline via `onGenUIChunk`.
- * - `{ type: "genui_event", streamId, eventType, payload }` ← sent by us when
- *   a mounted GenUI component fires an event (form submit, card action, …).
+ * - `{ type: "genui_event", streamId, eventType, scope?, component?, payload }` ←
+ *   sent by us when a mounted GenUI component fires an event (form submit, card
+ *   action, …). `scope` says who it is addressed to (§10.4): `"component"` from a
+ *   `component-event` attribute, `"graph"` from `mekik-event`, absent from a plain
+ *   `data-event`.
  * - `{ type: "error", data: { code, message } }` → auth rejection (§2.1),
  *   followed by a close (code 4401); surfaced via `onAuthError`, reconnect off.
  *
@@ -160,12 +235,38 @@ export class MekikConnector implements IConnector {
 
   private ws: WebSocket | null = null;
   private options: Required<
-    Omit<MekikConnectorOptions, "userId" | "conversationId" | "auth" | "token" | "onAuthError">
+    Omit<
+      MekikConnectorOptions,
+      "userId" | "conversationId" | "auth" | "token" | "onAuthError" | "tools" | "allowDynamicTools"
+    >
   > &
     Pick<
       MekikConnectorOptions,
       "userId" | "conversationId" | "auth" | "token" | "onAuthError"
     >;
+
+  // ── client tools (mekik PROTOCOL.md §11) ─────────────────────────────
+  // True-private (#) on purpose: `private` is erased at runtime, so a console
+  // user or injected script could otherwise read or replace tool handlers on
+  // the instance. With #fields the registry is unreachable from outside the
+  // class body, and the definitions are frozen clones — the declaration the
+  // server saw cannot be mutated after the fact.
+  /** Frozen definition clones, in declaration order — what `hello.tools` carries. */
+  #toolDefs: readonly ClientToolDefinition[] = [];
+  /** name → handler; never exposed. */
+  readonly #toolHandlers = new Map<string, MekikClientToolHandler>();
+  /** Locked unless `allowDynamicTools: true` was passed at construction. */
+  readonly #allowDynamicTools: boolean = false;
+  /** Interrupt ids whose tool handler already ran this session (idempotence guard). */
+  readonly #executedToolCalls = new Set<string>();
+  /** `streamId:chunkId` keys of notify invocations already fired this session. */
+  readonly #firedNotifications = new Set<string>();
+  /**
+   * The server's seq at welcome. Replayed history frames carry seq ≤ this, so a
+   * replayed (possibly long-resolved) tool interrupt is never re-executed —
+   * still-open calls are re-announced via `welcome.pending` instead.
+   */
+  #sessionBaseSeq = 0;
 
   /** The `auth` adapter, or one desugared from the legacy `token` option. */
   private readonly authProvider: MekikAuthProvider | undefined;
@@ -176,6 +277,24 @@ export class MekikConnector implements IConnector {
   private typingHandler: TypingHandler | null = null;
   private toolCallHandler: ToolCallHandler | null = null;
   private genUIChunkHandler: GenUIChunkHandler | null = null;
+  private genUIComponentsHandler: GenUIComponentsHandler | null = null;
+  /**
+   * Components the server announced on this connection. Replayed to a handler
+   * that registers after the frame arrived, and re-sent by the server on every
+   * reconnect (the client de-duplicates by name+version).
+   */
+  private serverComponents: GenUIComponentDefinition[] = [];
+  /**
+   * Catalog cache, keyed by server URL. Lets the handshake carry the stored
+   * hash so an unchanged catalog is never re-sent (PROTOCOL.md §10). Built on
+   * first use — `options` is only assigned in the constructor.
+   */
+  private _componentCache: GenUIComponentCache | null = null;
+
+  private get componentCache(): GenUIComponentCache {
+    this._componentCache ??= createGenUIComponentCache({ namespace: this.options.url });
+    return this._componentCache;
+  }
 
   private reconnectAttempts = 0;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -207,6 +326,9 @@ export class MekikConnector implements IConnector {
   private generation = 0;
 
   constructor(options: MekikConnectorOptions) {
+    // Tools never land on `this.options` (a soft-private field): the defs and
+    // handlers go straight into the # registry below.
+    const { tools, allowDynamicTools, ...rest } = options;
     this.options = {
       protocols: [],
       reconnect: true,
@@ -217,8 +339,10 @@ export class MekikConnector implements IConnector {
       routeInUrl: false,
       queueOfflineMessages: true,
       resumeConversation: false,
-      ...options,
+      ...rest,
     };
+    this.#allowDynamicTools = allowDynamicTools === true;
+    for (const tool of tools ?? []) this.#storeTool(tool);
     // Captured before `welcome` can adopt a server-minted id: only an
     // app-configured userId scopes the storage key (see storageKey()).
     this.configuredUserId = options.userId;
@@ -246,6 +370,125 @@ export class MekikConnector implements IConnector {
   /** The last auth rejection (null unless the server refused this connection). */
   get authError(): MekikAuthError | null {
     return this._authError;
+  }
+
+  // ── client tools API (mekik PROTOCOL.md §11) ─────────────────────────
+
+  /** The declared tool definitions (frozen; handlers are not exposed). */
+  get clientTools(): readonly Omit<MekikClientTool, "handler">[] {
+    return this.#toolDefs;
+  }
+
+  /**
+   * Declare (or replace) one tool at runtime and re-announce the full set to
+   * the server with a `client_tools` frame. Requires
+   * {@link MekikConnectorOptions.allowDynamicTools} — with the default, the
+   * toolset is sealed at construction so page-level script cannot rewire what
+   * the server-side model may trigger.
+   */
+  registerTool(tool: MekikClientTool): void {
+    this.#assertDynamicToolsAllowed();
+    this.#storeTool(tool);
+    this.#announceTools();
+  }
+
+  /** Withdraw one tool at runtime and re-announce. Same lock as {@link registerTool}. */
+  unregisterTool(name: string): void {
+    this.#assertDynamicToolsAllowed();
+    if (!this.#toolHandlers.delete(name)) return;
+    this.#toolDefs = this.#toolDefs.filter((d) => d.name !== name);
+    this.#announceTools();
+  }
+
+  #assertDynamicToolsAllowed(): void {
+    if (!this.#allowDynamicTools) {
+      throw new Error(
+        "MekikConnector: the toolset is sealed. Pass `allowDynamicTools: true` at construction to change tools at runtime.",
+      );
+    }
+  }
+
+  /** Validate, deep-clone, freeze, and store one tool (last declaration of a name wins). */
+  #storeTool(tool: MekikClientTool): void {
+    if (typeof tool?.name !== "string" || tool.name.length === 0) {
+      throw new Error("MekikConnector: a client tool needs a non-empty name.");
+    }
+    if (typeof tool.handler !== "function") {
+      throw new Error(`MekikConnector: client tool "${tool.name}" needs a handler function.`);
+    }
+    // Clone via JSON so later mutation of the caller's object cannot silently
+    // change what was (or will be) declared to the server.
+    const def = deepFreeze(
+      JSON.parse(
+        JSON.stringify({
+          name: tool.name,
+          ...(tool.description !== undefined ? { description: tool.description } : {}),
+          ...(tool.parameters !== undefined ? { parameters: tool.parameters } : {}),
+          ...(tool.tags !== undefined ? { tags: tool.tags } : {}),
+          ...(tool.mode !== undefined ? { mode: tool.mode } : {}),
+        }),
+      ) as ClientToolDefinition,
+    );
+    const existing = this.#toolDefs.findIndex((d) => d.name === def.name);
+    this.#toolDefs =
+      existing >= 0
+        ? this.#toolDefs.map((d, i) => (i === existing ? def : d))
+        : [...this.#toolDefs, def];
+    this.#toolHandlers.set(def.name, tool.handler);
+  }
+
+  /** Replace the server's view of this connection's toolset (a live socket only — `hello` covers reconnects). */
+  #announceTools(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "client_tools", tools: this.#toolDefs }));
+    }
+  }
+
+  /**
+   * Run the handler for a server-invoked tool call and answer the pause with
+   * the §11.3 result envelope. Executed at most once per interrupt id per
+   * session; an id nobody here handles is left standing (another tab may own
+   * it — the pause is durable and re-announced on its reconnect).
+   */
+  async #executeToolCall(id: string, call: { name: string; params?: Record<string, unknown> }): Promise<void> {
+    if (this.#executedToolCalls.has(id)) return;
+    const handler = this.#toolHandlers.get(call.name);
+    if (!handler) return;
+    this.#executedToolCalls.add(id);
+
+    let envelope: Record<string, unknown>;
+    try {
+      const result = await handler(call.params);
+      envelope = { ok: true, ...(result !== undefined ? { result } : {}) };
+    } catch (err) {
+      envelope = { ok: false, error: err instanceof Error ? err.message : String(err) };
+    }
+    this.openInterrupts.delete(id);
+    await this.sendOrQueue(JSON.stringify({ type: "resume", answers: { [id]: envelope } }));
+  }
+
+  /**
+   * A `"notify"`-mode invocation arrives as a stream event chunk under the
+   * reserved name `client_tool` (§11.3). It belongs to the tool registry, not
+   * the mounted components — fire the handler (once per chunk key) and swallow
+   * the chunk. Returns true when the chunk was claimed.
+   */
+  #maybeClientToolChunk(streamId: string, chunk: unknown): boolean {
+    if (!isRecord(chunk) || chunk.type !== "event" || chunk.name !== "client_tool") return false;
+    const payload = isRecord(chunk.payload) ? chunk.payload : {};
+    const name = typeof payload.name === "string" ? payload.name : "";
+    const key = `${streamId}:${String(chunk.id ?? "")}`;
+    if (!name || this.#firedNotifications.has(key)) return true;
+    this.#firedNotifications.add(key);
+    const handler = this.#toolHandlers.get(name);
+    if (handler) {
+      // Fire-and-forget by contract: the result is discarded, a failure is the
+      // client's own business — nothing round-trips.
+      void Promise.resolve()
+        .then(() => handler(isRecord(payload.params) ? payload.params : undefined))
+        .catch(() => {});
+    }
+    return true;
   }
 
   async connect(): Promise<void> {
@@ -411,8 +654,24 @@ export class MekikConnector implements IConnector {
     const d = (frame.data ?? {}) as Record<string, unknown>;
     const payload = (d.payload ?? {}) as Record<string, unknown>;
     const actions = Array.isArray(d.actions) ? (d.actions as MessageAction[]) : undefined;
+    // `event` means the server is parked on `onEvent` (§10.4): a widget already on
+    // screen answers this pause, so there is nothing for the chat to render.
+    const awaitedEvent = typeof d.event === "string" ? d.event : undefined;
     this.openInterrupts.set(id, { ui: d.ui, actions });
     this.typingHandler?.(false);
+
+    // A client tool call (§11.3): the pause is answered by our registered
+    // handler, not by a human — render nothing. Execute only when the call is
+    // actually open: a `welcome.pending` re-announcement (no seq) or a live
+    // frame (seq beyond the welcome watermark); a replayed historic interrupt
+    // is display-order bookkeeping, not an instruction to run the tool again.
+    if (isRecord(d.tool) && typeof d.tool.name === "string") {
+      const live = frame.seq === undefined || (typeof frame.seq === "number" && frame.seq > this.#sessionBaseSeq);
+      if (live) {
+        void this.#executeToolCall(id, d.tool as { name: string; params?: Record<string, unknown> });
+      }
+      return;
+    }
 
     if (actions && actions.length > 0) {
       // Chips display and send the label; asResume maps it back to the answer.
@@ -424,6 +683,10 @@ export class MekikConnector implements IConnector {
       this.genUIChunkHandler?.(`interrupt-${id}`, { type: "ui", component: d.ui.component, props, id: 1 }, true);
       return;
     }
+    // A pause waiting for a component interaction is answered by that component,
+    // not by the chat. Default chips here would be a dead end — tapping "Approve"
+    // sends a `resume` the node is not waiting for.
+    if (awaitedEvent) return;
     // Nothing to answer with: default Approve/Cancel chips.
     this.renderQuickReply(id, interruptText(payload), [{ label: "Approve" }, { label: "Cancel" }]);
   }
@@ -466,13 +729,34 @@ export class MekikConnector implements IConnector {
   }
 
   /**
-   * Forward a GenUI component event (form submit, card action, …) to the
-   * server as `{ type: "genui_event", streamId, eventType, payload }` —
-   * the outbound counterpart of the inbound `genui` frame.
+   * Components the server defines itself (PROTOCOL.md §10). The catalog arrives
+   * right after `welcome`, which can be before the app registers this handler —
+   * so whatever already arrived is replayed immediately.
    */
-  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+  onGenUIComponents(callback: GenUIComponentsHandler): void {
+    this.genUIComponentsHandler = callback;
+    if (this.serverComponents.length > 0) callback([...this.serverComponents]);
+  }
+
+  /**
+   * Forward a GenUI component event (form submit, card action, …) to the server
+   * as `{ type: "genui_event", streamId, eventType, scope?, component?, payload }`
+   * — the outbound counterpart of the inbound `genui` frame.
+   *
+   * `scope` is what makes the interaction routable server-side (PROTOCOL.md
+   * §10.4): `"component"` (from a `component-event` attribute) reaches only a node
+   * parked waiting for that event name, `"graph"` (from `mekik-event`) reaches the
+   * app's handler, and an absent scope lets the server try both. A `submit` naming
+   * an open interrupt still answers it whatever the scope says.
+   */
+  receiveComponentEvent(
+    streamId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions,
+  ): void {
     void this.sendOrQueue(
-      JSON.stringify(createGenUIEventFrame(streamId, eventType, payload)),
+      JSON.stringify(createGenUIEventFrame(streamId, eventType, payload, opts)),
     );
   }
 
@@ -551,6 +835,11 @@ export class MekikConnector implements IConnector {
       }
       if (this.options.resumeConversation) this.saveSession();
 
+      // Frames replayed after this welcome carry seq ≤ the server's current
+      // watermark — that boundary is what keeps historic (already-resolved)
+      // client tool calls from re-executing (§11.3).
+      this.#sessionBaseSeq = this._identity.watermark;
+
       // mekik/2: the server re-announces any open interrupts so a reconnecting
       // tab re-renders the approval it was parked on (§3.2).
       const pending = (data.data as Record<string, unknown> | undefined)?.pending;
@@ -596,7 +885,18 @@ export class MekikConnector implements IConnector {
         this.toolCallHandler?.(frame.toolCall);
         return;
       case "genui":
+        // A reserved `client_tool` event chunk is a notify-mode invocation
+        // (§11.3): it addresses the tool registry, never a mounted component.
+        if (this.#maybeClientToolChunk(frame.streamId, frame.chunk)) return;
         this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return;
+      case "genui_components":
+        // `unchanged` means our cached catalog is still current — it was
+        // already published when the socket opened, so there is nothing to do.
+        if (frame.unchanged) return;
+        this.serverComponents = frame.definitions;
+        if (frame.hash) this.componentCache.save(frame.hash, frame.definitions);
+        this.genUIComponentsHandler?.(frame.definitions);
         return;
       case "typing":
         this.typingHandler?.(frame.isTyping);
@@ -613,7 +913,11 @@ export class MekikConnector implements IConnector {
     // A malformed `tool_call`/`genui` frame is dropped rather than falling
     // through to the message handler: rendering half a trace as a chat bubble
     // would be worse than ignoring a frame the server got wrong.
-    if (data?.type === "tool_call" || data?.type === "genui") return;
+    if (
+      data?.type === "tool_call" ||
+      data?.type === "genui" ||
+      data?.type === "genui_components"
+    ) return;
 
     // A bot message ends any visible "working" state.
     this.typingHandler?.(false);
@@ -710,6 +1014,14 @@ export class MekikConnector implements IConnector {
   /** Send the mekik/1 hello handshake once the socket is open, then resolve connect(). */
   private sendHello(ws: WebSocket, token: string | undefined, resolve: () => void): void {
     this.reconnectAttempts = 0;
+    // A returning user's widgets render from cache immediately; the server
+    // only sends markup back when the hash moved on.
+    const cached = this.componentCache.load();
+    const componentsHash = cached?.hash;
+    if (cached && cached.components.length > 0) {
+      this.serverComponents = cached.components;
+      this.genUIComponentsHandler?.([...cached.components]);
+    }
     // mekik/1 handshake — all fields optional, server fills the gaps.
     // `token` is only present when the server authenticates (§2.1).
     ws.send(
@@ -718,7 +1030,13 @@ export class MekikConnector implements IConnector {
         userId: this.options.userId,
         conversationId: this.options.conversationId,
         watermark: this.watermark,
+        // ETag for the server-defined component catalog: same hash → the
+        // server answers `unchanged` instead of re-sending the markup.
+        ...(componentsHash ? { componentsHash } : {}),
         ...(token ? { token } : {}),
+        // Client tools (§11.1): the definitions only — handlers stay local.
+        // Re-sent on every (re)connect, since declarations are per-connection.
+        ...(this.#toolDefs.length > 0 ? { tools: this.#toolDefs } : {}),
       }),
     );
     this.flushQueue();

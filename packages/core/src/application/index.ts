@@ -11,6 +11,7 @@ export { default as conversationStore } from "./stores/ConversationStore";
 export type { ChatStoreState, ConnectorStatus, TypingOptions } from "./stores/ChatStore";
 export type { StoredMessage, MessageStoreState } from "./stores/MessageStore";
 export type { ConversationStoreState } from "./stores/ConversationStore";
+export { genUIDefinitionStore } from "./GenUIDefinitionStore";
 export { EventBus } from "./EventBus";
 export type { EventBusPayloadMap, EventBusEventName } from "./EventBus";
 export type { ChativaContext } from "./ChativaContext";

@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { renderIcon } from "../utils/icons";
 

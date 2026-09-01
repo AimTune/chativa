@@ -16,6 +16,8 @@ All registered automatically by importing `@chativa/ui`.
 
 `MessageAction` shape: `{ label: string, value?: string, url?: string }`. See [`schemas/messages/message-action.schema.json`](../../schemas/messages/message-action.schema.json).
 
+Bot-authored `buttons` and `quick-reply` bubbles show the bot avatar, honouring the theme's `avatar.bot` URL and `showBot` flag — see [theming.md → Avatars](../theming.md#avatars).
+
 ## Visual reference
 
 | Type | Screenshot |

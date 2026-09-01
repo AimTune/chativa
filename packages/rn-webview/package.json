@@ -1,6 +1,6 @@
 {
   "name": "@chativa/rn-webview",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "description": "Chativa RN WebView — embeds the Chativa web chat widget in a react-native-webview, bridged to native props/callbacks, so any existing @chativa/connector-* works unmodified. See README.md for architecture and the native-fallback tracking issues.",
   "author": "Hamza Agar",
   "license": "MIT",
@@ -46,8 +46,8 @@
   },
   "scripts": {
     "build": "bob build",
-    "test": "echo \"@chativa/rn-webview: no tests yet\"",
-    "typecheck": "tsc --noEmit"
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.compat.json --noEmit"
   },
   "dependencies": {
     "@chativa/core": "workspace:*"
@@ -59,13 +59,15 @@
     "react-native-webview": ">=13.0.0"
   },
   "devDependencies": {
+    "@chativa/connector-mekik": "workspace:*",
     "@react-native/babel-preset": "^0.86.1",
     "@types/react": "^19.2.17",
     "react": "^19.2.8",
     "react-native": "^0.86.0",
     "react-native-builder-bob": "^0.43.0",
     "react-native-webview": "^14.0.1",
-    "typescript": "~5.8.3"
+    "typescript": "~5.8.3",
+    "vitest": "^4.0.18"
   },
   "react-native-builder-bob": {
     "source": "src",

@@ -1,0 +1,17 @@
+{
+  // Second typecheck pass for the mekik spec drift guard only. The main
+  // tsconfig can't host it: importing @chativa/connector-mekik's built
+  // dist/index.d.ts drags @chativa/core's *source* into the program (the
+  // rolled-up d.ts references ../../core/src/index.ts), and core's UI code
+  // needs the DOM lib this RN package deliberately drops. This pass keeps the
+  // base config's browser lib list and resolves both packages from source.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@chativa/core/frames": ["../core/src/frames.ts"],
+      "@chativa/core": ["../core/src/index.ts"],
+      "@chativa/connector-mekik": ["../connector-mekik/src/index.ts"]
+    }
+  },
+  "include": ["src/bridge/__tests__/mekikSpecCompat.test.ts", "src/bridge/types.ts"]
+}

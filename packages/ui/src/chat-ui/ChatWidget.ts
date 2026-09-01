@@ -1,6 +1,6 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { t } from "i18next";
+import { t } from "@chativa/core";
 import {
   ChatEngine,
   MultiConversationEngine,
@@ -11,6 +11,7 @@ import {
   createOutgoingMessage,
   applyGlobalSettings,
   type EndOfConversationSurveyConfig,
+  type GenUIEventOptions,
   type SurveyPayload,
 } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
@@ -201,11 +202,24 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
    * Equivalent to: setFullscreen(true) + setAllowFullscreen(false)
    */
   @property({ type: Boolean, attribute: "fullscreen-only" })
-  get fulllscreenOnly(): boolean { return false; }
-  set fulllscreenOnly(_v: boolean) {
+  get fullscreenOnly(): boolean {
+    return this.themeState.isFullscreen && !this.themeState.allowFullscreen;
+  }
+  set fullscreenOnly(v: boolean) {
+    // An absent attribute (or an explicit `false`) means "no opinion" — forcing
+    // the toggle back on here would undo a `setAllowFullscreen(false)` the host
+    // page made for its own reasons.
+    if (!v) return;
     this.themeState.setFullscreen(true);
     this.themeState.setAllowFullscreen(false);
   }
+
+  /**
+   * @deprecated Misspelling of {@link fullscreenOnly}, kept so code written
+   * against 0.10 and earlier keeps working. Use `fullscreenOnly`.
+   */
+  get fulllscreenOnly(): boolean { return this.fullscreenOnly; }
+  set fulllscreenOnly(v: boolean) { this.fullscreenOnly = v; }
 
   // ── File-drop overlay ────────────────────────────────────────────────
 
@@ -477,8 +491,11 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       .catch((err: unknown) => console.error("[ChatWidget] loadHistory failed:", err));
   };
 
-  private _onGenUISendEvent = (e: CustomEvent<{ msgId: string; eventType: string; payload: unknown }>) => {
-    this._engine.receiveComponentEvent(e.detail.msgId, e.detail.eventType, e.detail.payload);
+  private _onGenUISendEvent = (
+    e: CustomEvent<{ msgId: string; eventType: string; payload: unknown } & GenUIEventOptions>
+  ) => {
+    const { msgId, eventType, payload, scope, component } = e.detail;
+    this._engine.receiveComponentEvent(msgId, eventType, payload, { scope, component });
   };
 
   // ── Multi-conversation handlers ───────────────────────────────────────

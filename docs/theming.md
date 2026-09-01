@@ -81,6 +81,25 @@ chatStore.getState().setTheme({
 ![Window modes](./assets/screenshots/hero/window-modes.png)
 > _Screenshot placeholder — four modes side by side._
 
+### Locking the widget to fullscreen
+
+`fullscreen-only` starts the widget expanded and hides the header's fullscreen
+toggle — the shorthand for `setFullscreen(true)` + `setAllowFullscreen(false)`:
+
+```html
+<chat-iva fullscreen-only></chat-iva>
+```
+
+```tsx
+import { ChatIva } from "@chativa/react";
+
+<ChatIva fullscreenOnly />
+```
+
+Passing `false` (or omitting it) means "no opinion": the widget keeps whatever
+`windowMode` and `allowFullscreen` the theme already set, rather than forcing the
+toggle back on.
+
 ## Avatars
 
 ```ts
@@ -96,6 +115,8 @@ chatStore.getState().setTheme({
 ```
 
 Omit any URL to fall back to the default SVG.
+
+`avatar.bot` and `showBot` apply to every bot-authored bubble — including the `buttons` and `quick-reply` [message types](./message-types/built-in.md), which render the configured image (or the default robot SVG when no URL is set) next to their button list. `showBot: false` hides the avatar there too.
 
 ## Custom launcher button
 

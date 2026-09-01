@@ -1,34 +1,17 @@
 /**
- * API injected by `GenUIMessage` into every registered custom component instance.
+ * The GenUI component contract now lives in `@chativa/core` next to the
+ * `GenUIElement` base class that implements it. Re-exported here so existing
+ * `import type { GenUIComponentAPI } from "@chativa/genui"` keeps working.
  *
- * Use this interface in your custom components to type the injected properties:
+ * Prefer extending `GenUIElement` — it implements the whole API with working
+ * defaults, so you don't declare the injected properties yourself:
  *
  * ```ts
- * import type { GenUIComponentAPI } from "@chativa/genui";
+ * import { GenUIElement } from "@chativa/core";
  *
- * class MyWidget extends LitElement implements Partial<GenUIComponentAPI> {
- *   sendEvent?: GenUIComponentAPI["sendEvent"];
- *   listenEvent?: GenUIComponentAPI["listenEvent"];
- *   tFn?: GenUIComponentAPI["tFn"];
- *   onLangChange?: GenUIComponentAPI["onLangChange"];
+ * class MyWidget extends GenUIElement {
+ *   private _submit() { this.sendEvent("my_submit", { ok: true }); }
  * }
  * ```
  */
-export interface GenUIComponentAPI {
-  /** Send an event to the connector (e.g. `"form_submit"`, `"rating_submit"`). */
-  sendEvent(type: string, payload: unknown): void;
-  /** Listen for a server-originated event within this message scope. */
-  listenEvent(type: string, cb: (payload: unknown) => void): void;
-  /**
-   * Translate a key using the shared i18next instance.
-   * Falls back to `fallback` if the key is not found.
-   * Named `tFn` (not `translate`) to avoid conflict with the native
-   * `HTMLElement.translate` boolean attribute.
-   */
-  tFn(key: string, fallback?: string): string;
-  /**
-   * Subscribe to locale changes so you can call `requestUpdate()`.
-   * Returns an unsubscribe function — call it in `disconnectedCallback`.
-   */
-  onLangChange(cb: () => void): () => void;
-}
+export type { GenUIComponentAPI } from "@chativa/core";

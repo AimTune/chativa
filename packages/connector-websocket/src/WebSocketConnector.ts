@@ -8,6 +8,7 @@ import type {
   SurveyPayload,
   ToolCallHandler,
   GenUIChunkHandler,
+  GenUIEventOptions,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
@@ -142,9 +143,14 @@ export class WebSocketConnector implements IConnector {
    * as `{ type: "genui_event", streamId, eventType, payload }` — the outbound
    * counterpart of the inbound `genui` frame.
    */
-  receiveComponentEvent(streamId: string, eventType: string, payload: unknown): void {
+  receiveComponentEvent(
+    streamId: string,
+    eventType: string,
+    payload: unknown,
+    opts?: GenUIEventOptions,
+  ): void {
     if (this.ws?.readyState !== WebSocket.OPEN) return;
-    this.ws.send(JSON.stringify(createGenUIEventFrame(streamId, eventType, payload)));
+    this.ws.send(JSON.stringify(createGenUIEventFrame(streamId, eventType, payload, opts)));
   }
 
   /**
@@ -159,6 +165,11 @@ export class WebSocketConnector implements IConnector {
         return true;
       case "genui":
         this.genUIChunkHandler?.(frame.streamId, frame.chunk, frame.done);
+        return true;
+      case "genui_components":
+        // Server-defined component catalogs are a mekik feature
+        // (PROTOCOL.md §10). Swallow the frame rather than letting it fall
+        // through and render as a chat bubble.
         return true;
       case "typing":
         this.typingHandler?.(frame.isTyping);

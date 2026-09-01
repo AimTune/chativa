@@ -43,7 +43,6 @@ export interface ChatIvaProps {
 
 interface ChatIvaElementProps {
   connector?: string;
-  fulllscreenOnly?: boolean;
   className?: string;
   style?: React.CSSProperties;
   children?: React.ReactNode;
@@ -117,6 +116,20 @@ export const ChatIva = React.forwardRef<HTMLElement, ChatIvaProps>(function Chat
     chatStore.getState().setConnector(connectorName);
   }
 
+  // Same reasoning as the connector above, and the same reason it is applied
+  // here rather than handed to the element as a `fullscreenOnly` property:
+  // `<chat-iva>` decides its window mode while connecting, and `@lit/react`
+  // only assigns element properties afterwards — late enough to render one
+  // non-fullscreen frame first, and not at all in its `node` build. Writing to
+  // the shared store is the one path that works before the element connects.
+  // `false` is deliberately not the inverse: it means "no opinion", so it never
+  // re-enables a fullscreen toggle the theme turned off.
+  if (fullscreenOnly) {
+    const theme = chatStore.getState();
+    if (!theme.isFullscreen) theme.setFullscreen(true);
+    if (theme.allowFullscreen) theme.setAllowFullscreen(false);
+  }
+
   useChativaEvent("message_received", onMessage);
   useChativaEvent("message_sent", onMessageSent);
   useChativaEvent("survey_submitted", onSurveySubmit);
@@ -129,7 +142,6 @@ export const ChatIva = React.forwardRef<HTMLElement, ChatIvaProps>(function Chat
 
   const elementProps: ChatIvaElementProps = { ...rest };
   if (connectorName !== undefined) elementProps.connector = connectorName;
-  if (fullscreenOnly !== undefined) elementProps.fulllscreenOnly = fullscreenOnly;
 
   return <LazyChatIva ref={ref} {...elementProps} />;
 });

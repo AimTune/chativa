@@ -18,7 +18,12 @@
 
 import type { IncomingMessage, MessageAction } from "./Message";
 import type { ToolCall } from "./ToolCall";
-import type { AIChunk } from "./GenUI";
+import type {
+  AIChunk,
+  GenUIComponentDefinition,
+  GenUIEventOptions,
+  GenUIEventScope,
+} from "./GenUI";
 
 /** A wire frame parsed into what the connector should do with it. */
 export type ChatFrame =
@@ -26,6 +31,18 @@ export type ChatFrame =
   | { kind: "tool_call"; toolCall: ToolCall }
   /** One Generative UI chunk of the `streamId` stream. */
   | { kind: "genui"; streamId: string; chunk: AIChunk; done: boolean }
+  /**
+   * The server's catalog of components it defines itself — register them, then
+   * mount by name. `hash` versions the catalog (send it back in the next
+   * handshake); `unchanged` means the client's cached catalog is still current
+   * and `definitions` is empty.
+   */
+  | {
+      kind: "genui_components";
+      definitions: GenUIComponentDefinition[];
+      hash?: string;
+      unchanged: boolean;
+    }
   /** Typing indicator toggle. */
   | { kind: "typing"; isTyping: boolean }
   /** A bot question with chips — the human-in-the-loop interrupt. */
@@ -58,6 +75,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  * switch (frame.kind) {
  *   case "tool_call":   return onToolCall(frame.toolCall);
  *   case "genui":       return onGenUIChunk(frame.streamId, frame.chunk, frame.done);
+ *   case "genui_components": return onGenUIComponents(frame.definitions);
  *   case "typing":      return onTyping(frame.isTyping);
  *   case "quick_reply": return onMessage(frame.message);
  *   case "other":       break; // your own handling
@@ -99,6 +117,28 @@ export function parseChatFrame(
     return { kind: "other" };
   }
 
+  // { type: "genui_components", hash?, unchanged?, components: [{ name, template, … }] }
+  // The server defines the component itself; the client registers it and mounts
+  // it by name from then on. `unchanged: true` is the cache hit — the client's
+  // stored catalog matches `hash`, so no markup travels. A definition without a
+  // name or a string template is dropped: a half-formed component would render
+  // as an empty bubble.
+  if (raw.type === "genui_components") {
+    const list = Array.isArray(raw.components) ? raw.components : [];
+    const definitions = list.filter(
+      (d): d is GenUIComponentDefinition =>
+        isRecord(d) && typeof d.name === "string" && !!d.name && typeof d.template === "string"
+    );
+    const unchanged = raw.unchanged === true;
+    if (definitions.length === 0 && !unchanged) return { kind: "other" };
+    return {
+      kind: "genui_components",
+      definitions,
+      unchanged,
+      ...(typeof raw.hash === "string" && raw.hash ? { hash: raw.hash } : {}),
+    };
+  }
+
   // { type: "typing", isTyping: boolean }
   if (raw.type === "typing") {
     return { kind: "typing", isTyping: raw.isTyping === true };
@@ -134,11 +174,31 @@ export function parseChatFrame(
   return { kind: "other" };
 }
 
-/** Build the outbound frame for a GenUI component event (form submit, card action…). */
+/**
+ * Build the outbound frame for a GenUI component event (form submit, card action…).
+ *
+ * `scope` and `component` are omitted when unknown rather than sent as `null`, so a
+ * backend that does not model routing sees exactly the frame it saw before.
+ */
 export function createGenUIEventFrame(
   streamId: string,
   eventType: string,
   payload: unknown,
-): { type: "genui_event"; streamId: string; eventType: string; payload: unknown } {
-  return { type: "genui_event", streamId, eventType, payload };
+  opts?: GenUIEventOptions,
+): {
+  type: "genui_event";
+  streamId: string;
+  eventType: string;
+  payload: unknown;
+  scope?: GenUIEventScope;
+  component?: string;
+} {
+  return {
+    type: "genui_event",
+    streamId,
+    eventType,
+    payload,
+    ...(opts?.scope ? { scope: opts.scope } : {}),
+    ...(opts?.component ? { component: opts.component } : {}),
+  };
 }
