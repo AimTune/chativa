@@ -79,8 +79,8 @@ export class ButtonsMessage extends LitElement {
       font-size: 0.875rem;
       line-height: 1.5;
       word-break: break-word;
-      background: #f1f5f9;
-      color: #0f172a;
+      background: var(--chativa-bubble-bot-bg, #f1f5f9);
+      color: var(--chativa-bubble-bot-color, #0f172a);
       border-radius: 4px 16px 16px 16px;
     }
 

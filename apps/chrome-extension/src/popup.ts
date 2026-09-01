@@ -51,13 +51,15 @@ const COLOR_PRESETS = [
   { label: "Teal",    value: "#0d9488" }, { label: "Black",   value: "#0f172a" },
 ];
 
-const COLOR_FIELDS: { key: keyof ThemeColors; label: string }[] = [
+const COLOR_FIELDS = [
   { key: "primary",    label: "Primary" },
   { key: "secondary",  label: "Secondary" },
   { key: "background", label: "Background" },
   { key: "text",       label: "Text" },
   { key: "border",     label: "Border" },
-];
+] as const satisfies readonly { key: keyof ThemeColors; label: string }[];
+
+type EditableColorKey = (typeof COLOR_FIELDS)[number]["key"];
 
 const WINDOW_MODES: { label: string; value: WindowMode }[] = [
   { label: "Popup", value: "popup" }, { label: "Side", value: "side-panel" },
@@ -232,11 +234,11 @@ export class ChativaExtPopup extends LitElement {
   `;
 
   @state() private _theme: ThemeConfig = { ...DEFAULT_THEME };
-  @state() private _hexInputs: Record<keyof ThemeColors, string> = {
+  @state() private _hexInputs: Record<EditableColorKey, string> = {
     primary: DEFAULT_THEME.colors.primary, secondary: DEFAULT_THEME.colors.secondary,
     background: DEFAULT_THEME.colors.background, text: DEFAULT_THEME.colors.text, border: DEFAULT_THEME.colors.border,
   };
-  @state() private _dropTarget: keyof ThemeColors | null = null;
+  @state() private _dropTarget: EditableColorKey | null = null;
   @state() private _injected = false;
   @state() private _status: { msg: string; ok: boolean } | null = null;
   private _updateTimer: ReturnType<typeof setTimeout> | null = null;
@@ -274,7 +276,7 @@ export class ChativaExtPopup extends LitElement {
     }
   }
 
-  private _applyHex(key: keyof ThemeColors) {
+  private _applyHex(key: EditableColorKey) {
     if (/^#[0-9a-fA-F]{6}$/.test(this._hexInputs[key]))
       this._set({ colors: { [key]: this._hexInputs[key] } as Partial<ThemeColors> });
   }
@@ -283,10 +285,10 @@ export class ChativaExtPopup extends LitElement {
     e.dataTransfer!.setData("text/plain", color);
     e.dataTransfer!.effectAllowed = "copy";
   };
-  private _onFieldOver = (e: DragEvent, key: keyof ThemeColors) => {
+  private _onFieldOver = (e: DragEvent, key: EditableColorKey) => {
     e.preventDefault(); e.dataTransfer!.dropEffect = "copy"; this._dropTarget = key;
   };
-  private _onFieldDrop = (e: DragEvent, key: keyof ThemeColors) => {
+  private _onFieldDrop = (e: DragEvent, key: EditableColorKey) => {
     e.preventDefault(); this._dropTarget = null;
     const c = e.dataTransfer!.getData("text/plain");
     if (/^#[0-9a-fA-F]{6}$/.test(c)) this._set({ colors: { [key]: c } as Partial<ThemeColors> });

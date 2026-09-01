@@ -3,6 +3,7 @@ import { customElement, property, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { chatStore, SlashCommandRegistry, resolveText, type ISlashCommand } from "@chativa/core";
+import { renderIcon } from "../utils/icons";
 import "./EmojiPicker";
 
 @customElement("chat-input")
@@ -517,7 +518,7 @@ class ChatInput extends LitElement {
                 @click=${() => this._removeFile(i)}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10">
-                  <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>
+                  ${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>`)}
                 </svg>
               </button>
             </div>
@@ -547,7 +548,7 @@ class ChatInput extends LitElement {
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._openFilePicker(); }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
-            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>
+            ${renderIcon("attach", html`<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>`)}
           </svg>
         </button>
         ` : nothing}
@@ -564,10 +565,7 @@ class ChatInput extends LitElement {
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="10" />
-            <path d="M8 13s1.5 2 4 2 4-2 4-2" stroke-linecap="round" />
-            <circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none" />
-            <circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none" />
+            ${renderIcon("emoji", html`<circle cx="12" cy="12" r="10" /><path d="M8 13s1.5 2 4 2 4-2 4-2" stroke-linecap="round" /><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none" />`)}
           </svg>
         </button>
 
@@ -596,7 +594,7 @@ class ChatInput extends LitElement {
           aria-label="${t("input.send")}"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            ${renderIcon("send", html`<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />`)}
           </svg>
         </button>
       </div>

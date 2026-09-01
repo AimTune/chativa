@@ -43,6 +43,15 @@ export function render(
             "--chativa-background-color": c.background,
             "--chativa-text-color": c.text,
             "--chativa-border-color": c.border,
+            "--chativa-accent-color": c.accent,
+            "--chativa-surface": c.surface,
+            "--chativa-text-secondary": c.textSecondary,
+            "--chativa-text-tertiary": c.textTertiary,
+            "--chativa-text-muted": c.textTertiary,
+            "--chativa-success-color": c.success,
+            "--chativa-error-color": c.error,
+            "--chativa-warning-color": c.warning,
+            "--chativa-info-color": c.info,
         };
         for (const [prop, value] of Object.entries(map)) {
             if (value) container.style.setProperty(prop, value);

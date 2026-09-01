@@ -26,6 +26,8 @@ import type {
   LayoutConfig,
   AvatarConfig,
   EndOfConversationSurveyConfig,
+  DisclaimerConfig,
+  IconName,
 } from "../Theme";
 
 // ── Compile-time contracts ─────────────────────────────────────────────
@@ -47,6 +49,8 @@ const EXPECTED_THEME: { [K in keyof Required<ThemeConfig>]: true } = {
   hideButtonOnOpen: true,
   windowMode: true,
   endOfConversationSurvey: true,
+  disclaimer: true,
+  icons: true,
 };
 
 const EXPECTED_COLORS: { [K in keyof Required<ThemeColors>]: true } = {
@@ -55,6 +59,14 @@ const EXPECTED_COLORS: { [K in keyof Required<ThemeColors>]: true } = {
   background: true,
   text: true,
   border: true,
+  accent: true,
+  surface: true,
+  textSecondary: true,
+  textTertiary: true,
+  success: true,
+  error: true,
+  warning: true,
+  info: true,
 };
 
 const EXPECTED_LAYOUT: { [K in keyof Required<LayoutConfig>]: true } = {
@@ -84,6 +96,25 @@ const EXPECTED_SURVEY: {
   requireCommentBelow: true,
   kind: true,
   resetOnSubmit: true,
+};
+
+const EXPECTED_DISCLAIMER: {
+  [K in keyof Required<DisclaimerConfig>]: true;
+} = {
+  enabled: true,
+  text: true,
+};
+
+const EXPECTED_ICONS: { [K in IconName]: true } = {
+  chatLauncher: true,
+  close: true,
+  minimize: true,
+  search: true,
+  send: true,
+  emoji: true,
+  attach: true,
+  maximizeFullscreen: true,
+  minimizeFullscreen: true,
 };
 
 // ── Schema accessor ────────────────────────────────────────────────────
@@ -130,5 +161,17 @@ describe("schema drift — schemas/theme.schema.json ↔ ThemeConfig", () => {
     expect(
       keys(themeSchema.properties?.endOfConversationSurvey?.properties),
     ).toEqual(keys(EXPECTED_SURVEY));
+  });
+
+  it("DisclaimerConfig fields match schema.properties.disclaimer.properties", () => {
+    expect(keys(themeSchema.properties?.disclaimer?.properties)).toEqual(
+      keys(EXPECTED_DISCLAIMER),
+    );
+  });
+
+  it("IconName keys match schema.properties.icons.properties", () => {
+    expect(keys(themeSchema.properties?.icons?.properties)).toEqual(
+      keys(EXPECTED_ICONS),
+    );
   });
 });

@@ -52,6 +52,17 @@ export const ChatbotMixin = <T extends Constructor<LitElement>>(
       this.style.setProperty("--chativa-background", colors.background);
       this.style.setProperty("--chativa-text", colors.text);
       this.style.setProperty("--chativa-border", colors.border);
+      if (colors.accent) this.style.setProperty("--chativa-accent-color", colors.accent);
+      if (colors.surface) this.style.setProperty("--chativa-surface", colors.surface);
+      if (colors.textSecondary) this.style.setProperty("--chativa-text-secondary", colors.textSecondary);
+      if (colors.textTertiary) {
+        this.style.setProperty("--chativa-text-tertiary", colors.textTertiary);
+        this.style.setProperty("--chativa-text-muted", colors.textTertiary);
+      }
+      if (colors.success) this.style.setProperty("--chativa-success-color", colors.success);
+      if (colors.error) this.style.setProperty("--chativa-error-color", colors.error);
+      if (colors.warning) this.style.setProperty("--chativa-warning-color", colors.warning);
+      if (colors.info) this.style.setProperty("--chativa-info-color", colors.info);
     }
 
     override disconnectedCallback() {

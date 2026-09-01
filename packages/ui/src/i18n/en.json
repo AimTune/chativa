@@ -67,7 +67,8 @@
     "close": "Close chat"
   },
   "widget": {
-    "title": "Chat"
+    "title": "Chat",
+    "disclaimer": "AI-generated content may be inaccurate."
   },
   "survey": {
     "title": "How did we do?",

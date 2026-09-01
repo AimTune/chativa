@@ -40,6 +40,22 @@ export interface ThemeColors {
     background: string;
     text: string;
     border: string;
+    /** Accent/highlight color (e.g. warnings, secondary CTAs). Optional. */
+    accent?: string;
+    /** Surface color for cards/panels distinct from the base background. Optional. */
+    surface?: string;
+    /** Secondary body text color. Optional. */
+    textSecondary?: string;
+    /** Tertiary/muted text color (e.g. timestamps, disclaimers). Optional. */
+    textTertiary?: string;
+    /** Success state color. Optional. */
+    success?: string;
+    /** Error state color. Optional. */
+    error?: string;
+    /** Warning state color. Optional. */
+    warning?: string;
+    /** Informational state color. Optional. */
+    info?: string;
 }
 
 export interface LayoutConfig {
@@ -94,6 +110,37 @@ export interface EndOfConversationSurveyConfig {
     resetOnSubmit?: boolean;
 }
 
+/**
+ * Persistent, low-emphasis footer note shown under the chat input
+ * (e.g. an AI-generated-content disclaimer). Disabled by default.
+ */
+export interface DisclaimerConfig {
+    /** Show the disclaimer note. Default: `false`. */
+    enabled?: boolean;
+    /** Note text. Falls back to the `widget.disclaimer` i18n key when omitted. */
+    text?: string;
+}
+
+/**
+ * Names of the built-in icons that can be swapped via `ThemeConfig.icons`.
+ * Each value must be inner SVG markup (e.g. `<path d="..."/>`), rendered
+ * inside chativa's own `<svg>` wrapper — do not include an outer `<svg>` tag.
+ * The wrapper sets `fill`/`stroke` to `currentColor` so icons inherit the
+ * surrounding icon color automatically.
+ */
+export type IconName =
+    | "chatLauncher"
+    | "close"
+    | "minimize"
+    | "search"
+    | "send"
+    | "emoji"
+    | "attach"
+    | "maximizeFullscreen"
+    | "minimizeFullscreen";
+
+export type IconsConfig = Partial<Record<IconName, string>>;
+
 export interface ThemeConfig {
     allowFullscreen?: boolean;
     colors: ThemeColors;
@@ -130,6 +177,10 @@ export interface ThemeConfig {
     hideButtonOnOpen?: boolean;
     /** End-of-conversation survey configuration. Default: disabled. */
     endOfConversationSurvey?: EndOfConversationSurveyConfig;
+    /** Persistent footer disclaimer note (e.g. AI-content warning). Default: disabled. */
+    disclaimer?: DisclaimerConfig;
+    /** Custom SVG markup overrides for built-in icons, keyed by IconName. */
+    icons?: IconsConfig;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -165,13 +216,23 @@ export const DEFAULT_THEME: ThemeConfig = {
 
 /** Build CSS variable map from a ThemeConfig. */
 export function themeToCSS(theme: ThemeConfig): Record<string, string> {
-    return {
-        "--chativa-primary-color": theme.colors.primary,
-        "--chativa-secondary-color": theme.colors.secondary,
-        "--chativa-background-color": theme.colors.background,
-        "--chativa-text-color": theme.colors.text,
-        "--chativa-border-color": theme.colors.border,
+    const { colors } = theme;
+    const vars: Record<string, string> = {
+        "--chativa-primary-color": colors.primary,
+        "--chativa-secondary-color": colors.secondary,
+        "--chativa-background-color": colors.background,
+        "--chativa-text-color": colors.text,
+        "--chativa-border-color": colors.border,
     };
+    if (colors.accent) vars["--chativa-accent-color"] = colors.accent;
+    if (colors.surface) vars["--chativa-surface"] = colors.surface;
+    if (colors.textSecondary) vars["--chativa-text-secondary"] = colors.textSecondary;
+    if (colors.textTertiary) vars["--chativa-text-tertiary"] = colors.textTertiary;
+    if (colors.success) vars["--chativa-success-color"] = colors.success;
+    if (colors.error) vars["--chativa-error-color"] = colors.error;
+    if (colors.warning) vars["--chativa-warning-color"] = colors.warning;
+    if (colors.info) vars["--chativa-info-color"] = colors.info;
+    return vars;
 }
 
 /** Deep merge a partial theme over a base theme. */
@@ -189,6 +250,20 @@ export function mergeTheme(
                 ? {
                       ...(base.endOfConversationSurvey ?? {}),
                       ...(overrides.endOfConversationSurvey ?? {}),
+                  }
+                : undefined,
+        disclaimer:
+            base.disclaimer || overrides.disclaimer
+                ? {
+                      ...(base.disclaimer ?? {}),
+                      ...(overrides.disclaimer ?? {}),
+                  }
+                : undefined,
+        icons:
+            base.icons || overrides.icons
+                ? {
+                      ...(base.icons ?? {}),
+                      ...(overrides.icons ?? {}),
                   }
                 : undefined,
     } as ThemeConfig;

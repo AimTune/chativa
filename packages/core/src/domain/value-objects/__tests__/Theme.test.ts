@@ -60,4 +60,14 @@ describe("themeToCSS", () => {
     const css = themeToCSS(DEFAULT_THEME);
     expect(Object.keys(css)).toHaveLength(5);
   });
+
+  it("maps extended colors only when provided", () => {
+    const themed = mergeTheme(DEFAULT_THEME, {
+      colors: { accent: "#e35205", textTertiary: "#97999b" },
+    });
+    const css = themeToCSS(themed);
+    expect(css["--chativa-accent-color"]).toBe("#e35205");
+    expect(css["--chativa-text-tertiary"]).toBe("#97999b");
+    expect(css["--chativa-surface"]).toBeUndefined();
+  });
 });
