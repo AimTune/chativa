@@ -10,18 +10,18 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 11
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          registry-url: "https://registry.npmjs.org"
           cache: "pnpm"
 
       - name: Extract version from tag
@@ -43,75 +43,39 @@ jobs:
       - name: Publish @chativa/core
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/core
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-dummy
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-dummy
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-websocket
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-websocket
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-signalr
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-signalr
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-directline
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-directline
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-mekik
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-mekik
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-http
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-http
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/connector-sse
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-sse
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/genui
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/genui
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/ui
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/ui
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/react
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/react
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Publish @chativa/rn-webview
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/rn-webview
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
