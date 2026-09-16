@@ -56,6 +56,26 @@ describe("ButtonsMessage — label markdown rendering", () => {
   });
 });
 
+describe("ButtonsMessage — body markdown rendering", () => {
+  it("renders links and separate paragraphs in the message bubble", () => {
+    const message = new ButtonsMessage();
+    message.sender = "bot";
+    message.messageData = {
+      text: "Read [here](https://example.com).\n\nAre you a customer?",
+      buttons: [{ label: "Yes" }],
+    };
+
+    const rendered = message.render();
+    const values = collectTemplateValues(rendered);
+    const bodyHtml = values.find((value) => value.includes("https://example.com"));
+
+    expect(bodyHtml).toContain(
+      '<a href="https://example.com" target="_blank" rel="noopener noreferrer">here</a>',
+    );
+    expect(bodyHtml).toContain("</p>\n<p>Are you a customer?</p>");
+  });
+});
+
 function collectTemplateValues(node: unknown, out: string[] = []): string[] {
   if (typeof node === "string") {
     out.push(node);

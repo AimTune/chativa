@@ -10,6 +10,16 @@ function renderInlineMarkdown(text: string): ReturnType<typeof unsafeHTML> {
   return unsafeHTML(html);
 }
 
+/** Render the message body with the same Markdown/HTML support as regular bot messages. */
+function renderBlockMarkdown(text: string): ReturnType<typeof unsafeHTML> {
+  const parsed = marked.parse(text, { async: false }) as string;
+  const linksInNewTabs = parsed.replace(
+    /<a\b(?![^>]*\btarget=)([^>]*)>/gi,
+    '<a$1 target="_blank" rel="noopener noreferrer">',
+  );
+  return unsafeHTML(linksInNewTabs);
+}
+
 /**
  * Buttons message component.
  * Renders a bot text bubble followed by a vertical list of full-width action buttons.
@@ -82,6 +92,20 @@ export class ButtonsMessage extends LitElement {
       background: var(--chativa-bubble-bot-bg, #f1f5f9);
       color: var(--chativa-bubble-bot-color, #0f172a);
       border-radius: 4px 16px 16px 16px;
+    }
+
+    .bubble p {
+      margin: 0;
+    }
+
+    .bubble p + p {
+      margin-top: 1em;
+    }
+
+    .bubble a {
+      color: inherit;
+      font-weight: 700;
+      text-decoration: underline;
     }
 
     .btn-list {
@@ -248,7 +272,7 @@ export class ButtonsMessage extends LitElement {
       <div class="message ${isUser ? "user" : "bot"}">
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         <div class="content">
-          ${text ? html`<div class="bubble">${text}</div>` : nothing}
+          ${text ? html`<div class="bubble">${renderBlockMarkdown(text)}</div>` : nothing}
 
           ${!persistent && this._selected !== null
             /* One-time mode: replace buttons with confirmation label */
