@@ -221,7 +221,15 @@ class ChatMessageList extends LitElement {
       margin-top: 4px;
     }
 
-    .typing-bubble span {
+    .typing-text {
+      margin-left: 4px;
+      color: #64748b;
+      font-size: 0.8125rem;
+      line-height: 1.25;
+      max-width: 240px;
+    }
+
+    .typing-bubble .typing-dot {
       display: block;
       width: 7px;
       height: 7px;
@@ -230,9 +238,9 @@ class ChatMessageList extends LitElement {
       animation: typing-bounce 1.2s infinite ease-in-out;
     }
 
-    .typing-bubble span:nth-child(1) { animation-delay: 0s; }
-    .typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+    .typing-bubble .typing-dot:nth-child(1) { animation-delay: 0s; }
+    .typing-bubble .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-bubble .typing-dot:nth-child(3) { animation-delay: 0.4s; }
 
     @keyframes typing-bounce {
       0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
@@ -536,7 +544,7 @@ class ChatMessageList extends LitElement {
 
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls } = chatStore.getState();
+    const { connectorStatus, isTyping, typingMessage, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls } = chatStore.getState();
 
     const displayMessages = searchQuery
       ? messages.filter((msg) => {
@@ -645,9 +653,14 @@ class ChatMessageList extends LitElement {
             role="status"
             aria-label="${t("messageList.typingIndicator")}"
           >
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
+            <span class="typing-dot" aria-hidden="true"></span>
+            <span class="typing-dot" aria-hidden="true"></span>
+            <span class="typing-dot" aria-hidden="true"></span>
+            ${typingMessage ? html`
+              <span class="typing-text" aria-hidden="true">
+                ${typingMessage}
+              </span>
+            ` : null}
           </div>
         ` : null}
       </div>

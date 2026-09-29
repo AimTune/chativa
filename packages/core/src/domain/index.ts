@@ -14,6 +14,8 @@ export type {
   ConnectHandler,
   DisconnectHandler,
   TypingHandler,
+  ProgressUpdate,
+  ProgressHandler,
   FeedbackType,
   SurveyPayload,
   MessageStatusHandler,

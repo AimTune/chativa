@@ -44,6 +44,8 @@ export interface ChatStoreState {
     connectorStatus: ConnectorStatus;
     /** True while the remote peer (bot) is composing a reply. */
     isTyping: boolean;
+    /** Backend-supplied progress message for the current reply, if available. */
+    typingMessage: string | null;
     /** Number of unread messages received while the chat was closed. */
     unreadCount: number;
     /** Current auto-reconnect attempt (0 = not reconnecting). */
@@ -76,6 +78,7 @@ export interface ChatStoreState {
     setConnector: (name: string) => void;
     setConnectorStatus: (status: ConnectorStatus) => void;
     setTyping: (v: boolean, opts?: TypingOptions) => void;
+    setTypingMessage: (message: string | null) => void;
     incrementUnread: () => void;
     resetUnread: () => void;
     setReconnectAttempt: (n: number) => void;
@@ -112,6 +115,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     activeConnector: "dummy",
     connectorStatus: "idle",
     isTyping: false,
+    typingMessage: null,
     unreadCount: 0,
     reconnectAttempt: 0,
     theme: DEFAULT_THEME,
@@ -182,10 +186,17 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
             const ms = Math.max(0, opts.durationMs);
             _typingTimer = setTimeout(() => {
                 _typingTimer = null;
-                setState(() => ({ isTyping: false }));
+                setState(() => ({ isTyping: false, typingMessage: null }));
             }, ms);
         }
-        setState(() => ({ isTyping: v }));
+        setState(() => ({ isTyping: v, ...(v ? {} : { typingMessage: null }) }));
+    },
+
+    setTypingMessage: (message: string | null) => {
+        setState(() => ({
+            typingMessage: message,
+            ...(message ? { isTyping: true } : {}),
+        }));
     },
 
     incrementUnread: () =>
@@ -232,6 +243,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
         const hadSearch = getState().searchQuery !== "";
         setState(() => ({
             isTyping: false,
+            typingMessage: null,
             unreadCount: 0,
             reconnectAttempt: 0,
             hasMoreHistory: false,

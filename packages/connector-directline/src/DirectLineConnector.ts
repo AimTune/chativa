@@ -4,6 +4,7 @@ import type {
     ConnectHandler,
     DisconnectHandler,
     TypingHandler,
+    ProgressHandler,
     MessageStatusHandler,
     ChativaContext,
     SurveyPayload,
@@ -237,6 +238,7 @@ export class DirectLineConnector implements IConnector {
     private connectHandler: ConnectHandler | null = null;
     private disconnectHandler: DisconnectHandler | null = null;
     private typingHandler: TypingHandler | null = null;
+    private progressHandler: ProgressHandler | null = null;
     private messageStatusHandler: MessageStatusHandler | null = null;
 
     private activitySub: Unsubscribable | null = null;
@@ -615,6 +617,10 @@ export class DirectLineConnector implements IConnector {
         this.typingHandler = callback;
     }
 
+    onProgress(callback: ProgressHandler): void {
+        this.progressHandler = callback;
+    }
+
     onMessageStatus(callback: MessageStatusHandler): void {
         this.messageStatusHandler = callback;
     }
@@ -677,6 +683,24 @@ export class DirectLineConnector implements IConnector {
 
                 // Bot-initiated event
                 if (activity.type === "event" && activity.name) {
+                    if (activity.name === "chativa/progress") {
+                        const value = activity.value as {
+                            stage?: unknown;
+                            message?: unknown;
+                        } | undefined;
+                        const message = typeof value?.message === "string" && value.message.trim()
+                            ? value.message
+                            : undefined;
+                        if (typeof value?.stage === "string" || message) {
+                            this.typingHandler?.(true);
+                            this.progressHandler?.({
+                                ...(typeof value?.stage === "string" ? { stage: value.stage } : {}),
+                                ...(message ? { message } : {}),
+                            });
+                        }
+                        return;
+                    }
+
                     // Built-in: DisableFeedbackButton — mark the message as feedback-sent
                     if (
                         activity.name === "DisableFeedbackButton" &&
