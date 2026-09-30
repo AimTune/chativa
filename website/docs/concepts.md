@@ -93,6 +93,7 @@ Everything else is **optional capability hooks** that the engine feature-detects
 | `onMessageStatus?(cb)` | Tick indicators (sending → sent → read). |
 | `sendFeedback?(id, "like" \| "dislike")` | Like/dislike buttons on bot messages. |
 | `onTyping?(cb)` | "Bot is typing…" indicator. |
+| `onProgress?(cb)` | Progress text beside the typing indicator. |
 | `sendSurvey?(payload)` | End-of-conversation survey delivery. |
 | `onGenUIChunk?(cb)` | Generative UI streaming. |
 | `receiveComponentEvent?(...)` | Bidirectional events from streamed components. |

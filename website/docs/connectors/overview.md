@@ -47,6 +47,7 @@ All optional methods are feature-detected at runtime. A capability is "advertise
 | Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Connect / disconnect events | `onConnect` / `onDisconnect` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Typing indicator | `onTyping` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Progress messages | `onProgress` |   |   |   | ✅ |   |   |   |
 | File upload | `sendFile` | ✅ |   |   | ✅ |   |   |   |
 | History pagination | `loadHistory` | ✅ |   |   | ✅ |   | ✅ | ✅ |
 | Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   |   |   |

@@ -50,6 +50,7 @@ Inbound DirectLine activities are mapped by `mapActivity.ts` into Chativa's nati
 | `message` + video attachment | `video` |
 | `message` + file attachment | `file` |
 | `typing` | typing indicator (no stored message) |
+| `event` `name=chativa/progress` | progress text beside the typing dots (no stored message) |
 | `event` `name=DisableFeedbackButton` | mutates the message's `feedbackDisabled` flag |
 | `event` `name=*` | dispatched to `eventHandlers[name]` if registered |
 
@@ -87,6 +88,32 @@ connector.removeEventHandler("MyEvent");
 ```
 
 `ctx` is `EventHandlerContext` — full access to `chativa.messages`, `chativa.chat`, `chativa.theme`, and `chativa.events`.
+
+## Progress messages
+
+A plain `typing` activity only toggles the dots. To tell the user *what* the bot
+is doing, send a `chativa/progress` event from the bot while the turn is still
+running:
+
+```csharp
+await turnContext.SendActivityAsync(new Activity
+{
+    Type = ActivityTypes.Event,
+    Name = "chativa/progress",
+    Value = new { stage = "search", message = "Searching your orders…" },
+});
+```
+
+- `message` is rendered verbatim next to the typing dots — send text already
+  localized for the user.
+- `stage` is optional and free-form; Chativa stores it but never interprets it.
+- Receiving the event also turns the typing indicator on.
+- The text clears on its own when the next bot message arrives, when typing
+  stops (see `typingTimeoutMs`), or on disconnect — no "clear" event needed.
+
+Send it as often as you like; each event replaces the previous text.
+
+`chativa/progress` is handled internally, so it never reaches `eventHandlers`.
 
 ## Survey delivery
 
