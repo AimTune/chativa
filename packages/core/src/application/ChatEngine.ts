@@ -100,6 +100,7 @@ export class ChatEngine {
       // tool-call strip must not stay stuck on "running". A resuming
       // connector replays the lifecycle frames after reconnect.
       chatStore.getState().clearToolCalls();
+      chatStore.getState().setTyping(false);
       // Auto-reconnect unless destroyed or user-initiated disconnect
       if (!this._destroyed && reason !== "user") {
         this._scheduleReconnect(1);
@@ -108,6 +109,10 @@ export class ChatEngine {
 
     this.connector.onTyping?.((isTyping) => {
       chatStore.getState().setTyping(isTyping);
+    });
+
+    this.connector.onProgress?.((update) => {
+      chatStore.getState().setTypingMessage(update?.message ?? null);
     });
 
     this.connector.onMessageStatus?.((messageId, status) => {

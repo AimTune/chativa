@@ -21,6 +21,13 @@ export type MessageHandler = (message: IncomingMessage) => void;
 export type ConnectHandler = () => void;
 export type DisconnectHandler = (reason?: string) => void;
 export type TypingHandler = (isTyping: boolean) => void;
+export interface ProgressUpdate {
+  /** Optional backend-defined stage identifier. Chativa does not interpret it. */
+  stage?: string;
+  /** Optional localized message supplied by the consuming application. */
+  message?: string;
+}
+export type ProgressHandler = (update: ProgressUpdate | null) => void;
 export type FeedbackType = "like" | "dislike";
 export type MessageStatusHandler = (messageId: string, status: MessageStatus) => void;
 
@@ -75,6 +82,9 @@ export interface IConnector {
 
   /** Optional: called when the remote peer starts or stops typing. */
   onTyping?(callback: TypingHandler): void;
+
+  /** Optional: called when the backend reports the current processing stage. */
+  onProgress?(callback: ProgressHandler): void;
 
   /** Optional: send a like/dislike reaction on a bot message to the backend. */
   sendFeedback?(messageId: string, feedback: FeedbackType): Promise<void>;
