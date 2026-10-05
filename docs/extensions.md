@@ -95,4 +95,4 @@ EventBus.on("widget_opened",      ()    => track("opened"));
 EventBus.on("genui_stream_completed", ({ streamId }) => track("genui_done", { streamId }));
 ```
 
-Full event payload map: [`packages/core/src/application/EventBus.ts`](../packages/core/src/application/EventBus.ts).
+Every event, its payload type and exactly when it fires: [EventBus reference](./events.md). Source: [`packages/core/src/application/EventBus.ts`](../packages/core/src/application/EventBus.ts).

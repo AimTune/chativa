@@ -4,6 +4,7 @@ const sidebars: SidebarsConfig = {
   docs: [
     "intro",
     "getting-started",
+    "recipes",
     "concepts",
     "react-native",
     {
@@ -47,7 +48,7 @@ const sidebars: SidebarsConfig = {
     {
       type: "category",
       label: "Extensibility",
-      items: ["extensions", "slash-commands"],
+      items: ["extensions", "events", "slash-commands"],
     },
     {
       type: "category",

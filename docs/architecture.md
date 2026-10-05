@@ -81,7 +81,7 @@ Zero runtime imports. No DOM, no `lit`, no `zustand`. If you need to add a class
 - `MultiConversationEngine` — runs many `ChatEngine`s; lazy-mounts per conversation.
 - Registries — `ConnectorRegistry`, `MessageTypeRegistry`, `ExtensionRegistry`, `SlashCommandRegistry`.
 - Stores (Zustand vanilla) — `chatStore`, `messageStore`, `conversationStore`.
-- `EventBus` — typed pub/sub for analytics hooks.
+- `EventBus` — typed pub/sub for analytics hooks. Every event is listed in the [EventBus reference](./events.md).
 - `ChativaContext` + `createChativaContext()` — facade injected into connectors and extensions.
 - `ChativaSettings` + `applyGlobalSettings()` — reads `window.chativaSettings` and applies it before mount.
 

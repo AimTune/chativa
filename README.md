@@ -67,7 +67,9 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | [Connectors](docs/connectors/overview.md) | Capability matrix + per-connector pages |
 | [Message types](docs/message-types/overview.md) | Built-ins + custom renderers |
 | [Generative UI](docs/genui/overview.md) | Streaming protocol, built-in components, custom widgets |
+| [Recipes](docs/recipes.md) | Copy-paste React, Vue, WordPress and DirectLine token-endpoint setups |
 | [Extensions](docs/extensions.md) | Middleware lifecycle |
+| [EventBus](docs/events.md) | Every analytics event — payload and when it fires |
 | [Slash commands](docs/slash-commands.md) | Built-ins + registering your own |
 | [Survey](docs/survey.md) | End-of-conversation flow |
 | [Multi-conversation](docs/multi-conversation.md) | Agent-panel mode |
