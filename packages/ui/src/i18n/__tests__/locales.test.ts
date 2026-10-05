@@ -5,6 +5,7 @@ import {
   flatten,
   loadLocales,
   pluralCategories,
+  readRepoFile,
 } from "../../../../../scripts/i18n-check.mjs";
 import i18next, { BUNDLED_LOCALES, SUPPORTED_LOCALES } from "../i18n";
 import "@chativa/genui";
@@ -107,5 +108,14 @@ describe("bundled locales — runtime resolution", () => {
     await i18next.changeLanguage(detected);
     const expected = (BUNDLED_LOCALES as Record<string, { greeting: string }>)[bundle].greeting;
     expect(i18next.t("greeting")).toBe(expected);
+  });
+});
+
+describe("bundled locales — documentation", () => {
+  it("lists every bundled language in both docs trees", () => {
+    for (const doc of ["website/docs/i18n.md", "docs/i18n.md"]) {
+      const text = readRepoFile(doc);
+      for (const lng of SUPPORTED_LOCALES) expect(text, `${doc} lists ${lng}`).toContain(`\`${lng}\``);
+    }
   });
 });

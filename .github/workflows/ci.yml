@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check translations
+        run: node scripts/i18n-check.mjs
+
       - name: Build packages
         run: pnpm build
 
