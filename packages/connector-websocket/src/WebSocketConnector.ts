@@ -41,6 +41,8 @@ export class WebSocketConnector implements IConnector {
   private genUIChunkHandler: GenUIChunkHandler | null = null;
 
   private reconnectAttempts = 0;
+  /** Set by disconnect() so the resulting close event does not trigger a reconnect. */
+  private closedByUser = false;
 
   constructor(options: WebSocketConnectorOptions) {
     this.options = {
@@ -53,6 +55,7 @@ export class WebSocketConnector implements IConnector {
   }
 
   async connect(): Promise<void> {
+    this.closedByUser = false;
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.options.url, this.options.protocols);
 
@@ -84,17 +87,23 @@ export class WebSocketConnector implements IConnector {
       this.ws.onclose = (event) => {
         this.disconnectHandler?.(event.reason);
         if (
+          !this.closedByUser &&
           this.options.reconnect &&
           this.reconnectAttempts < this.options.maxReconnectAttempts
         ) {
           this.reconnectAttempts++;
-          setTimeout(() => this.connect(), this.options.reconnectDelay);
+          // A failed attempt closes the socket again, which schedules the next
+          // one from here — the rejected promise itself carries no extra signal.
+          setTimeout(() => {
+            if (!this.closedByUser) this.connect().catch(() => undefined);
+          }, this.options.reconnectDelay);
         }
       };
     });
   }
 
   async disconnect(): Promise<void> {
+    this.closedByUser = true;
     this.ws?.close();
     this.ws = null;
   }

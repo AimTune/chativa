@@ -142,6 +142,61 @@ describe("WebSocketConnector lifecycle", () => {
     );
   });
 
+  it("does not reconnect after a user-initiated disconnect", async () => {
+    vi.useFakeTimers();
+    const connector = new WebSocketConnector({ url: "ws://test" });
+    const p = connector.connect();
+    const ws = latest();
+    ws.open();
+    await p;
+
+    await connector.disconnect();
+    // A real browser fires `close` on the old socket after close().
+    ws.drop();
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(MockWebSocket.instances).toHaveLength(1);
+  });
+
+  it("cancels a pending reconnect when disconnect() is called during the delay", async () => {
+    vi.useFakeTimers();
+    const connector = new WebSocketConnector({ url: "ws://test" });
+    const p = connector.connect();
+    latest().open();
+    await p;
+
+    latest().drop("server restart"); // schedules a reconnect
+    await connector.disconnect();
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(MockWebSocket.instances).toHaveLength(1);
+  });
+
+  it("does not leak an unhandled rejection when a reconnect attempt fails", async () => {
+    vi.useFakeTimers();
+    const unhandled = vi.fn();
+    // Typed locally: this package has no @types/node.
+    const proc = (globalThis as unknown as {
+      process: { on(e: string, f: () => void): void; off(e: string, f: () => void): void };
+    }).process;
+    proc.on("unhandledRejection", unhandled);
+    try {
+      const connector = new WebSocketConnector({ url: "ws://test", maxReconnectAttempts: 1 });
+      const p = connector.connect();
+      latest().open();
+      await p;
+
+      latest().drop();
+      await vi.advanceTimersByTimeAsync(2000);
+      expect(MockWebSocket.instances).toHaveLength(2);
+      latest().onerror?.({ type: "error" });
+      await vi.advanceTimersByTimeAsync(0);
+      vi.useRealTimers();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(unhandled).not.toHaveBeenCalled();
+    } finally {
+      proc.off("unhandledRejection", unhandled);
+    }
+  });
+
   it("disconnect before connect is a no-op", async () => {
     const connector = new WebSocketConnector({ url: "ws://test" });
     await expect(connector.disconnect()).resolves.toBeUndefined();
