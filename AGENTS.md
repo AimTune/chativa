@@ -30,7 +30,8 @@ packages/
 ├── connector-dummy/    @chativa/connector-dummy
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
-└── connector-directline/ @chativa/connector-directline
+├── connector-directline/ @chativa/connector-directline
+└── vue2/               @chativa/vue2     — Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
 apps/
 └── sandbox/            — Interactive demo app
 ```

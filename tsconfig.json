@@ -14,6 +14,9 @@
       "path": "packages/rn-webview"
     },
     {
+      "path": "packages/vue2"
+    },
+    {
       "path": "packages/connector-directline"
     },
     {
