@@ -1,0 +1,95 @@
+{
+  "greeting": "Halo",
+  "welcome": "Selamat datang, {{name}}!",
+  "header": {
+    "title": "Chatbot Chativa",
+    "status": {
+      "connecting": "Menghubungkan…",
+      "connected": "Online",
+      "error": "Kesalahan koneksi",
+      "disconnected": "Terputus",
+      "offline": "Offline"
+    },
+    "fullscreen": {
+      "enter": "Layar penuh",
+      "exit": "Keluar dari layar penuh"
+    },
+    "close": "Tutup",
+    "minimize": "Perkecil",
+    "search": {
+      "toggle": "Cari",
+      "placeholder": "Cari pesan…",
+      "clear": "Hapus pencarian"
+    }
+  },
+  "input": {
+    "placeholder": "Ketik pesan…",
+    "send": "Kirim pesan",
+    "emoji": "Emoji",
+    "attachFile": "Lampirkan file",
+    "removeFile": "Hapus {{name}}",
+    "dropHere": "Letakkan file di sini",
+    "dropHereSubtitle": "Lepaskan untuk melampirkan"
+  },
+  "messageList": {
+    "connecting": "Menghubungkan…",
+    "emptyTitle": "Ada yang bisa saya bantu?",
+    "emptySubtitle": "Kirim pesan untuk memulai.",
+    "newMessage": "Pesan baru",
+    "loadMore": "Muat pesan sebelumnya",
+    "errorTitle": "Koneksi terputus",
+    "errorSubtitle": "Kami tidak dapat terhubung kembali. Silakan coba lagi.",
+    "retry": "Coba lagi",
+    "reconnecting": "Menghubungkan kembali… (percobaan ke-{{attempt}})",
+    "searchEmpty": "Tidak ada pesan yang cocok dengan pencarian Anda.",
+    "searchResult": "{{count}} hasil ditemukan",
+    "loadingHistory": "Memuat pesan sebelumnya…",
+    "ariaLabel": "Pesan obrolan",
+    "typingIndicator": "Asisten sedang mengetik"
+  },
+  "message": {
+    "from": {
+      "bot": "Asisten",
+      "user": "Anda"
+    },
+    "likeButton": "Sukai pesan ini",
+    "dislikeButton": "Tidak sukai pesan ini",
+    "statusSending": "Mengirim",
+    "statusSent": "Terkirim",
+    "statusRead": "Dibaca"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Cari emoji…",
+    "noResults": "Tidak ada hasil"
+  },
+  "chatButton": {
+    "open": "Buka obrolan",
+    "close": "Tutup obrolan"
+  },
+  "widget": {
+    "title": "Obrolan",
+    "disclaimer": "Konten yang dibuat oleh AI mungkin tidak akurat."
+  },
+  "survey": {
+    "title": "Bagaimana layanan kami?",
+    "ratingLabel": "Nilai pengalaman Anda",
+    "commentPlaceholder": "Apa yang bisa kami tingkatkan?",
+    "commentRequired": "Beri tahu kami apa yang salah",
+    "submit": "Kirim",
+    "skip": "Lewati",
+    "thankYouTitle": "Kami telah menerima masukan Anda!",
+    "thankYouBody": "Terima kasih atas pemikiran dan komentar Anda yang berharga.",
+    "close": "Tutup",
+    "starLabel_other": "{{count}} bintang"
+  },
+  "toolCalls": {
+    "running": "Berjalan",
+    "completed": "Selesai",
+    "error": "Kesalahan",
+    "parameters": "Parameter",
+    "result": "Hasil",
+    "summary_other": "{{count}} operasi",
+    "failed": "{{count}} gagal",
+    "ariaToggle": "Tampilkan atau sembunyikan detail panggilan alat"
+  }
+}
