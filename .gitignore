@@ -27,3 +27,6 @@ website/.docusaurus
 *.njsproj
 *.sln
 *.sw?
+
+# Test coverage reports
+coverage
