@@ -105,3 +105,24 @@ describe("buildBootstrapHtml — inline JSON safety", () => {
     expect(out).toContain("\\u003c/script>");
   });
 });
+
+describe("buildBootstrapHtml — custom connector", () => {
+  it("loads the custom script and instantiates window[globalName][className] with the options", () => {
+    const out = html({
+      type: "custom",
+      scriptUrl: "https://example.com/my-connector.global.js",
+      globalName: "MyGlobal",
+      className: "MyConnector",
+      options: { url: "wss://h/ws" },
+    });
+    expect(out).toContain('<script src="https://example.com/my-connector.global.js"></script>');
+    expect(out).toContain('new window["MyGlobal"]["MyConnector"]({"url":"wss://h/ws"})');
+    // No built-in connector script is loaded for a custom spec.
+    expect(out).not.toContain("@chativa/connector-");
+  });
+
+  it("defaults custom connector options to an empty object", () => {
+    const out = html({ type: "custom", scriptUrl: "https://x/y.js", globalName: "G", className: "K" });
+    expect(out).toContain('new window["G"]["K"]({})');
+  });
+});

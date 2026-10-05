@@ -193,6 +193,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -214,6 +217,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -239,6 +245,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -260,6 +269,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -281,6 +293,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -307,7 +322,7 @@ importers:
         version: 3.3.2
       zustand:
         specifier: ^5.0.6
-        version: 5.0.11(@types/react@19.2.14)(react@19.2.5)
+        version: 5.0.11(@types/react@19.2.17)(react@19.2.8)
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
@@ -429,9 +444,18 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       react:
         specifier: ^19.2.8
         version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
       react-native:
         specifier: ^0.86.0
         version: 0.86.0(@babel/core@7.29.0)(@types/react@19.2.17)(react@19.2.8)
@@ -17892,9 +17916,9 @@ snapshots:
 
   zod@3.25.76: {}
 
-  zustand@5.0.11(@types/react@19.2.14)(react@19.2.5):
+  zustand@5.0.11(@types/react@19.2.17)(react@19.2.8):
     optionalDependencies:
-      '@types/react': 19.2.14
-      react: 19.2.5
+      '@types/react': 19.2.17
+      react: 19.2.8
 
   zwitch@2.0.4: {}
