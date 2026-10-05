@@ -83,3 +83,4 @@ See [docs/sandbox.md](./sandbox.md) for the tour.
 - **Render rich messages** → [message-types/overview.md](./message-types/overview.md)
 - **Stream AI components inline** → [genui/overview.md](./genui/overview.md)
 - **Extend the pipeline** → [extensions.md](./extensions.md)
+- **Vue 2 / Nuxt 2 app** → [vue2.md](./vue2.md)

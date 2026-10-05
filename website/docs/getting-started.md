@@ -170,6 +170,19 @@ app.mount("#app");
 </template>
 ```
 
+### Vue 2 (2.7) / Nuxt 2
+
+Legacy Vue 2.7 apps should use the `@chativa/vue2` wrapper instead of the raw elements — it forwards object/boolean props as DOM properties and turns widget events into Vue `@event` listeners:
+
+```js
+import Vue from "vue";
+import Chativa from "@chativa/vue2";
+
+Vue.use(Chativa, { connector: myConnector }); // then <ChatBotButton /> + <ChatIva @message="..." />
+```
+
+See [Vue 2 / Nuxt 2](./vue2.md), including the Nuxt 2 client-only plugin setup.
+
 ### Angular
 
 ```ts
