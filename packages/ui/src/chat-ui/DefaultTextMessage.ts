@@ -1,5 +1,5 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
 import { t } from "@chativa/core";
@@ -194,54 +194,6 @@ export class DefaultTextMessage extends LitElement {
       to { transform: rotate(360deg); }
     }
 
-    .feedback {
-      display: flex;
-      gap: 2px;
-      opacity: 0;
-      transition: opacity 0.15s;
-      padding: 0 2px;
-    }
-
-    .message.bot:hover .feedback,
-    .feedback.active {
-      opacity: 1;
-    }
-
-    .feedback-btn {
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      padding: 2px 5px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      line-height: 1;
-      color: #94a3b8;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
-    }
-
-    .feedback-btn:hover {
-      border-color: #e2e8f0;
-      background: #f8fafc;
-      color: #64748b;
-    }
-
-    .feedback-btn.selected-like {
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-      color: #16a34a;
-    }
-
-    .feedback-btn.selected-dislike {
-      border-color: #fecaca;
-      background: #fef2f2;
-      color: #dc2626;
-    }
-
-    .feedback-btn:disabled {
-      cursor: default;
-      opacity: 0.7;
-    }
-
     .link-previews {
       display: flex;
       flex-direction: column;
@@ -259,24 +211,7 @@ export class DefaultTextMessage extends LitElement {
   @property({ type: String }) status: MessageStatus = "sent";
   @property({ type: Function }) metadataFetcher: LinkMetadataFetcher | null = null;
 
-  @state() private _feedback: "like" | "dislike" | null = null;
-
   private _onLangChange = () => { this.requestUpdate(); };
-
-  /** Whether feedback is locked by the bot (DisableFeedbackButton event). */
-  private get _feedbackDisabled(): boolean {
-    return !!(this.messageData as Record<string, unknown>)?.feedbackDisabled;
-  }
-
-  /** Effective feedback state: server-confirmed value takes priority over local. */
-  private get _effectiveFeedback(): "like" | "dislike" | null {
-    if (this._feedbackDisabled) {
-      const ft = (this.messageData as Record<string, unknown>)?.feedbackType;
-      if (ft === 0) return "like";
-      if (ft === 1) return "dislike";
-    }
-    return this._feedback;
-  }
 
   override connectedCallback() {
     super.connectedCallback();
@@ -286,22 +221,6 @@ export class DefaultTextMessage extends LitElement {
   override disconnectedCallback() {
     i18next.off("languageChanged", this._onLangChange);
     super.disconnectedCallback();
-  }
-
-  private _onFeedback(type: "like" | "dislike") {
-    if (this._feedbackDisabled) return;
-    if (this._feedback === type) {
-      this._feedback = null;
-      return;
-    }
-    this._feedback = type;
-    this.dispatchEvent(
-      new CustomEvent("chativa-feedback", {
-        bubbles: true,
-        composed: true,
-        detail: { messageId: this.messageId, feedback: type },
-      })
-    );
   }
 
   private get _time(): string {
@@ -440,24 +359,6 @@ export class DefaultTextMessage extends LitElement {
         <div class="content">
           <div class="bubble">${bubbleContent}</div>
           ${this._renderLinkPreviews()}
-          ${!isUser ? html`
-            <div class="feedback ${this._effectiveFeedback ? "active" : ""}">
-              <button
-                class="feedback-btn ${this._effectiveFeedback === "like" ? "selected-like" : ""}"
-                aria-label="${t("message.likeButton")}"
-                aria-pressed="${this._effectiveFeedback === "like"}"
-                ?disabled=${this._feedbackDisabled}
-                @click=${() => this._onFeedback("like")}
-              >👍</button>
-              <button
-                class="feedback-btn ${this._effectiveFeedback === "dislike" ? "selected-dislike" : ""}"
-                aria-label="${t("message.dislikeButton")}"
-                aria-pressed="${this._effectiveFeedback === "dislike"}"
-                ?disabled=${this._feedbackDisabled}
-                @click=${() => this._onFeedback("dislike")}
-              >👎</button>
-            </div>
-          ` : nothing}
           ${this._time || showStatus ? html`
             <div class="meta">
               ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}

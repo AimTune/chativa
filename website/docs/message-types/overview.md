@@ -44,3 +44,11 @@ MessageTypeRegistry.clear();                   // tests only
 ```
 
 Built-in types are auto-registered on import of `@chativa/ui`. Re-registering a name overrides it — useful when you want to swap the default `card` renderer for your own.
+
+## Feedback buttons
+
+Every bot message gets like / dislike buttons, **whatever its type** — `text`, `buttons`, `card`, `carousel`, `image`, a custom renderer or a GenUI message. The buttons are not part of the message component: `chat-message-list` renders a `<message-feedback>` element under each bot message, so custom renderers get feedback without implementing anything. User messages never show them.
+
+- They appear on hover / keyboard focus, and stay visible once a value is selected. On touch devices (no hover) they are always visible.
+- A click dispatches a `chativa-feedback` event (`{ messageId, feedback: "like" | "dislike" }`), which the widget forwards to `IConnector.sendFeedback`.
+- If the message's `data.feedbackDisabled` is `true`, the buttons are locked and `data.feedbackType` (`0` = like, `1` = dislike) shows the confirmed choice — this is how DirectLine's `DisableFeedbackButton` event is reflected.
