@@ -63,6 +63,11 @@ const sidebars: SidebarsConfig = {
       label: "Tools",
       items: ["sandbox", "chrome-extension"],
     },
+    {
+      type: "category",
+      label: "Contributing",
+      items: ["testing"],
+    },
   ],
 };
 

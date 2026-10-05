@@ -4,6 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![LitElement](https://img.shields.io/badge/Built%20with-LitElement-324fff?logo=lit)](https://lit.dev/)
 [![Vitest](https://img.shields.io/badge/Tests-Vitest-6e9f18?logo=vitest)](https://vitest.dev/)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/AimTune/chativa/actions)
 
 **Chativa** is an open-source, framework-agnostic chat widget built on Web Components. Drop one `<script>` tag into any page — React, Vue, Angular, plain HTML — and you have a fully functional, themeable chat interface. Connect to any backend via pluggable connectors, render rich message types, stream Generative UI inline, and extend the pipeline with middleware.
 
@@ -74,6 +75,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | [i18n](docs/i18n.md) | Localisation |
 | [Sandbox](docs/sandbox.md) | The hosted playground |
 | [Chrome extension](docs/chrome-extension.md) | Theme-preview extension for any website |
+| [Testing & coverage](docs/testing.md) | Running tests, coverage thresholds, CI enforcement |
 | [JSON Schemas](schemas/README.md) | Editor-friendly contracts for every JSON-serialisable shape |
 
 ## Repository layout
@@ -106,8 +108,11 @@ pnpm install          # install everything
 pnpm dev              # serve the sandbox at http://localhost:5173
 pnpm build            # build all packages
 pnpm test             # run all tests
+pnpm test:coverage    # all tests with coverage; fails below per-package thresholds
 pnpm typecheck        # strict type-check across the workspace
 ```
+
+Coverage thresholds, reports and what CI enforces are described in [Testing & coverage](docs/testing.md).
 
 The schema-drift test (`packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts`) guards the contract between [`schemas/theme.schema.json`](schemas/theme.schema.json) and the `ThemeConfig` TypeScript type. Add a field to one without the other and CI fails. See [AGENTS.md → Schema sync](AGENTS.md#schema-sync-rule).
 
