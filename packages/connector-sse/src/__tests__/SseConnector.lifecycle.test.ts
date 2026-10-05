@@ -216,14 +216,17 @@ describe("SseConnector lifecycle and transport", () => {
   });
 
   describe("named event listeners", () => {
-    it("handles JSON on the `message` listener and ignores invalid JSON", async () => {
+    it("delivers a default `message` event exactly once", async () => {
       const { connector, messages } = make();
       const { p, es } = start(connector);
       es.open();
       await p;
 
-      es.emit("message", JSON.stringify({ id: "n1", type: "text", data: { text: "a" } }));
-      es.emit("message", "not json");
+      // A browser dispatches an unnamed (or `event: message`) SSE event to
+      // both `onmessage` and every `addEventListener("message")` listener.
+      const frame = { data: JSON.stringify({ id: "n1", type: "text", data: { text: "a" } }) };
+      es.onmessage?.(frame);
+      es.listeners.get("message")?.(frame);
       expect(messages.map((m) => m.id)).toEqual(["n1"]);
     });
 
