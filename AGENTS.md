@@ -30,7 +30,9 @@ packages/
 ├── connector-dummy/    @chativa/connector-dummy
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
-└── connector-directline/ @chativa/connector-directline
+├── connector-directline/ @chativa/connector-directline
+├── react/              @chativa/react    — React / Next.js wrapper
+└── svelte/             @chativa/svelte   — Svelte 5 / SvelteKit wrapper
 apps/
 └── sandbox/            — Interactive demo app
 ```

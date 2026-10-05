@@ -61,6 +61,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | | |
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
+| [Svelte & SvelteKit](docs/svelte.md) | `@chativa/svelte` components, stores and SSR-safe setup |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
 | [Theming](docs/theming.md) | Colors, layout, window modes, custom launchers |
@@ -90,6 +91,9 @@ packages/
   connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
+  react/                 @chativa/react           React / Next.js wrapper
+  svelte/                @chativa/svelte          Svelte 5 / SvelteKit wrapper
+  rn-webview/            @chativa/rn-webview      React Native WebView bridge
 
 apps/
   sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)
