@@ -22,8 +22,8 @@ export class VideoMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -46,14 +46,16 @@ export class VideoMessage extends LitElement {
     }
 
     .video-wrap {
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 16px;
+      border-start-start-radius: 4px;
       overflow: hidden;
       background: #0f172a;
       max-width: 280px;
     }
 
     .message.user .video-wrap {
-      border-radius: 16px 4px 16px 16px;
+      border-radius: 16px;
+      border-start-end-radius: 4px;
     }
 
     video {
@@ -124,7 +126,7 @@ export class VideoMessage extends LitElement {
             ></video>
           </div>
           ${caption ? html`<span class="caption">${caption}</span>` : nothing}
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;

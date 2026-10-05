@@ -136,6 +136,11 @@ class ChatInput extends LitElement {
       height: 18px;
     }
 
+    /* The paper plane points along the reading direction. */
+    :host(:dir(rtl)) .send-btn svg {
+      transform: scaleX(-1);
+    }
+
     /* Hidden file input */
     .file-input {
       display: none;
@@ -154,7 +159,8 @@ class ChatInput extends LitElement {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px 4px 8px;
+      padding-block: 4px;
+      padding-inline: 8px 10px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
       border-radius: 999px;
@@ -199,7 +205,7 @@ class ChatInput extends LitElement {
     .picker-popup {
       position: absolute;
       bottom: calc(100% + 8px);
-      left: 8px;
+      inset-inline-start: 8px;
       z-index: 100;
     }
 
@@ -207,8 +213,8 @@ class ChatInput extends LitElement {
     .slash-popup {
       position: absolute;
       bottom: calc(100% + 8px);
-      left: 12px;
-      right: 12px;
+      inset-inline-start: 12px;
+      inset-inline-end: 12px;
       z-index: 101;
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -227,7 +233,7 @@ class ChatInput extends LitElement {
       border: none;
       background: none;
       width: 100%;
-      text-align: left;
+      text-align: start;
     }
 
     .slash-item:hover,
@@ -571,6 +577,7 @@ class ChatInput extends LitElement {
 
         <textarea
           class="text-input"
+          dir="auto"
           rows="1"
           .value=${this.value}
           @input=${this._onInput}

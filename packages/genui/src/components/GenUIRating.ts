@@ -40,6 +40,9 @@ export class GenUIRating extends ChativaElement {
     }
 
     .stars {
+      /* Rating scales read left-to-right (1 → max) even in RTL UIs — the
+         conventional rule; labels and buttons around them still mirror. */
+      direction: ltr;
       display: flex;
       justify-content: center;
       flex-wrap: wrap;

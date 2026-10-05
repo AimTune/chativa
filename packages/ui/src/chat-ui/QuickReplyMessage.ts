@@ -26,8 +26,8 @@ export class QuickReplyMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -70,13 +70,15 @@ export class QuickReplyMessage extends LitElement {
     .message.bot .bubble {
       background: var(--chativa-bubble-bot-bg, #f1f5f9);
       color: var(--chativa-bubble-bot-color, #0f172a);
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 16px;
+      border-start-start-radius: 4px;
     }
 
     .message.user .bubble {
       background: var(--chativa-bubble-user-bg, var(--chativa-primary-color, #4f46e5));
       color: var(--chativa-bubble-user-color, #ffffff);
-      border-radius: 16px 4px 16px 16px;
+      border-radius: 16px;
+      border-start-end-radius: 4px;
     }
 
     .time {
@@ -218,7 +220,7 @@ export class QuickReplyMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         <div class="content">
           ${this.messageData?.text
-            ? html`<div class="bubble">${this.messageData.text as string}</div>`
+            ? html`<div class="bubble"><div class="bubble-text" dir="auto">${this.messageData.text as string}</div></div>`
             : nothing}
           ${showChips ? html`
             <div class="chips">
@@ -239,7 +241,7 @@ export class QuickReplyMessage extends LitElement {
             </div>
           ` : nothing}
           ${this._time && !this.hideAvatar
-            ? html`<span class="time">${this._time}</span>`
+            ? html`<span class="time"><bdi>${this._time}</bdi></span>`
             : nothing}
         </div>
       </div>
