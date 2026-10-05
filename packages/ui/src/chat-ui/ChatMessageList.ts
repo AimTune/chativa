@@ -7,6 +7,7 @@ import i18next from "../i18n/i18n";
 
 import { messageStore, chatStore, type StoredMessage, type ToolCall } from "@chativa/core";
 import "./ToolCallActivity";
+import "./MessageFeedback";
 import { resolveDisclaimerContent } from "./disclaimerContent";
 
 function resolveTag(component: typeof HTMLElement): string {
@@ -207,6 +208,29 @@ class ChatMessageList extends LitElement {
     /* Align with the bubble, past the 28px avatar + 8px gap */
     .tool-activity-attached.avatar-offset {
       margin-left: 36px;
+    }
+
+    /* Like/dislike under every bot message — revealed on hover/focus,
+       pinned once a value is selected. */
+    .message-feedback {
+      width: fit-content;
+      margin-top: 1px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .message-feedback.avatar-offset {
+      margin-left: 36px;
+    }
+
+    .bot-message:hover .message-feedback,
+    .bot-message:focus-within .message-feedback,
+    .message-feedback[active] {
+      opacity: 1;
+    }
+
+    @media (hover: none) {
+      .message-feedback { opacity: 1; }
     }
 
     /* Typing indicator */
@@ -500,7 +524,8 @@ class ChatMessageList extends LitElement {
       : "default-text-message";
     const next = messages[i + 1];
     const isLastInGroup = !next || next.from !== msg.from;
-    const rendered = staticHtml`<${unsafeStatic(tag)}
+    const isBot = msg.from !== "user";
+    const element = staticHtml`<${unsafeStatic(tag)}
       .messageData=${msg.data}
       .sender=${msg.from ?? "bot"}
       .messageId=${msg.id}
@@ -508,17 +533,30 @@ class ChatMessageList extends LitElement {
       .hideAvatar=${!isLastInGroup}
       .status=${msg.status ?? "sent"}
     ></${unsafeStatic(tag)}>`;
+    if (!isBot) return element;
+
+    const showBotAvatar = chatStore.getState().theme.avatar?.showBot !== false;
+
+    // Like/dislike attaches at list level so every bot message type — text,
+    // buttons, card, carousel, custom or GenUI — gets the feedback buttons.
+    const rendered = html`
+      <div class="bot-message">
+        ${element}
+        <message-feedback
+          class="message-feedback ${showBotAvatar ? "avatar-offset" : ""}"
+          .messageId=${msg.id}
+          .messageData=${msg.data ?? {}}
+        ></message-feedback>
+      </div>
+    `;
 
     // Tool-call trace attaches at list level so every message type — built-in
     // or custom (e.g. a GenUI weather widget) — gets the activity line above it.
-    const toolCalls = msg.from !== "user"
-      ? (msg.data?.toolCalls as ToolCall[] | undefined)
-      : undefined;
+    const toolCalls = msg.data?.toolCalls as ToolCall[] | undefined;
     // Array.isArray also shields against connector-supplied non-array values
     // (data.toolCalls passes through core with only an undefined check).
     if (!Array.isArray(toolCalls) || toolCalls.length === 0) return rendered;
 
-    const showBotAvatar = chatStore.getState().theme.avatar?.showBot !== false;
     return html`
       <div class="tool-activity-attached ${showBotAvatar ? "avatar-offset" : ""}">
         <tool-call-activity .toolCalls=${toolCalls}></tool-call-activity>

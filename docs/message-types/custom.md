@@ -55,6 +55,7 @@ MessageTypeRegistry.register("text", MyFancyTextMessage);   // overrides default
 
 - Extend `ChatbotMixin(LitElement)` — it brings `I18nMixin` and styling tokens.
 - Read CSS variables (`--chativa-primary-color`, `--chativa-bubble-bot-bg`, …) in your styles to inherit the active theme.
+- Don't render like / dislike buttons yourself — the message list adds them under every bot message (see [Feedback buttons](./overview.md#feedback-buttons)).
 - Need to send a message back from inside your component? Use the `chativa-action` custom event:
 
 ```ts
