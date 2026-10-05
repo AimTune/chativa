@@ -14,5 +14,13 @@ export default defineConfig({
   },
   test: {
     include: ["src/**/__tests__/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov", "json-summary"],
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/**/__tests__/**", "src/**/*.test.ts", "src/index.ts"],
+      // A few points below the measured numbers so CI fails on a real regression.
+      thresholds: { lines: 95, functions: 95, branches: 90, statements: 95 },
+    },
   },
 });
