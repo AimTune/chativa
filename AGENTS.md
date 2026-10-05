@@ -48,17 +48,23 @@ Several `domain/` types have a paired JSON Schema under `schemas/` (see [schemas
 
 Enforcement is automated:
 
-1. **Compile-time** — `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` declares mapped-type contracts (`{ [K in keyof Required<T>]: true }`). Adding or removing a field on `ThemeConfig`, `ThemeColors`, `LayoutConfig`, `AvatarConfig`, or `EndOfConversationSurveyConfig` fails `pnpm typecheck` until the contract is updated.
-2. **Runtime** — the same test reads `schemas/theme.schema.json` and asserts that `properties` keys exactly match those contracts. A drift fails `pnpm test`.
+1. **Compile-time** — each `schema-drift.test.ts` declares mapped-type contracts (`{ [K in keyof Required<T>]: true }`). Adding or removing a field on a paired type fails `pnpm typecheck` until the contract is updated.
+2. **Runtime** — the same test reads the paired schema under `schemas/` and asserts that its `properties` keys exactly match those contracts. A drift fails `pnpm test`.
+
+Drift tests live next to the type they guard:
+
+| Test | Guards |
+|---|---|
+| `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` | `ThemeConfig` and its sub-objects ↔ `theme.schema.json` |
+| `packages/core/src/domain/entities/__tests__/schema-drift.test.ts` | `IncomingMessage`, `OutgoingMessage`, `MessageAction`, `HistoryResult`, `Conversation`, `SurveyPayload`, `ToolCall` ↔ `messages/*.schema.json`; every `AIChunk` variant ↔ `genui/ai-chunk.schema.json` `oneOf` |
+| `packages/connector-*/src/__tests__/schema-drift.test.ts` | each connector's options type ↔ `connectors/<name>.schema.json` (kept in the connector's own package — no cross-package imports into core) |
 
 When you add a new schema-paired type:
 
 1. Add the type in the appropriate `domain/` file.
 2. Mirror it in a new file under `schemas/` (copy the closest sibling as a template).
 3. Add a row to [schemas/README.md](./schemas/README.md).
-4. Extend `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block.
-
-Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test only mechanically guards the high-traffic `ThemeConfig` for now; extending it to those types is welcome.
+4. Extend the nearest `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block. A new connector package gets its own `src/__tests__/schema-drift.test.ts` (copy a sibling connector's).
 
 ---
 
