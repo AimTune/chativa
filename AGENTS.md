@@ -30,7 +30,8 @@ packages/
 ├── connector-dummy/    @chativa/connector-dummy
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
-└── connector-directline/ @chativa/connector-directline
+├── connector-directline/ @chativa/connector-directline
+└── angular/            @chativa/angular  — Angular 16+ wrapper (ng-packagr build, publishes from dist/)
 apps/
 └── sandbox/            — Interactive demo app
 ```

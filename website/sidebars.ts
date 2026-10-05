@@ -6,6 +6,7 @@ const sidebars: SidebarsConfig = {
     "getting-started",
     "concepts",
     "react-native",
+    "angular",
     {
       type: "category",
       label: "Architecture",

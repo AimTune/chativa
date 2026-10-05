@@ -172,6 +172,10 @@ app.mount("#app");
 
 ### Angular
 
+For Angular 16+ apps, `@chativa/angular` provides standalone wrapper components with typed inputs and outputs (`<chativa-chat-iva [connector]="dummy" (message)="onMessage($event)" />`), an `NgModule`, `provideChativa()` and a `ChativaService`, and works with both Zone.js and zoneless change detection. See [Angular](./angular.md).
+
+To use the custom elements directly instead, opt in to them with `CUSTOM_ELEMENTS_SCHEMA`:
+
 ```ts
 // app.module.ts
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from "@angular/core";
