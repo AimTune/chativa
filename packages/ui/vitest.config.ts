@@ -17,5 +17,14 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     include: ["src/**/__tests__/**/*.test.ts", "src/**/*.test.ts"],
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/__tests__/**", "src/**/*.test.ts", "src/index.ts", "src/vite-env.d.ts"],
+      // A few points under the measured numbers (lines 99.3, statements 98.4,
+      // functions 97, branches 93.1) so CI catches real regressions.
+      thresholds: { lines: 95, statements: 95, functions: 93, branches: 89 },
+    },
   },
 });

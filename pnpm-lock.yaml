@@ -307,7 +307,7 @@ importers:
         version: 3.3.2
       zustand:
         specifier: ^5.0.6
-        version: 5.0.11(@types/react@19.2.14)(react@19.2.5)
+        version: 5.0.11(@types/react@19.2.17)(react@19.2.8)
     devDependencies:
       '@vitest/coverage-v8':
         specifier: ^4.0.18
@@ -472,6 +472,9 @@ importers:
         specifier: ^13.0.0
         version: 13.0.3
     devDependencies:
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
@@ -17892,9 +17895,9 @@ snapshots:
 
   zod@3.25.76: {}
 
-  zustand@5.0.11(@types/react@19.2.14)(react@19.2.5):
+  zustand@5.0.11(@types/react@19.2.17)(react@19.2.8):
     optionalDependencies:
-      '@types/react': 19.2.14
-      react: 19.2.5
+      '@types/react': 19.2.17
+      react: 19.2.8
 
   zwitch@2.0.4: {}
