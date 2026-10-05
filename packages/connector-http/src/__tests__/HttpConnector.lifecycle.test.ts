@@ -278,6 +278,48 @@ describe("HttpConnector lifecycle and transport", () => {
       expect(calls()).toHaveLength(count);
     });
 
+    it("drops the result of a poll that was in flight when disconnect() was called", async () => {
+      const { connector, messages } = make();
+      await connector.connect();
+
+      let release!: (r: Response) => void;
+      responder = () => new Promise<Response>((r) => (release = r));
+      await vi.advanceTimersByTimeAsync(10); // poll in flight
+      await connector.disconnect();
+      release(ok({ messages: [{ id: "late", type: "text", data: { text: "x" } }] }));
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(messages).toEqual([]);
+    });
+
+    it("does not count a failure of an in-flight poll against a later session", async () => {
+      const { connector, disconnects } = make({ maxErrors: 1 });
+      await connector.connect();
+
+      let fail!: (e: Error) => void;
+      responder = () => new Promise<Response>((_, rej) => (fail = rej));
+      await vi.advanceTimersByTimeAsync(10); // poll in flight
+      await connector.disconnect();
+      fail(new Error("network down"));
+      await vi.advanceTimersByTimeAsync(0);
+
+      expect(disconnects).toEqual(["user"]);
+    });
+
+    it("runs a single poller when connect() is called twice", async () => {
+      const { connector } = make();
+      await connector.connect();
+      await connector.connect();
+      const afterConnects = calls().length; // two probes
+
+      await vi.advanceTimersByTimeAsync(10);
+      expect(calls()).toHaveLength(afterConnects + 1);
+
+      await connector.disconnect();
+      await vi.advanceTimersByTimeAsync(100);
+      expect(calls()).toHaveLength(afterConnects + 1);
+    });
+
     it("skips a tick that fires while stopped", async () => {
       // A tick queued before disconnect() must not fetch once _stopped is set.
       const { connector } = make();
