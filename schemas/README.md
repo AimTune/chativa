@@ -36,7 +36,7 @@ Each connector's constructor `Options` interface:
 
 | Schema | TypeScript source |
 |---|---|
-| [connectors/dummy.schema.json](./connectors/dummy.schema.json) | `connector-dummy/src/DummyConnector.ts` |
+| [connectors/dummy.schema.json](./connectors/dummy.schema.json) | `connector-dummy/src/DummyConnector.ts` → `DummyConnectorOptions` (incl. `DummyRule`) — drift-tested in `connector-dummy/src/__tests__/schema-drift.test.ts` |
 | [connectors/websocket.schema.json](./connectors/websocket.schema.json) | `connector-websocket/src/WebSocketConnector.ts` → `WebSocketConnectorOptions` |
 | [connectors/signalr.schema.json](./connectors/signalr.schema.json) | `connector-signalr/src/SignalRConnector.ts` → `SignalRConnectorOptions` |
 | [connectors/directline.schema.json](./connectors/directline.schema.json) | `connector-directline/src/DirectLineConnector.ts` → `DirectLineConnectorOptions` |
