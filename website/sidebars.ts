@@ -7,6 +7,7 @@ const sidebars: SidebarsConfig = {
     "concepts",
     "react-native",
     "vue",
+    "vue2",
     "svelte",
     {
       type: "category",

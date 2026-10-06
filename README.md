@@ -76,6 +76,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | [i18n](docs/i18n.md) | Localisation |
 | [Sandbox](docs/sandbox.md) | The hosted playground |
 | [Chrome extension](docs/chrome-extension.md) | Theme-preview extension for any website |
+| [Vue 2 / Nuxt 2](docs/vue2.md) | `@chativa/vue2` wrapper for legacy Vue 2.7 apps (maintenance mode) |
 | [JSON Schemas](schemas/README.md) | Editor-friendly contracts for every JSON-serialisable shape |
 
 ## Repository layout
@@ -96,6 +97,7 @@ packages/
   svelte/                @chativa/svelte          Svelte 5 / SvelteKit wrapper
   rn-webview/            @chativa/rn-webview      React Native WebView bridge
   vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
+  vue2/                  @chativa/vue2            Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
 
 apps/
   sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)
