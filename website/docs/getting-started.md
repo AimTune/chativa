@@ -170,6 +170,8 @@ app.mount("#app");
 </template>
 ```
 
+Prefer typed components, camelCase `v-on` events and reactive composables? `@chativa/vue` wraps the same elements as `<ChatIva>` / `<ChatBotButton>` with a `ChativaPlugin`, and it is SSR-safe for Nuxt 3. See [Vue 3](./vue.md).
+
 ### Angular
 
 ```ts
