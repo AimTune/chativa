@@ -358,6 +358,12 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(lightningcss@1.32.0)(terser@5.46.0)(yaml@2.9.0))
+      jsdom:
+        specifier: ^28.1.0
+        version: 28.1.0
       terser:
         specifier: ^5.46.0
         version: 5.46.0
