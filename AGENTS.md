@@ -62,7 +62,7 @@ When you add a new schema-paired type:
 3. Add a row to [schemas/README.md](./schemas/README.md).
 4. Extend `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block.
 
-Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test only mechanically guards the high-traffic `ThemeConfig` for now; extending it to those types is welcome.
+Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test mechanically guards the high-traffic `ThemeConfig`; `DummyConnectorOptions` / `DummyRule` have their own guard in `packages/connector-dummy/src/__tests__/schema-drift.test.ts`. Extending the same pattern to the other connector option types is welcome.
 
 ---
 

@@ -2,15 +2,20 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import {
   chatStore,
-  messageStore,
   ConnectorRegistry,
   type ConnectorStatus,
   type IConnector,
 } from "@chativa/core";
-import { DummyConnector } from "@chativa/connector-dummy";
 import { DirectLineConnector } from "@chativa/connector-directline";
 import { MekikConnector } from "@chativa/connector-mekik";
 import { sectionStyles } from "../sandboxShared";
+import {
+  buildDummyConnector,
+  getDummyOptions,
+  setDummyOptions,
+  subscribeDummyOptions,
+  swapConnector,
+} from "../connectorSwap";
 
 type ConnectorKind = "dummy" | "directline" | "mekik";
 
@@ -212,7 +217,10 @@ export class ConnectorSection extends LitElement {
   @state() private _capabilities: Record<string, boolean> = detectCapabilities();
   @state() private _feedback: { msg: string; ok: boolean } | null = null;
 
-  @state() private _dummy: DummyForm = { replyDelay: 500, connectDelay: 2000 };
+  @state() private _dummy: DummyForm = {
+    replyDelay: getDummyOptions().replyDelay,
+    connectDelay: getDummyOptions().connectDelay,
+  };
   @state() private _directline: DirectLineForm = {
     token: "",
     userId: "",
@@ -225,9 +233,13 @@ export class ConnectorSection extends LitElement {
   };
 
   private _unsub!: () => void;
+  private _unsubDummy!: () => void;
 
   connectedCallback() {
     super.connectedCallback();
+    this._unsubDummy = subscribeDummyOptions((o) => {
+      this._dummy = { replyDelay: o.replyDelay, connectDelay: o.connectDelay };
+    });
     this._unsub = chatStore.subscribe(() => {
       const s = chatStore.getState();
       this._status = s.connectorStatus;
@@ -243,6 +255,7 @@ export class ConnectorSection extends LitElement {
 
   disconnectedCallback() {
     this._unsub?.();
+    this._unsubDummy?.();
     super.disconnectedCallback();
   }
 
@@ -251,38 +264,7 @@ export class ConnectorSection extends LitElement {
     this._feedback = null;
     try {
       const instance = this._buildConnector();
-      // Replace any same-named instance in the registry with the new one.
-      ConnectorRegistry.register(instance);
-      chatStore.getState().setConnector(instance.name);
-
-      // Wipe runtime state from the previous session so the new connector
-      // starts clean (mirrors what ChatWidget._resetConversation does after
-      // a survey submit).
-      messageStore.getState().clear();
-      chatStore.setState({
-        connectorStatus: "idle",
-        isTyping: false,
-        unreadCount: 0,
-        reconnectAttempt: 0,
-        hasMoreHistory: false,
-        isLoadingHistory: false,
-        historyCursor: undefined,
-        searchQuery: "",
-        isRendered: false,
-        activeToolCalls: [],
-      });
-
-      // Replace the <chat-iva> element so its connectedCallback re-binds
-      // the engine to the newly registered adapter. ChatWidget.disconnectedCallback
-      // calls _multiEngine.destroy(), which disconnects the old connector.
-      const old = document.querySelector("chat-iva");
-      if (old?.parentNode) {
-        const fresh = document.createElement(old.tagName.toLowerCase());
-        for (const attr of Array.from(old.attributes)) {
-          fresh.setAttribute(attr.name, attr.value);
-        }
-        old.parentNode.replaceChild(fresh, old);
-      }
+      swapConnector(instance);
 
       this._feedback = {
         msg: `Connected ${instance.name}. Open the widget to talk to it.`,
@@ -296,10 +278,12 @@ export class ConnectorSection extends LitElement {
 
   private _buildConnector(): IConnector {
     if (this._kind === "dummy") {
-      return new DummyConnector({
+      // Delays come from this form; rules come from the Rules tab.
+      setDummyOptions({
         replyDelay: Number(this._dummy.replyDelay) || 0,
         connectDelay: Number(this._dummy.connectDelay) || 0,
       });
+      return buildDummyConnector();
     }
     if (this._kind === "directline") {
       const f = this._directline;
