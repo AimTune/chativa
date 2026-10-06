@@ -126,14 +126,10 @@ export class SseConnector implements IConnector {
         }
       };
 
-      // Listen for named event types the server may emit
-      es.addEventListener("message", (e: MessageEvent) => {
-        try {
-          const data = JSON.parse(e.data as string) as Record<string, unknown>;
-          this._handleServerEvent(data);
-        } catch { /* ignore */ }
-      });
-
+      // Listen for named event types the server may emit. (No separate
+      // "message" listener: a default/`event: message` event already reaches
+      // `onmessage` above, and a browser fires both — a second listener would
+      // deliver every frame twice.)
       es.addEventListener("connected", () => {
         this.connectHandler?.();
         resolve();

@@ -35,37 +35,33 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      # Runs `test:coverage` in every @chativa/* package that defines it.
+      # Each package enforces its own thresholds (vitest.config.ts →
+      # coverage.thresholds); a package that drops below them exits non-zero
+      # and fails this job. --no-bail lets every package report first.
       - name: Run tests with coverage
         run: pnpm test:coverage
 
+      # Per-package + weighted total table in the job summary. Runs even when
+      # thresholds failed so the numbers are visible on the failing run.
+      - name: Coverage summary
+        if: ${{ !cancelled() && hashFiles('packages/*/coverage/coverage-summary.json') != '' }}
+        run: pnpm coverage:summary
+
+      - name: Upload coverage reports
+        if: ${{ !cancelled() && hashFiles('packages/*/coverage/coverage-summary.json') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: packages/*/coverage/
+          if-no-files-found: warn
+          retention-days: 14
+
+      # Aggregates every packages/*/coverage/coverage-summary.json, weighted
+      # by line totals (covered lines / total lines across all packages).
       - name: Update coverage badge in README
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          node -e "
-          const fs = require('fs');
-          const pkgs = [
-            'packages/core',
-            'packages/connector-dummy',
-            'packages/genui',
-            'packages/vue2',
-            'packages/svelte',
-          ];
-          let total = 0, covered = 0;
-          for (const pkg of pkgs) {
-            try {
-              const s = JSON.parse(fs.readFileSync(\`\${pkg}/coverage/coverage-summary.json\`, 'utf8'));
-              total   += s.total.lines.total;
-              covered += s.total.lines.covered;
-            } catch (_) {}
-          }
-          const pct   = total > 0 ? Math.round(covered / total * 100) : 0;
-          const color = pct >= 80 ? 'brightgreen' : pct >= 70 ? 'yellow' : pct >= 50 ? 'orange' : 'red';
-          const badge = \`[![Coverage](https://img.shields.io/badge/coverage-\${pct}%25-\${color})](https://github.com/AimTune/chativa/actions)\`;
-          let readme  = fs.readFileSync('README.md', 'utf8');
-          readme = readme.replace(/\[!\[Coverage\]\(.*?\)\]\(.*?\)/, badge);
-          fs.writeFileSync('README.md', readme);
-          console.log(\`Coverage: \${pct}% (\${color})\`);
-          "
+        run: node scripts/coverage-summary.mjs --badge
 
       - name: Commit updated badge
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
