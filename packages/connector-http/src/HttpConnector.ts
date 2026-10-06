@@ -60,6 +60,12 @@ export class HttpConnector implements IConnector {
   private _cursor: string | undefined;
   private _errorCount = 0;
   private _stopped = false;
+  /**
+   * Bumped on every connect()/disconnect(). A poll that was already in flight
+   * when the session changed must not deliver into (or error-count against)
+   * the new one.
+   */
+  private _session = 0;
 
   private messageHandler: MessageHandler | null = null;
   private connectHandler: ConnectHandler | null = null;
@@ -79,6 +85,7 @@ export class HttpConnector implements IConnector {
 
   async connect(): Promise<void> {
     this._stopped = false;
+    this._session++;
     this._errorCount = 0;
 
     // Verify the endpoint is reachable
@@ -90,6 +97,7 @@ export class HttpConnector implements IConnector {
 
   async disconnect(): Promise<void> {
     this._stopped = true;
+    this._session++;
     this._stopPolling();
     this.disconnectHandler?.("user");
   }
@@ -192,6 +200,8 @@ export class HttpConnector implements IConnector {
   }
 
   private _startPolling(): void {
+    // A second connect() without disconnect() must not leave the first timer running.
+    this._stopPolling();
     this._pollTimer = setInterval(() => void this._poll(), this.options.pollInterval);
   }
 
@@ -204,6 +214,7 @@ export class HttpConnector implements IConnector {
 
   private async _poll(): Promise<void> {
     if (this._stopped) return;
+    const session = this._session;
 
     const url = this._cursor
       ? `${this.options.url}/messages?cursor=${encodeURIComponent(this._cursor)}`
@@ -214,6 +225,7 @@ export class HttpConnector implements IConnector {
         messages: Parameters<MessageHandler>[0][];
         cursor?: string;
       };
+      if (session !== this._session) return;
 
       this._errorCount = 0;
 
@@ -227,6 +239,7 @@ export class HttpConnector implements IConnector {
         this.messageHandler?.(msg);
       }
     } catch {
+      if (session !== this._session) return;
       this._errorCount++;
       if (this._errorCount >= this.options.maxErrors) {
         this._stopPolling();

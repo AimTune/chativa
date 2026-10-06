@@ -18,7 +18,8 @@
     "build": "pnpm -r --filter @chativa/* build",
     "test": "pnpm -r --filter @chativa/* test",
     "test:watch": "pnpm -r --filter @chativa/* exec vitest",
-    "test:coverage": "pnpm --filter '@chativa/core' run test -- --coverage && pnpm --filter '@chativa/connector-dummy' run test -- --coverage && pnpm --filter '@chativa/genui' run test -- --coverage && pnpm --filter '@chativa/vue' run test -- --coverage && pnpm --filter '@chativa/vue2' run test -- --coverage && pnpm --filter '@chativa/svelte' run test -- --coverage",
+    "test:coverage": "pnpm -r --no-bail --filter @chativa/* run --if-present test:coverage",
+    "coverage:summary": "node scripts/coverage-summary.mjs",
     "typecheck": "pnpm -r --filter @chativa/* typecheck",
     "i18n:check": "node scripts/i18n-check.mjs"
   },
