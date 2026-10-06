@@ -406,6 +406,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -427,6 +430,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -452,6 +458,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -473,6 +482,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -494,6 +506,9 @@ importers:
       '@chativa/core':
         specifier: workspace:*
         version: link:../core
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       terser:
         specifier: ^5.46.0
         version: 5.46.0
@@ -642,9 +657,18 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.17)
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       react:
         specifier: ^19.2.8
         version: 19.2.8
+      react-dom:
+        specifier: ^19.2.8
+        version: 19.2.8(react@19.2.8)
       react-native:
         specifier: ^0.86.0
         version: 0.86.0(@babel/core@7.29.7)(@types/react@19.2.17)(react@19.2.8)

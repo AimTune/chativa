@@ -76,6 +76,18 @@ jobs:
       - name: Publish @chativa/rn-webview
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/rn-webview
+      - name: Publish @chativa/vue
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/vue
+      - name: Publish @chativa/vue2
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/vue2
+      - name: Publish @chativa/angular
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/angular
+      - name: Publish @chativa/svelte
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/svelte
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
