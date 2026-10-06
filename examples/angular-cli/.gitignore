@@ -1,0 +1,3 @@
+# Angular CLI build cache
+/.angular/
+/out-tsc/
