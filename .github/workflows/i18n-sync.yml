@@ -1,0 +1,171 @@
+# Translation guard.
+#
+# Runs scripts/i18n-check.mjs whenever a PR touches the UI or GenUI locale
+# files. If a translation was forgotten (missing key, missing plural form,
+# broken {{placeholder}}, untranslated copy of English) and the PR comes from a
+# branch of this repository, Claude Code adds exactly the reported translations
+# and pushes them to the PR branch. PRs from forks only get the report and a
+# failing check — secrets are not available to them, by design.
+#
+# Setup (maintainer): add the `ANTHROPIC_API_KEY` repository secret and install
+# the Claude GitHub App (https://github.com/apps/claude) on this repository.
+# See website/docs/i18n.md → "CI translation guard".
+name: i18n sync
+
+on:
+  pull_request:
+    paths:
+      - "packages/ui/src/i18n/**"
+      - "packages/genui/src/i18n/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write # OIDC exchange for the Claude GitHub App token
+
+concurrency:
+  group: i18n-sync-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  i18n:
+    runs-on: ubuntu-latest
+    env:
+      # Marker Claude puts in its commit message; a run on such a commit never
+      # invokes Claude again, so a fix that does not converge cannot loop.
+      SYNC_MARKER: "[i18n-sync]"
+      IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+      TARGET_BRANCH: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+    steps:
+      - name: Check out the PR branch
+        uses: actions/checkout@v4
+        with:
+          # Same-repo PRs: the real head branch, so commits can be pushed to it.
+          # Forks: the default merge ref — nothing is pushed for them.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref || '' }}
+          fetch-depth: 2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check translations
+        id: check
+        shell: bash
+        run: |
+          set +e
+          node scripts/i18n-check.mjs --json > "$RUNNER_TEMP/i18n-report.json"
+          code=$?
+          set -e
+          node scripts/i18n-check.mjs | tee "$RUNNER_TEMP/i18n-report.txt" || true
+          {
+            echo "## i18n check"
+            echo '```'
+            cat "$RUNNER_TEMP/i18n-report.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "$code" -gt 1 ]; then
+            echo "::error::i18n-check crashed (exit $code)"
+            exit "$code"
+          fi
+          echo "failed=$([ "$code" -eq 1 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          {
+            echo "report<<I18N_REPORT_EOF"
+            cat "$RUNNER_TEMP/i18n-report.json"
+            echo "I18N_REPORT_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Decide whether Claude may fix it
+        id: gate
+        if: steps.check.outputs.failed == 'true'
+        shell: bash
+        run: |
+          head_author="$(git log -1 --format='%an')"
+          head_message="$(git log -1 --format='%B')"
+          reason=""
+          if [ "$IS_FORK" = "true" ]; then
+            reason="PR comes from a fork — secrets are unavailable, add the translations manually."
+          elif [ "$TARGET_BRANCH" = "$DEFAULT_BRANCH" ]; then
+            reason="Refusing to push translations straight to the default branch."
+          elif [[ "$head_message" == *"$SYNC_MARKER"* ]] || [[ "$head_author" == "claude[bot]" ]]; then
+            reason="Head commit is already an automated translation commit — not retrying (loop guard)."
+          fi
+          if [ -n "$reason" ]; then
+            echo "::notice::$reason"
+            echo "fix=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "fix=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Add missing translations with Claude Code
+        if: steps.gate.outputs.fix == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            You are fixing translation gaps in the Chativa repository (${{ github.repository }}),
+            on branch `${{ env.TARGET_BRANCH }}`.
+
+            `node scripts/i18n-check.mjs --json` reported the problems below. Fix exactly these
+            problems and nothing else.
+
+            ```json
+            ${{ steps.check.outputs.report }}
+            ```
+
+            Where things live:
+            - UI strings: `packages/ui/src/i18n/<locale>.json` (nested JSON; `en.json` is the source of truth).
+            - GenUI strings: `packages/genui/src/i18n/index.ts`, one flat `const XX: Record<string, string>`
+              block per locale, registered in `GENUI_LOCALES` (`EN` is the source of truth). Keep each entry
+              on one line as `"key": "value",` with double-quoted strings.
+
+            Rules:
+            - `missingKey` / `missingPlural`: add the key to that locale, translating the English text
+              (`english`) naturally and in the same tone and terminology the locale already uses.
+            - Plural keys use i18next suffixes `_zero`, `_one`, `_two`, `_few`, `_many`, `_other`. Provide
+              every category listed in `pluralCategories` for that locale (they come from
+              Intl.PluralRules) and keep `{{count}}` in each form.
+            - `placeholder`: make the locale's `{{placeholders}}` match `expected` exactly (same names, never
+              translated); do not change the English source.
+            - `untranslated`: replace the English copy with a real translation.
+            - `extraKey`: remove the key from the locale unless it is clearly a renamed version of a
+              missing key, in which case move its translation to the new key.
+            - Never edit `en.json`, the `EN` block, tests, workflows or any file outside the two
+              locations above. Preserve existing formatting, key order and any HTML/markdown in values.
+
+            When done:
+            1. Run `node scripts/i18n-check.mjs` and repeat until it exits 0.
+            2. Commit only the changed locale files with the message
+               `chore(i18n): add missing translations ${{ env.SYNC_MARKER }}` and push to
+               `${{ env.TARGET_BRANCH }}`.
+            Mention in your summary that the translations are machine-generated and should get a
+            native-speaker review.
+          claude_args: |
+            --max-turns 40
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(node scripts/i18n-check.mjs:*),Bash(git status:*),Bash(git diff:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*)"
+
+      - name: Re-check after Claude
+        if: steps.gate.outputs.fix == 'true'
+        shell: bash
+        run: |
+          node scripts/i18n-check.mjs
+          if [ -n "$(git status --porcelain -- packages/ui/src/i18n packages/genui/src/i18n)" ]; then
+            echo "::error::Claude left uncommitted locale changes; translations were not pushed."
+            exit 1
+          fi
+          git fetch --quiet origin "$TARGET_BRANCH"
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse FETCH_HEAD)" ]; then
+            echo "::error::The translation commit was not pushed to $TARGET_BRANCH."
+            exit 1
+          fi
+          echo "Missing translations were added and pushed to $TARGET_BRANCH." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail with the report
+        if: steps.check.outputs.failed == 'true' && steps.gate.outputs.fix != 'true'
+        shell: bash
+        run: |
+          cat "$RUNNER_TEMP/i18n-report.txt"
+          echo "::error::Translations are missing or out of sync — run 'node scripts/i18n-check.mjs' locally and add them."
+          exit 1

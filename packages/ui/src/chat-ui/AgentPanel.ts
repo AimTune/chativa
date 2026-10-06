@@ -9,6 +9,7 @@ import {
   type GenUIEventOptions,
 } from "@chativa/core";
 import { registerCommand } from "../commands/index";
+import { DirectionController } from "../i18n/rtl";
 import "./ConversationList";
 import "./ChatHeader";
 import "./ChatMessageList";
@@ -17,7 +18,8 @@ import "./ChatInput";
 /**
  * `<agent-panel>` — embedded multi-conversation panel for agent / support desk use.
  *
- * Shows a sidebar with the conversation list on the left and the active chat on the right.
+ * Shows a sidebar with the conversation list on the inline-start side (left in
+ * LTR, right in RTL) and the active chat beside it.
  * Does NOT show a floating button — it's meant to be embedded directly in an application.
  *
  * Attributes:
@@ -89,6 +91,9 @@ export class AgentPanel extends LitElement {
   `;
 
   @property({ type: String }) connector = "dummy";
+
+  /** Mirrors the active language onto `dir` (an author-set `dir` wins). */
+  protected readonly _direction = new DirectionController(this);
   @property({ type: String, attribute: "sidebar-width" }) sidebarWidth = "260px";
 
   @state() private _activeId: string | null = null;

@@ -4,6 +4,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![LitElement](https://img.shields.io/badge/Built%20with-LitElement-324fff?logo=lit)](https://lit.dev/)
 [![Vitest](https://img.shields.io/badge/Tests-Vitest-6e9f18?logo=vitest)](https://vitest.dev/)
+[![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/AimTune/chativa/actions)
 
 **Chativa** is an open-source, framework-agnostic chat widget built on Web Components. Drop one `<script>` tag into any page — React, Vue, Angular, plain HTML — and you have a fully functional, themeable chat interface. Connect to any backend via pluggable connectors, render rich message types, stream Generative UI inline, and extend the pipeline with middleware.
 
@@ -52,7 +53,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | **Generative UI** | [Stream LitElement components inline](docs/genui/overview.md) — forms, charts, tables, your own widgets. |
 | **Extensions** | [Middleware lifecycle](docs/extensions.md) for analytics, transformers, and slash commands. |
 | **Themable** | [CSS variables + JSON config + fluent builder](docs/theming.md). Four window modes. |
-| **i18n** | English & Turkish out of the box; [extend at runtime](docs/i18n.md). |
+| **i18n** | 20 languages out of the box (incl. pt-BR, zh-CN/zh-TW, ar, he); [extend at runtime](docs/i18n.md). |
 | **End-of-conversation survey** | [Star rating + comment](docs/survey.md), connector-routed. |
 | **Multi-conversation** | [Agent-panel mode](docs/multi-conversation.md) for helpdesk scenarios. |
 
@@ -61,19 +62,26 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | | |
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
+| [Vue 3](docs/vue.md) | `@chativa/vue` — typed components, plugin, composables, Nuxt/SSR |
+| [Angular](docs/angular.md) | `@chativa/angular` — standalone components, NgModule, `ChativaService` |
+| [Svelte & SvelteKit](docs/svelte.md) | `@chativa/svelte` components, stores and SSR-safe setup |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
 | [Theming](docs/theming.md) | Colors, layout, window modes, custom launchers |
 | [Connectors](docs/connectors/overview.md) | Capability matrix + per-connector pages |
 | [Message types](docs/message-types/overview.md) | Built-ins + custom renderers |
 | [Generative UI](docs/genui/overview.md) | Streaming protocol, built-in components, custom widgets |
+| [Recipes](docs/recipes.md) | Copy-paste React, Vue, WordPress and DirectLine token-endpoint setups |
 | [Extensions](docs/extensions.md) | Middleware lifecycle |
+| [EventBus](docs/events.md) | Every analytics event — payload and when it fires |
 | [Slash commands](docs/slash-commands.md) | Built-ins + registering your own |
 | [Survey](docs/survey.md) | End-of-conversation flow |
 | [Multi-conversation](docs/multi-conversation.md) | Agent-panel mode |
 | [i18n](docs/i18n.md) | Localisation |
 | [Sandbox](docs/sandbox.md) | The hosted playground |
 | [Chrome extension](docs/chrome-extension.md) | Theme-preview extension for any website |
+| [Vue 2 / Nuxt 2](docs/vue2.md) | `@chativa/vue2` wrapper for legacy Vue 2.7 apps (maintenance mode) |
+| [Testing & coverage](docs/testing.md) | Running tests, coverage thresholds, CI enforcement |
 | [JSON Schemas](schemas/README.md) | Editor-friendly contracts for every JSON-serialisable shape |
 
 ## Repository layout
@@ -90,6 +98,12 @@ packages/
   connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
+  react/                 @chativa/react           React / Next.js wrapper
+  svelte/                @chativa/svelte          Svelte 5 / SvelteKit wrapper
+  rn-webview/            @chativa/rn-webview      React Native WebView bridge
+  vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
+  vue2/                  @chativa/vue2            Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+  angular/               @chativa/angular         Angular wrapper components (ng-packagr)
 
 apps/
   sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)
@@ -106,8 +120,12 @@ pnpm install          # install everything
 pnpm dev              # serve the sandbox at http://localhost:5173
 pnpm build            # build all packages
 pnpm test             # run all tests
+pnpm test:coverage    # all tests with coverage; fails below per-package thresholds
+pnpm --filter @chativa/ui test:coverage   # coverage for the UI components only
 pnpm typecheck        # strict type-check across the workspace
 ```
+
+Coverage thresholds, reports and what CI enforces are described in [Testing & coverage](docs/testing.md).
 
 The schema-drift test (`packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts`) guards the contract between [`schemas/theme.schema.json`](schemas/theme.schema.json) and the `ThemeConfig` TypeScript type. Add a field to one without the other and CI fails. See [AGENTS.md → Schema sync](AGENTS.md#schema-sync-rule).
 

@@ -1,0 +1,101 @@
+{
+  "greeting": "Здравствуйте",
+  "welcome": "Добро пожаловать, {{name}}!",
+  "header": {
+    "title": "Чат-бот Chativa",
+    "status": {
+      "connecting": "Подключение…",
+      "connected": "В сети",
+      "error": "Ошибка подключения",
+      "disconnected": "Отключено",
+      "offline": "Не в сети"
+    },
+    "fullscreen": {
+      "enter": "Развернуть на весь экран",
+      "exit": "Выйти из полноэкранного режима"
+    },
+    "close": "Закрыть",
+    "minimize": "Свернуть",
+    "search": {
+      "toggle": "Поиск",
+      "placeholder": "Поиск по сообщениям…",
+      "clear": "Очистить поиск"
+    }
+  },
+  "input": {
+    "placeholder": "Введите сообщение…",
+    "send": "Отправить сообщение",
+    "emoji": "Эмодзи",
+    "attachFile": "Прикрепить файл",
+    "removeFile": "Удалить {{name}}",
+    "dropHere": "Перетащите файлы сюда",
+    "dropHereSubtitle": "Отпустите, чтобы прикрепить"
+  },
+  "messageList": {
+    "connecting": "Подключение…",
+    "emptyTitle": "Чем я могу помочь?",
+    "emptySubtitle": "Отправьте сообщение, чтобы начать.",
+    "newMessage": "Новое сообщение",
+    "loadMore": "Загрузить предыдущие сообщения",
+    "errorTitle": "Соединение потеряно",
+    "errorSubtitle": "Не удалось переподключиться. Попробуйте ещё раз.",
+    "retry": "Повторить",
+    "reconnecting": "Переподключение… (попытка {{attempt}})",
+    "searchEmpty": "Нет сообщений, соответствующих запросу.",
+    "searchResult": "Найдено результатов: {{count}}",
+    "loadingHistory": "Загрузка предыдущих сообщений…",
+    "ariaLabel": "Сообщения чата",
+    "typingIndicator": "Ассистент печатает"
+  },
+  "message": {
+    "from": {
+      "bot": "Ассистент",
+      "user": "Вы"
+    },
+    "likeButton": "Нравится это сообщение",
+    "dislikeButton": "Не нравится это сообщение",
+    "statusSending": "Отправляется",
+    "statusSent": "Отправлено",
+    "statusRead": "Прочитано"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Поиск эмодзи…",
+    "noResults": "Ничего не найдено"
+  },
+  "chatButton": {
+    "open": "Открыть чат",
+    "close": "Закрыть чат"
+  },
+  "widget": {
+    "title": "Чат",
+    "disclaimer": "Контент, созданный ИИ, может быть неточным."
+  },
+  "survey": {
+    "title": "Как мы справились?",
+    "ratingLabel": "Оцените ваш опыт",
+    "commentPlaceholder": "Что мы могли бы улучшить?",
+    "commentRequired": "Расскажите, что пошло не так",
+    "submit": "Отправить",
+    "skip": "Пропустить",
+    "thankYouTitle": "Мы получили ваш отзыв!",
+    "thankYouBody": "Спасибо за ваши ценные мысли и комментарии.",
+    "close": "Закрыть",
+    "starLabel_one": "{{count}} звезда",
+    "starLabel_few": "{{count}} звезды",
+    "starLabel_many": "{{count}} звёзд",
+    "starLabel_other": "{{count}} звезды"
+  },
+  "toolCalls": {
+    "running": "Выполняется",
+    "completed": "Завершено",
+    "error": "Ошибка",
+    "parameters": "Параметры",
+    "result": "Результат",
+    "summary_one": "{{count}} операция",
+    "summary_few": "{{count}} операции",
+    "summary_many": "{{count}} операций",
+    "summary_other": "{{count}} операции",
+    "failed": "С ошибкой: {{count}}",
+    "ariaToggle": "Показать или скрыть подробности вызовов инструментов"
+  }
+}

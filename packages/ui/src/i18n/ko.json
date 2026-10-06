@@ -1,0 +1,95 @@
+{
+  "greeting": "안녕하세요",
+  "welcome": "{{name}}님, 환영합니다!",
+  "header": {
+    "title": "Chativa 챗봇",
+    "status": {
+      "connecting": "연결 중…",
+      "connected": "온라인",
+      "error": "연결 오류",
+      "disconnected": "연결 끊김",
+      "offline": "오프라인"
+    },
+    "fullscreen": {
+      "enter": "전체 화면",
+      "exit": "전체 화면 종료"
+    },
+    "close": "닫기",
+    "minimize": "최소화",
+    "search": {
+      "toggle": "검색",
+      "placeholder": "메시지 검색…",
+      "clear": "검색 지우기"
+    }
+  },
+  "input": {
+    "placeholder": "메시지를 입력하세요…",
+    "send": "메시지 보내기",
+    "emoji": "이모지",
+    "attachFile": "파일 첨부",
+    "removeFile": "{{name}} 삭제",
+    "dropHere": "여기에 파일을 놓으세요",
+    "dropHereSubtitle": "놓으면 첨부됩니다"
+  },
+  "messageList": {
+    "connecting": "연결 중…",
+    "emptyTitle": "무엇을 도와드릴까요?",
+    "emptySubtitle": "메시지를 보내 대화를 시작하세요.",
+    "newMessage": "새 메시지",
+    "loadMore": "이전 메시지 불러오기",
+    "errorTitle": "연결이 끊어졌습니다",
+    "errorSubtitle": "다시 연결하지 못했습니다. 다시 시도해 주세요.",
+    "retry": "다시 시도",
+    "reconnecting": "다시 연결 중… ({{attempt}}번째 시도)",
+    "searchEmpty": "검색과 일치하는 메시지가 없습니다.",
+    "searchResult": "검색 결과 {{count}}개",
+    "loadingHistory": "이전 메시지를 불러오는 중…",
+    "ariaLabel": "채팅 메시지",
+    "typingIndicator": "어시스턴트가 입력 중입니다"
+  },
+  "message": {
+    "from": {
+      "bot": "어시스턴트",
+      "user": "나"
+    },
+    "likeButton": "이 메시지 좋아요",
+    "dislikeButton": "이 메시지 싫어요",
+    "statusSending": "보내는 중",
+    "statusSent": "보냄",
+    "statusRead": "읽음"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "이모지 검색…",
+    "noResults": "결과 없음"
+  },
+  "chatButton": {
+    "open": "채팅 열기",
+    "close": "채팅 닫기"
+  },
+  "widget": {
+    "title": "채팅",
+    "disclaimer": "AI가 생성한 콘텐츠는 정확하지 않을 수 있습니다."
+  },
+  "survey": {
+    "title": "상담은 어떠셨나요?",
+    "ratingLabel": "이용 경험을 평가해 주세요",
+    "commentPlaceholder": "개선할 점을 알려 주세요",
+    "commentRequired": "어떤 문제가 있었는지 알려 주세요",
+    "submit": "제출",
+    "skip": "건너뛰기",
+    "thankYouTitle": "피드백을 받았습니다!",
+    "thankYouBody": "소중한 의견을 보내 주셔서 감사합니다.",
+    "close": "닫기",
+    "starLabel_other": "별 {{count}}개"
+  },
+  "toolCalls": {
+    "running": "실행 중",
+    "completed": "완료",
+    "error": "오류",
+    "parameters": "매개변수",
+    "result": "결과",
+    "summary_other": "작업 {{count}}개",
+    "failed": "{{count}}개 실패",
+    "ariaToggle": "도구 호출 세부 정보 표시/숨기기"
+  }
+}

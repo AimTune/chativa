@@ -142,6 +142,24 @@ The dynamic `import()` keeps the chat bundle out of your initial JavaScript payl
 
 Native apps embed the same widget through a WebView bridge — `@chativa/rn-webview`'s `<ChativaWebView>` gets full web feature parity (every message type, GenUI, every connector) with no UI code to port. See [React Native](./react-native.md).
 
+### Svelte (and SvelteKit)
+
+Svelte renders custom elements natively — import `@chativa/ui` in the browser and use `<chat-iva>` as-is. For typed props, callback-prop events, `$chatState` / `$messages` stores and SSR-safe loading in SvelteKit, use the `@chativa/svelte` wrapper:
+
+```svelte
+<script lang="ts">
+  import { ChatIva, ChatBotButton } from "@chativa/svelte";
+  import { DummyConnector } from "@chativa/connector-dummy";
+
+  const dummy = new DummyConnector();
+</script>
+
+<ChatBotButton />
+<ChatIva connector={dummy} onmessage={(m) => console.log(m)} />
+```
+
+See [Svelte & SvelteKit](./svelte.md).
+
 ### Vue 3
 
 Vue treats unknown tags with hyphens as custom elements out of the box, but you should opt in explicitly so it doesn't try to create components for them:
@@ -170,7 +188,26 @@ app.mount("#app");
 </template>
 ```
 
+Prefer typed components, camelCase `v-on` events and reactive composables? `@chativa/vue` wraps the same elements as `<ChatIva>` / `<ChatBotButton>` with a `ChativaPlugin`, and it is SSR-safe for Nuxt 3. See [Vue 3](./vue.md).
+
+### Vue 2 (2.7) / Nuxt 2
+
+Legacy Vue 2.7 apps should use the `@chativa/vue2` wrapper instead of the raw elements — it forwards object/boolean props as DOM properties and turns widget events into Vue `@event` listeners:
+
+```js
+import Vue from "vue";
+import Chativa from "@chativa/vue2";
+
+Vue.use(Chativa, { connector: myConnector }); // then <ChatBotButton /> + <ChatIva @message="..." />
+```
+
+See [Vue 2 / Nuxt 2](./vue2.md), including the Nuxt 2 client-only plugin setup.
+
 ### Angular
+
+For Angular 16+ apps, `@chativa/angular` provides standalone wrapper components with typed inputs and outputs (`<chativa-chat-iva [connector]="dummy" (message)="onMessage($event)" />`), an `NgModule`, `provideChativa()` and a `ChativaService`, and works with both Zone.js and zoneless change detection. See [Angular](./angular.md).
+
+To use the custom elements directly instead, opt in to them with `CUSTOM_ELEMENTS_SCHEMA`:
 
 ```ts
 // app.module.ts

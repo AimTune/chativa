@@ -30,7 +30,11 @@ packages/
 ├── connector-dummy/    @chativa/connector-dummy
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
-└── connector-directline/ @chativa/connector-directline
+├── connector-directline/ @chativa/connector-directline
+├── react/              @chativa/react    — React / Next.js wrapper
+├── vue2/               @chativa/vue2     — Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+├── angular/            @chativa/angular  — Angular 16+ wrapper (ng-packagr build, publishes from dist/)
+└── svelte/             @chativa/svelte   — Svelte 5 / SvelteKit wrapper
 apps/
 └── sandbox/            — Interactive demo app
 ```
@@ -58,7 +62,7 @@ When you add a new schema-paired type:
 3. Add a row to [schemas/README.md](./schemas/README.md).
 4. Extend `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block.
 
-Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test only mechanically guards the high-traffic `ThemeConfig` for now; extending it to those types is welcome.
+Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test mechanically guards the high-traffic `ThemeConfig`; `DummyConnectorOptions` / `DummyRule` have their own guard in `packages/connector-dummy/src/__tests__/schema-drift.test.ts`. Extending the same pattern to the other connector option types is welcome.
 
 ---
 
@@ -372,8 +376,9 @@ element dispatches a bubbling, composed `genui-component-event` instead.
 
 - Test file location mirrors source: `src/foo/bar.ts` → `src/foo/__tests__/bar.test.ts`
 - Run tests: `pnpm test`
-- Run with coverage: `pnpm test:coverage`
-- Coverage threshold: 80% for application layer
+- Run with coverage: `pnpm test:coverage` (one package: `pnpm --filter @chativa/ui test:coverage`)
+- Coverage threshold: 80% for application layer. `packages/ui` enforces per-metric thresholds in `packages/ui/vitest.config.ts` — raise them when coverage goes up, never lower them to make CI pass
+- UI component tests mount the real element in jsdom (`document.body.appendChild`, `await el.updateComplete`, query `el.shadowRoot`). Use the helpers in `packages/ui/src/__tests__/testUtils.ts`: `mount()`, `createFakeConnector()` / `registerFakeConnector()` (an `IConnector` double whose methods are `vi.fn`s) and `resetGlobals()` (resets `chatStore`, `messageStore`, `conversationStore` and the connector / slash-command registries) in `beforeEach`
 - Always call `.clear()` on registries in `beforeEach`
 
 ### Test Patterns

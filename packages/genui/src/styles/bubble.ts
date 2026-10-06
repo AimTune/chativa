@@ -24,8 +24,15 @@ export const bubbleStyles = css`
   .chativa-bubble {
     background: #f1f5f9;
     color: #0f172a;
-    border-radius: 4px 16px 16px 16px;
+    /* Logical corners: the "tail" corner sits at the inline-start, top
+       edge — top-left in LTR, top-right in RTL. */
+    border-radius: 16px;
+    border-start-start-radius: 4px;
     padding: 9px 13px;
+    /* Each line picks its own base direction from its first strong
+       character, so mixed Arabic/English text keeps its punctuation in
+       place without changing the bubble's own (widget) direction. */
+    unicode-bidi: plaintext;
     font-family: var(--chativa-font-family, inherit);
     font-size: 0.875rem;
     line-height: 1.5;

@@ -10,6 +10,7 @@ import {
 
 import "./sections/AppearanceSection";
 import "./sections/ConnectorSection";
+import "./sections/RulesSection";
 import "./sections/ExtensionsSection";
 import "./sections/FeaturesSection";
 import "./sections/MessagesSection";
@@ -25,6 +26,7 @@ import { resetPreview } from "./previewState";
 type TabId =
   | "appearance"
   | "connector"
+  | "rules"
   | "extensions"
   | "features"
   | "messages"
@@ -105,6 +107,12 @@ const TABS: TabDef[] = [
     label: "Connector",
     icon: svg`<path d="M9 2v6m6-6v6"/><rect x="6" y="8" width="12" height="6" rx="1"/><path d="M12 14v8"/>`,
     docPath: "connectors/overview.md",
+  },
+  {
+    id: "rules",
+    label: "Rules",
+    icon: svg`<path d="M4 6h10M4 12h7M4 18h10"/><path d="M17 9l3 3-3 3"/>`,
+    docPath: "connectors/dummy.md",
   },
   {
     id: "extensions",
@@ -563,6 +571,9 @@ export class SandboxControls extends LitElement {
             </div>
             <div class="tab-pane ${this._activeTab === "connector" ? "active" : ""}">
               <sandbox-connector-section></sandbox-connector-section>
+            </div>
+            <div class="tab-pane ${this._activeTab === "rules" ? "active" : ""}">
+              <sandbox-rules-section></sandbox-rules-section>
             </div>
             <div class="tab-pane ${this._activeTab === "extensions" ? "active" : ""}">
               <sandbox-extensions-section></sandbox-extensions-section>

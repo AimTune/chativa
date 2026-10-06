@@ -30,8 +30,8 @@ export class CardMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -121,7 +121,7 @@ export class CardMessage extends LitElement {
       font-weight: 500;
       color: var(--chativa-primary-color, #4f46e5);
       cursor: pointer;
-      text-align: left;
+      text-align: start;
       font-family: inherit;
       transition: background 0.15s;
     }
@@ -237,7 +237,7 @@ export class CardMessage extends LitElement {
               </div>
             ` : nothing}
           </div>
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;
