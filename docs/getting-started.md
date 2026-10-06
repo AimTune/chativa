@@ -85,3 +85,4 @@ See [docs/sandbox.md](./sandbox.md) for the tour.
 - **Extend the pipeline** → [extensions.md](./extensions.md)
 - **Use typed Vue 3 / Nuxt components** → [vue.md](./vue.md)
 - **Vue 2 / Nuxt 2 app** → [vue2.md](./vue2.md)
+- **Use it from Angular** → [angular.md](./angular.md)

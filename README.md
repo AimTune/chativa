@@ -62,6 +62,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
 | [Vue 3](docs/vue.md) | `@chativa/vue` — typed components, plugin, composables, Nuxt/SSR |
+| [Angular](docs/angular.md) | `@chativa/angular` — standalone components, NgModule, `ChativaService` |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
 | [Theming](docs/theming.md) | Colors, layout, window modes, custom launchers |
@@ -94,6 +95,7 @@ packages/
   connector-http/        @chativa/connector-http
   vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
   vue2/                  @chativa/vue2            Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+  angular/               @chativa/angular         Angular wrapper components (ng-packagr)
 
 apps/
   sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)

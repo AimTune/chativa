@@ -1,0 +1,40 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    // Off (the `ng new` default is on): inside this monorepo the workspace
+    // packages' declaration files point at `@chativa/core`'s TypeScript
+    // source, which this app would otherwise type-check under that rule.
+    // Apps installing the packages from npm can leave it on.
+    "noPropertyAccessFromIndexSignature": false,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    // Monorepo-only: `@chativa/angular` is linked to `packages/angular/dist`,
+    // and that package has its own (older) Angular as dev dependencies to
+    // build against. Pin Angular to this app's copy so the bundle contains a
+    // single `@angular/core`. Not needed when installing from npm.
+    "paths": {
+      "@angular/core": ["./node_modules/@angular/core"],
+      "@angular/common": ["./node_modules/@angular/common"]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    }
+  ]
+}
