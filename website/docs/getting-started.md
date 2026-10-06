@@ -170,6 +170,8 @@ app.mount("#app");
 </template>
 ```
 
+Prefer typed components, camelCase `v-on` events and reactive composables? `@chativa/vue` wraps the same elements as `<ChatIva>` / `<ChatBotButton>` with a `ChativaPlugin`, and it is SSR-safe for Nuxt 3. See [Vue 3](./vue.md).
+
 ### Vue 2 (2.7) / Nuxt 2
 
 Legacy Vue 2.7 apps should use the `@chativa/vue2` wrapper instead of the raw elements — it forwards object/boolean props as DOM properties and turns widget events into Vue `@event` listeners:

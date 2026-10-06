@@ -1,14 +1,14 @@
-# Chativa
+﻿# Chativa
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178c6?logo=typescript)](https://www.typescriptlang.org/)
 [![LitElement](https://img.shields.io/badge/Built%20with-LitElement-324fff?logo=lit)](https://lit.dev/)
 [![Vitest](https://img.shields.io/badge/Tests-Vitest-6e9f18?logo=vitest)](https://vitest.dev/)
 
-**Chativa** is an open-source, framework-agnostic chat widget built on Web Components. Drop one `<script>` tag into any page — React, Vue, Angular, plain HTML — and you have a fully functional, themeable chat interface. Connect to any backend via pluggable connectors, render rich message types, stream Generative UI inline, and extend the pipeline with middleware.
+**Chativa** is an open-source, framework-agnostic chat widget built on Web Components. Drop one `<script>` tag into any page â€” React, Vue, Angular, plain HTML â€” and you have a fully functional, themeable chat interface. Connect to any backend via pluggable connectors, render rich message types, stream Generative UI inline, and extend the pipeline with middleware.
 
 ![Chativa chat widget](docs/assets/screenshots/hero/widget-component.png)
-> _Docs:_ **<https://chativa.aimtune.dev>** · _Live demo:_ **<https://chativa.aimtune.dev/sandbox/>**
+> _Docs:_ **<https://chativa.aimtune.dev>** Â· _Live demo:_ **<https://chativa.aimtune.dev/sandbox/>**
 
 ## Quick start
 
@@ -19,7 +19,7 @@
 <chat-iva></chat-iva>
 ```
 
-That's it — the default `dummy` connector echoes whatever you type. Wire to your backend:
+That's it â€” the default `dummy` connector echoes whatever you type. Wire to your backend:
 
 ```ts
 import { ConnectorRegistry, chatStore } from "@chativa/core";
@@ -41,15 +41,15 @@ Or set everything declaratively before the script tag:
 </script>
 ```
 
-Full guide → [docs/getting-started.md](docs/getting-started.md).
+Full guide â†’ [docs/getting-started.md](docs/getting-started.md).
 
 ## What's in the box
 
 | Capability | Details |
 |---|---|
-| **Pluggable connectors** | [Dummy, WebSocket, SignalR, DirectLine, Mekik, SSE, HTTP](docs/connectors/overview.md) — or write your own. |
-| **Rich messages** | [text, image, card, buttons, quick-reply, carousel, file, video](docs/message-types/built-in.md) — register custom types. |
-| **Generative UI** | [Stream LitElement components inline](docs/genui/overview.md) — forms, charts, tables, your own widgets. |
+| **Pluggable connectors** | [Dummy, WebSocket, SignalR, DirectLine, Mekik, SSE, HTTP](docs/connectors/overview.md) â€” or write your own. |
+| **Rich messages** | [text, image, card, buttons, quick-reply, carousel, file, video](docs/message-types/built-in.md) â€” register custom types. |
+| **Generative UI** | [Stream LitElement components inline](docs/genui/overview.md) â€” forms, charts, tables, your own widgets. |
 | **Extensions** | [Middleware lifecycle](docs/extensions.md) for analytics, transformers, and slash commands. |
 | **Themable** | [CSS variables + JSON config + fluent builder](docs/theming.md). Four window modes. |
 | **i18n** | English & Turkish out of the box; [extend at runtime](docs/i18n.md). |
@@ -61,6 +61,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | | |
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
+| [Vue 3](docs/vue.md) | `@chativa/vue` â€” typed components, plugin, composables, Nuxt/SSR |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
 | [Theming](docs/theming.md) | Colors, layout, window modes, custom launchers |
@@ -91,6 +92,7 @@ packages/
   connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
+  vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
   vue2/                  @chativa/vue2            Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
 
 apps/
@@ -111,7 +113,7 @@ pnpm test             # run all tests
 pnpm typecheck        # strict type-check across the workspace
 ```
 
-The schema-drift test (`packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts`) guards the contract between [`schemas/theme.schema.json`](schemas/theme.schema.json) and the `ThemeConfig` TypeScript type. Add a field to one without the other and CI fails. See [AGENTS.md → Schema sync](AGENTS.md#schema-sync-rule).
+The schema-drift test (`packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts`) guards the contract between [`schemas/theme.schema.json`](schemas/theme.schema.json) and the `ThemeConfig` TypeScript type. Add a field to one without the other and CI fails. See [AGENTS.md â†’ Schema sync](AGENTS.md#schema-sync-rule).
 
 ## Contributing
 
@@ -119,4 +121,4 @@ Conventions, architecture rules, and PR checklists are in [AGENTS.md](AGENTS.md)
 
 ## License
 
-[MIT](LICENSE) — © [Hamza Agar](https://github.com/AimTune)
+[MIT](LICENSE) â€” Â© [Hamza Agar](https://github.com/AimTune)
