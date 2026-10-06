@@ -31,6 +31,7 @@ packages/
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
 ├── connector-directline/ @chativa/connector-directline
+├── vue2/               @chativa/vue2     — Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
 └── angular/            @chativa/angular  — Angular 16+ wrapper (ng-packagr build, publishes from dist/)
 apps/
 └── sandbox/            — Interactive demo app
