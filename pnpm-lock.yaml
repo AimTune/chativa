@@ -617,6 +617,9 @@ importers:
       '@types/react-dom':
         specifier: ^19.2.3
         version: 19.2.3(@types/react@19.2.17)
+      '@vitest/coverage-v8':
+        specifier: ^4.0.18
+        version: 4.0.18(vitest@4.0.18(jiti@1.21.7)(jsdom@28.1.0)(less@4.9.1)(lightningcss@1.32.0)(sass@1.105.1)(terser@5.46.0)(yaml@2.9.0))
       jsdom:
         specifier: ^28.1.0
         version: 28.1.0
