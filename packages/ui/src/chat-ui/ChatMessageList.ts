@@ -207,7 +207,7 @@ class ChatMessageList extends LitElement {
 
     /* Align with the bubble, past the 28px avatar + 8px gap */
     .tool-activity-attached.avatar-offset {
-      margin-left: 36px;
+      margin-inline-start: 36px;
     }
 
     /* Like/dislike under every bot message — revealed on hover/focus,
@@ -220,7 +220,7 @@ class ChatMessageList extends LitElement {
     }
 
     .message-feedback.avatar-offset {
-      margin-left: 36px;
+      margin-inline-start: 36px;
     }
 
     .bot-message:hover .message-feedback,
@@ -240,13 +240,14 @@ class ChatMessageList extends LitElement {
       gap: 5px;
       padding: 10px 14px;
       background: #f1f5f9;
-      border-radius: 18px 18px 18px 4px;
+      border-radius: 18px;
+      border-end-start-radius: 4px;
       width: fit-content;
       margin-top: 4px;
     }
 
     .typing-text {
-      margin-left: 4px;
+      margin-inline-start: 4px;
       color: #64748b;
       font-size: 0.8125rem;
       line-height: 1.25;

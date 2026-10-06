@@ -7,6 +7,8 @@ export { ConversationList } from "./chat-ui/ConversationList";
 export { default as ChatBotButton } from "./chat-ui/ChatBotButton";
 export { default as i18n, SUPPORTED_LOCALES } from "./i18n/i18n";
 export type { BundledLocale } from "./i18n/i18n";
+export { RTL_LANGUAGES, isRtlLanguage, getLanguageDirection, DirectionController } from "./i18n/rtl";
+export type { TextDirection } from "./i18n/rtl";
 export { registerCommand } from "./commands/index";
 export type { LocalizedCommandConfig, CommandTranslations } from "./commands/index";
 export { render } from "./render";

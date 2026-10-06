@@ -28,7 +28,7 @@ export class GenUIAlert extends ChativaElement {
       align-items: flex-start;
       padding: 14px 16px;
       border-radius: 10px;
-      border-left: 4px solid;
+      border-inline-start: 4px solid;
       font-family: inherit;
       max-width: 420px;
     }

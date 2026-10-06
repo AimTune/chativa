@@ -19,7 +19,7 @@ export class ConversationList extends LitElement {
       flex-direction: column;
       height: 100%;
       background: #f8fafc;
-      border-right: 1px solid #e2e8f0;
+      border-inline-end: 1px solid #e2e8f0;
       font-family: var(--chativa-font-family, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif);
       min-width: 0;
     }
@@ -295,7 +295,7 @@ export class ConversationList extends LitElement {
               </div>
 
               <div class="info">
-                <div class="name">${c.contact ?? c.title}</div>
+                <div class="name" dir="auto">${c.contact ?? c.title}</div>
                 ${c.lastMessage
                   ? html`<div class="last">${c.lastMessage}</div>`
                   : nothing}

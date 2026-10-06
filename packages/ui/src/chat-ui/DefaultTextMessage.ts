@@ -28,11 +28,11 @@ export class DefaultTextMessage extends LitElement {
     }
 
     .message.bot {
-      margin-right: auto;
+      margin-inline-end: auto;
     }
 
     .message.user {
-      margin-left: auto;
+      margin-inline-start: auto;
       flex-direction: row-reverse;
     }
 
@@ -91,7 +91,7 @@ export class DefaultTextMessage extends LitElement {
     .message.bot .bubble pre code { background: none; padding: 0; }
     .message.bot .bubble a { color: #4f46e5; text-decoration: underline; }
     .message.bot .bubble ul,
-    .message.bot .bubble ol { margin: 4px 0; padding-left: 18px; }
+    .message.bot .bubble ol { margin: 4px 0; padding-inline-start: 18px; }
     .message.bot .bubble strong { font-weight: 600; }
     .message.bot .bubble em { font-style: italic; }
 
@@ -108,7 +108,22 @@ export class DefaultTextMessage extends LitElement {
     }
     .message.user .bubble a { color: #ffffff; text-decoration: underline; }
     .message.user .bubble ul,
-    .message.user .bubble ol { margin: 4px 0; padding-left: 18px; }
+    .message.user .bubble ol { margin: 4px 0; padding-inline-start: 18px; }
+
+    /* Bidi: the text inside a bubble picks its own base direction from its
+       first strong character (dir="auto" on .bubble-text), so an English
+       reply in an Arabic UI keeps its punctuation in place — while the
+       bubble itself (corners, alignment) follows the widget direction.
+       Links and inline code are isolated so URLs / identifiers never
+       reorder the sentence around them; code blocks always read LTR. */
+    .bubble a,
+    .bubble code {
+      unicode-bidi: isolate;
+    }
+    .bubble pre {
+      direction: ltr;
+      text-align: left;
+    }
 
     .content {
       display: flex;
@@ -131,13 +146,15 @@ export class DefaultTextMessage extends LitElement {
     .message.bot .bubble {
       background: var(--chativa-bubble-bot-bg, #f1f5f9);
       color: var(--chativa-bubble-bot-color, #0f172a);
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 16px;
+      border-start-start-radius: 4px;
     }
 
     .message.user .bubble {
       background: var(--chativa-bubble-user-bg, var(--chativa-primary-color, #4f46e5));
       color: var(--chativa-bubble-user-color, #ffffff);
-      border-radius: 16px 4px 16px 16px;
+      border-radius: 16px;
+      border-start-end-radius: 4px;
     }
 
     /* Streaming caret — shown while a bot bubble is still being streamed
@@ -146,7 +163,7 @@ export class DefaultTextMessage extends LitElement {
       display: inline-block;
       width: 2px;
       height: 1em;
-      margin-left: 1px;
+      margin-inline-start: 1px;
       vertical-align: text-bottom;
       background: currentColor;
       opacity: 0.7;
@@ -357,11 +374,11 @@ export class DefaultTextMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
-          <div class="bubble">${bubbleContent}</div>
+          <div class="bubble"><div class="bubble-text" dir="auto">${bubbleContent}</div></div>
           ${this._renderLinkPreviews()}
           ${this._time || showStatus ? html`
             <div class="meta">
-              ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}
+              ${this._time ? html`<span class="time" aria-hidden="true"><bdi>${this._time}</bdi></span>` : nothing}
               ${showStatus ? this._renderStatusIcon() : nothing}
             </div>
           ` : nothing}

@@ -3,6 +3,7 @@ import { customElement, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { renderIcon } from "../utils/icons";
+import { DirectionController } from "../i18n/rtl";
 
 const SIZE_PX: Record<string, number> = { small: 44, medium: 56, large: 68 };
 
@@ -120,7 +121,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
     .badge {
       position: absolute;
       top: -4px;
-      right: -4px;
+      inset-inline-end: -4px;
       min-width: 18px;
       height: 18px;
       padding: 0 4px;
@@ -157,6 +158,9 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       }
     }
   `;
+
+  /** Mirrors the active language onto `dir` (an author-set `dir` wins). */
+  protected readonly _direction = new DirectionController(this);
 
   /** True when consumer has placed content in the default slot */
   @state() private _hasSlot = false;

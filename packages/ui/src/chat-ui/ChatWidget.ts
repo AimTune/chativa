@@ -17,6 +17,7 @@ import {
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { registerCommand } from "../commands/index";
 import { resolveDisclaimerContent } from "./disclaimerContent";
+import { DirectionController } from "../i18n/rtl";
 
 import "./DefaultTextMessage";
 import "./QuickReplyMessage";
@@ -120,6 +121,13 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       animation: slideInFromLeft 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    /* The list slides in from the inline-start edge, so mirror it under RTL.
+       (The side-panel slide stays physical — it follows theme.position,
+       which is a physical corner.) */
+    :host(:dir(rtl)) conversation-list {
+      animation-name: slideInFromRight;
+    }
+
     /* Applied directly via JS — no transition during drag */
     .widget.dragging {
       transition: none !important;
@@ -136,8 +144,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
          * Fallback values (0px / 100dvh) cover Android and non-iOS browsers.
          */
         top: var(--_vv-top, 0px) !important;
-        left: 0 !important;
-        right: 0 !important;
+        inset-inline: 0 !important;
         bottom: auto !important;
         width: 100% !important;
         height: var(--_vv-height, 100dvh) !important;
@@ -198,6 +205,9 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
   `;
 
   @property({ type: String }) connector = "dummy";
+
+  /** Mirrors the active language onto `dir` (an author-set `dir` wins). */
+  protected readonly _direction = new DirectionController(this);
 
   /**
    * Set as HTML attribute to start in fullscreen and hide the toggle:

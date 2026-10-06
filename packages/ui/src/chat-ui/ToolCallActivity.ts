@@ -40,7 +40,7 @@ export class ToolCallActivity extends LitElement {
       font-family: inherit;
       font-size: 0.72rem;
       color: #475569;
-      text-align: left;
+      text-align: start;
     }
 
     .line:hover {
@@ -91,7 +91,7 @@ export class ToolCallActivity extends LitElement {
       width: 13px;
       height: 13px;
       flex-shrink: 0;
-      margin-left: auto;
+      margin-inline-start: auto;
       color: #94a3b8;
       transition: transform 0.15s;
     }
@@ -132,7 +132,7 @@ export class ToolCallActivity extends LitElement {
       return html`
         <span class="spinner" aria-hidden="true"></span>
         <span class="label">
-          <span class="names">${running.name}</span>
+          <span class="names" dir="auto">${running.name}</span>
           ${running.description ? html` · ${running.description}` : nothing}
         </span>
       `;
@@ -143,7 +143,7 @@ export class ToolCallActivity extends LitElement {
         <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
       </svg>
       <span class="label" title="${this._toolNames}">
-        <span class="names">${this._toolNames}</span>
+        <span class="names" dir="auto">${this._toolNames}</span>
         · ${t("toolCalls.summary", { count: calls.length })}
       </span>
       ${errorCount > 0
