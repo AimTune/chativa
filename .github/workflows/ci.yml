@@ -50,6 +50,8 @@ jobs:
             'packages/core',
             'packages/connector-dummy',
             'packages/genui',
+            'packages/vue2',
+            'packages/svelte',
           ];
           let total = 0, covered = 0;
           for (const pkg of pkgs) {
