@@ -33,6 +33,7 @@ packages/
 ├── connector-directline/ @chativa/connector-directline
 ├── react/              @chativa/react    — React / Next.js wrapper
 ├── vue2/               @chativa/vue2     — Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+├── angular/            @chativa/angular  — Angular 16+ wrapper (ng-packagr build, publishes from dist/)
 └── svelte/             @chativa/svelte   — Svelte 5 / SvelteKit wrapper
 apps/
 └── sandbox/            — Interactive demo app

@@ -1,0 +1,30 @@
+{
+  "name": "chativa-example-angular-cli",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Living usage doc for @chativa/angular — a zoneless Angular CLI standalone app with provideChativa() + <chativa-chat-iva> wired to @chativa/connector-dummy.",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit"
+  },
+  "dependencies": {
+    "@angular/common": "^21.2.0",
+    "@angular/compiler": "^21.2.0",
+    "@angular/core": "^21.2.0",
+    "@angular/platform-browser": "^21.2.0",
+    "@chativa/angular": "workspace:*",
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.25",
+    "@angular/cli": "^21.2.25",
+    "@angular/compiler-cli": "^21.2.0",
+    "typescript": "~5.9.2"
+  }
+}
