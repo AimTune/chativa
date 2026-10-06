@@ -1,6 +1,6 @@
 // @chativa/genui — Generative UI streaming for Chativa chat widget
 
-// ── i18n resources (EN/TR) — registered as a side-effect ─────────────────────
+// ── i18n resources (every bundled language) — registered as a side-effect ────
 import "./i18n/index";
 
 // ── Registry ──────────────────────────────────────────────────────────────────

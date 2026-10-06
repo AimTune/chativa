@@ -6,6 +6,10 @@ const sidebars: SidebarsConfig = {
     "getting-started",
     "concepts",
     "react-native",
+    "vue",
+    "vue2",
+    "angular",
+    "svelte",
     {
       type: "category",
       label: "Architecture",
@@ -62,6 +66,11 @@ const sidebars: SidebarsConfig = {
       type: "category",
       label: "Tools",
       items: ["sandbox", "chrome-extension"],
+    },
+    {
+      type: "category",
+      label: "Contributing",
+      items: ["testing"],
     },
   ],
 };

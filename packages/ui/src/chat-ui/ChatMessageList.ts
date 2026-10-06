@@ -463,8 +463,12 @@ class ChatMessageList extends LitElement {
 
     // After /clear — reset scroll flags
     if (currentCount === 0) {
+      // `_hasNewMessages` is not reactive — re-render so a pill shown before
+      // the clear does not linger over the empty list.
+      const hadPill = this._hasNewMessages;
       this._hasNewMessages = false;
       this._isAtBottom = true;
+      if (hadPill) this.requestUpdate();
       return;
     }
 

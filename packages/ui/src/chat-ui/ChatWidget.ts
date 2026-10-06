@@ -308,11 +308,7 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       },
     });
 
-    // Prefer connector from global settings, fall back to HTML attribute
-    const connectorName = this.themeState.activeConnector !== "dummy"
-      ? this.themeState.activeConnector
-      : this.connector;
-    const adapter = ConnectorRegistry.get(connectorName);
+    const adapter = ConnectorRegistry.get(this._resolveConnectorName());
     this._multiEngine = new MultiConversationEngine(adapter);
     this._engine = this._multiEngine.chatEngine;
     this._unsubscribeMessages = messageStore.subscribe(() => this.requestUpdate());
@@ -336,6 +332,12 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("survey-submitted", this._onSurveySubmitted as EventListener);
     this.addEventListener("survey-skipped", this._onSurveySkipped as EventListener);
     this.addEventListener("survey-close", this._onSurveyClose as EventListener);
+  }
+
+  /** Prefer the connector from global settings, fall back to the HTML attribute. */
+  private _resolveConnectorName(): string {
+    const fromStore = this.themeState.activeConnector;
+    return fromStore !== "dummy" ? fromStore : this.connector;
   }
 
   disconnectedCallback() {
@@ -677,8 +679,10 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
       // Rebuild the engine so the next open reconnects fresh. The host page
       // may have swapped the registered connector in its `chativa-reset`
       // listener; ConnectorRegistry.get picks up whatever is there now.
-      const connectorName = chatStore.getState().activeConnector;
-      const adapter = ConnectorRegistry.get(connectorName);
+      // Resolve the name the same way connectedCallback does — a widget
+      // configured only through its `connector` attribute leaves the store
+      // on "dummy".
+      const adapter = ConnectorRegistry.get(this._resolveConnectorName());
       this._multiEngine = new MultiConversationEngine(adapter);
       this._engine = this._multiEngine.chatEngine;
       this._engineInitialised = false;

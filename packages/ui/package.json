@@ -39,6 +39,7 @@
   "scripts": {
     "build": "vite build && vite build --config vite.config.cdn.ts",
     "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -54,6 +55,7 @@
     "@chativa/core": ">=0.0.1"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.0.18",
     "jsdom": "^28.1.0",
     "terser": "^5.46.0",
     "typescript": "~5.8.3",

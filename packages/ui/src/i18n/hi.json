@@ -1,0 +1,97 @@
+{
+  "greeting": "नमस्ते",
+  "welcome": "स्वागत है, {{name}}!",
+  "header": {
+    "title": "Chativa चैटबॉट",
+    "status": {
+      "connecting": "कनेक्ट हो रहा है…",
+      "connected": "ऑनलाइन",
+      "error": "कनेक्शन में त्रुटि",
+      "disconnected": "डिस्कनेक्ट हो गया",
+      "offline": "ऑफ़लाइन"
+    },
+    "fullscreen": {
+      "enter": "फ़ुल स्क्रीन करें",
+      "exit": "फ़ुल स्क्रीन से बाहर निकलें"
+    },
+    "close": "बंद करें",
+    "minimize": "छोटा करें",
+    "search": {
+      "toggle": "खोजें",
+      "placeholder": "संदेश खोजें…",
+      "clear": "खोज साफ़ करें"
+    }
+  },
+  "input": {
+    "placeholder": "संदेश लिखें…",
+    "send": "संदेश भेजें",
+    "emoji": "इमोजी",
+    "attachFile": "फ़ाइल अटैच करें",
+    "removeFile": "{{name}} हटाएँ",
+    "dropHere": "फ़ाइलें यहाँ छोड़ें",
+    "dropHereSubtitle": "अटैच करने के लिए छोड़ें"
+  },
+  "messageList": {
+    "connecting": "कनेक्ट हो रहा है…",
+    "emptyTitle": "मैं आपकी क्या मदद कर सकता हूँ?",
+    "emptySubtitle": "शुरू करने के लिए एक संदेश भेजें।",
+    "newMessage": "नया संदेश",
+    "loadMore": "पिछले संदेश लोड करें",
+    "errorTitle": "कनेक्शन टूट गया",
+    "errorSubtitle": "हम दोबारा कनेक्ट नहीं कर सके। कृपया फिर से कोशिश करें।",
+    "retry": "फिर से कोशिश करें",
+    "reconnecting": "फिर से कनेक्ट हो रहा है… (प्रयास {{attempt}})",
+    "searchEmpty": "आपकी खोज से कोई संदेश मेल नहीं खाता।",
+    "searchResult": "{{count}} परिणाम मिले",
+    "loadingHistory": "पिछले संदेश लोड हो रहे हैं…",
+    "ariaLabel": "चैट संदेश",
+    "typingIndicator": "सहायक लिख रहा है"
+  },
+  "message": {
+    "from": {
+      "bot": "सहायक",
+      "user": "आप"
+    },
+    "likeButton": "यह संदेश पसंद करें",
+    "dislikeButton": "यह संदेश नापसंद करें",
+    "statusSending": "भेजा जा रहा है",
+    "statusSent": "भेजा गया",
+    "statusRead": "पढ़ा गया"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "इमोजी खोजें…",
+    "noResults": "कोई परिणाम नहीं"
+  },
+  "chatButton": {
+    "open": "चैट खोलें",
+    "close": "चैट बंद करें"
+  },
+  "widget": {
+    "title": "चैट",
+    "disclaimer": "AI द्वारा बनाई गई सामग्री गलत हो सकती है।"
+  },
+  "survey": {
+    "title": "हमारी सेवा कैसी रही?",
+    "ratingLabel": "अपने अनुभव को रेटिंग दें",
+    "commentPlaceholder": "हम क्या बेहतर कर सकते हैं?",
+    "commentRequired": "कृपया बताएँ कि क्या गलत हुआ",
+    "submit": "सबमिट करें",
+    "skip": "छोड़ें",
+    "thankYouTitle": "हमें आपकी प्रतिक्रिया मिल गई है!",
+    "thankYouBody": "आपके बहुमूल्य विचारों और टिप्पणियों के लिए धन्यवाद।",
+    "close": "बंद करें",
+    "starLabel_one": "{{count}} स्टार",
+    "starLabel_other": "{{count}} स्टार"
+  },
+  "toolCalls": {
+    "running": "चल रहा है",
+    "completed": "पूरा हुआ",
+    "error": "त्रुटि",
+    "parameters": "पैरामीटर",
+    "result": "परिणाम",
+    "summary_one": "{{count}} ऑपरेशन",
+    "summary_other": "{{count}} ऑपरेशन",
+    "failed": "{{count}} विफल",
+    "ariaToggle": "टूल कॉल का विवरण दिखाएँ या छिपाएँ"
+  }
+}
