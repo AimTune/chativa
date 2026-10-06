@@ -61,6 +61,9 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | | |
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
+| [Vue 3](docs/vue.md) | `@chativa/vue` — typed components, plugin, composables, Nuxt/SSR |
+| [Angular](docs/angular.md) | `@chativa/angular` — standalone components, NgModule, `ChativaService` |
+| [Svelte & SvelteKit](docs/svelte.md) | `@chativa/svelte` components, stores and SSR-safe setup |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
 | [Theming](docs/theming.md) | Colors, layout, window modes, custom launchers |
@@ -74,6 +77,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | [i18n](docs/i18n.md) | Localisation |
 | [Sandbox](docs/sandbox.md) | The hosted playground |
 | [Chrome extension](docs/chrome-extension.md) | Theme-preview extension for any website |
+| [Vue 2 / Nuxt 2](docs/vue2.md) | `@chativa/vue2` wrapper for legacy Vue 2.7 apps (maintenance mode) |
 | [JSON Schemas](schemas/README.md) | Editor-friendly contracts for every JSON-serialisable shape |
 
 ## Repository layout
@@ -90,6 +94,12 @@ packages/
   connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
+  react/                 @chativa/react           React / Next.js wrapper
+  svelte/                @chativa/svelte          Svelte 5 / SvelteKit wrapper
+  rn-webview/            @chativa/rn-webview      React Native WebView bridge
+  vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
+  vue2/                  @chativa/vue2            Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+  angular/               @chativa/angular         Angular wrapper components (ng-packagr)
 
 apps/
   sandbox/               Live demo (https://chativa.aimtune.dev/sandbox/)
