@@ -149,3 +149,41 @@ class MyAIConnector implements IConnector {
 ```
 
 This round-trip pattern is how built-in components like `genui-form` and `genui-rating` close the loop.
+
+## The round-trip, step by step
+
+```mermaid
+sequenceDiagram
+  actor U as User
+  participant C as GenUI component<br/>(e.g. genui-form)
+  participant M as genui-message
+  participant W as chat-iva (ChatWidget)
+  participant E as ChatEngine
+  participant K as IConnector
+  participant B as Bot backend
+
+  K->>E: onGenUIChunk(streamId, ui chunk id 2, done=false)
+  E->>M: genui message created, chunk rendered
+  M->>C: mount + inject sendEvent / listenEvent
+  C->>M: listenEvent("form_success", cb)
+  U->>C: fills in and submits the form
+  C->>M: sendEvent("form_submit", formData)
+  M->>W: CustomEvent "genui-send-event" { msgId, eventType, payload }
+  W->>E: receiveComponentEvent(msgId, "form_submit", formData)
+  E->>K: receiveComponentEvent(streamId, "form_submit", formData, opts)
+  K->>B: forward the submission
+  B-->>K: result
+  K->>E: onGenUIChunk(streamId, event chunk "form_success" for 2, done=true)
+  E->>M: chunk appended, streamingComplete = true
+  M->>C: listenEvent callback fires with the payload
+  C->>U: success state
+```
+
+1. The connector streams a `ui` chunk with `done = false` — the stream stays open while the component waits for the user.
+2. `genui-message` mounts the component and injects `sendEvent` and `listenEvent`, both scoped to this message. The component registers its `listenEvent` callbacks.
+3. On interaction the component calls `sendEvent`. The message bubbles a `genui-send-event` DOM event up to `<chat-iva>`, which calls `ChatEngine.receiveComponentEvent(msgId, …)`.
+4. The engine maps the message id back to the connector's `streamId` and calls `IConnector.receiveComponentEvent(streamId, eventType, payload, opts)`.
+5. The connector talks to the backend and answers on the **same** `streamId` with an `event` chunk. `for` targets the component by its chunk id; leave it out to broadcast to every listener in the message.
+6. `genui-message` dispatches each new event chunk once to the matching `listenEvent` callbacks.
+
+The engine only routes component events while the stream is open: once a chunk with `done = true` has arrived, `receiveComponentEvent` for that message is dropped. Keep `done = false` on everything before the reply you are waiting for.
