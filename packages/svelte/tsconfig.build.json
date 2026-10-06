@@ -1,0 +1,16 @@
+{
+  "//": "Used by `svelte-package` to emit .d.ts files. Unlike tsconfig.json it resolves @chativa/* through node_modules (their built dist), so declarations reference the published packages instead of pulling sibling sources into the output.",
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["svelte"],
+    "allowImportingTsExtensions": false,
+    "noEmit": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.svelte"
+  ],
+  "exclude": [
+    "src/**/__tests__/**"
+  ]
+}
