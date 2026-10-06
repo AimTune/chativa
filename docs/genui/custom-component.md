@@ -295,6 +295,21 @@ Because props are re-assigned on every chunk, re-sending the same chunk id with 
 
 Outside a message the defaults keep working: `sendEvent` dispatches `genui-component-event`, `listenEvent` registers locally (deliver with `receiveEvent(type, payload)` in tests), and `tFn` / `onLangChange` use the shared i18next instance.
 
+## Right-to-left layouts
+
+Under an Arabic, Hebrew, Persian or Urdu locale, the widget sets `dir="rtl"` on its root and every component inherits it. The built-in GenUI components (form, card, steps, alert, table, image gallery, rating, date picker…) use CSS logical properties, so they mirror automatically. **Your own components only mirror if you write them the same way.** Use `margin-inline-start` instead of `margin-left`, `inset-inline-end` instead of `right`, `text-align: start` instead of `left`, and `border-start-start-radius` instead of `border-top-left-radius`. To flip icons or transforms, use `:host(:dir(rtl))`:
+
+```ts
+static styles = css`
+  .row   { padding-inline-start: 12px; }
+  .badge { position: absolute; inset-inline-end: 8px; }
+  :host(:dir(rtl)) .chevron { transform: scaleX(-1); }
+`;
+```
+
+`bubbleStyles` already uses a logical tail corner. For the full list, see [Internationalisation → Right-to-left languages](../i18n.md#right-to-left-languages).
+
+
 ## Naming convention
 
 - Built-in components are namespaced `genui-<thing>` (kebab-case). For your own widgets, any unique custom-element-compatible name works; just stay consistent across registrations.

@@ -26,6 +26,7 @@ const config: Config = {
 
   onBrokenLinks: "warn",
   markdown: {
+    mermaid: true,
     hooks: {
       onBrokenMarkdownLinks: "warn",
       onBrokenMarkdownImages: "warn",
@@ -36,6 +37,8 @@ const config: Config = {
     defaultLocale: "en",
     locales: ["en"],
   },
+
+  themes: ["@docusaurus/theme-mermaid"],
 
   presets: [
     [

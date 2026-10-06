@@ -156,8 +156,7 @@ export class EmojiPicker extends LitElement {
       content: "";
       position: absolute;
       bottom: -1px;
-      left: 0;
-      right: 0;
+      inset-inline: 0;
       height: 2px;
       background: var(--chativa-primary-color, #4f46e5);
       border-radius: 2px 2px 0 0;

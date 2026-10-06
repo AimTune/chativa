@@ -50,7 +50,7 @@ export class GenUISteps extends ChativaElement {
     .step:not(:last-child) .step-left::after {
       content: "";
       position: absolute;
-      left: 11px;
+      inset-inline-start: 11px;
       top: 28px;
       bottom: -6px;
       width: 2px;

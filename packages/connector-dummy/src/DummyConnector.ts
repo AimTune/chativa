@@ -19,10 +19,79 @@ import type {
 import type { OutgoingMessage } from "@chativa/core";
 
 /**
+ * A declarative response rule for {@link DummyConnector}.
+ *
+ * Rules are pure data — pattern matching only, no executable code — so a rule
+ * set can travel inside a JSON config blob. They are evaluated in order
+ * against every outgoing user message; the first match wins.
+ */
+export interface DummyRule {
+  /**
+   * Predicate over the user's outgoing message. Every field that is set must
+   * match (logical AND); an empty `when` matches every message.
+   */
+  when: {
+    /** Match by outgoing message `type` (exact comparison), e.g. `"text"`. */
+    type?: string;
+    /**
+     * Regular expression source (no surrounding slashes, no flags) tested
+     * against `data.text`. An invalid pattern disables the rule with a
+     * `console.warn` instead of throwing.
+     */
+    textMatches?: string;
+  };
+  /**
+   * What to emit on a match: either a static `IncomingMessage`, or a GenUI
+   * chunk script streamed through `onGenUIChunk`.
+   */
+  then: IncomingMessage | DummyGenUIResponse;
+  /** Milliseconds before `then` is emitted. Defaults to `replyDelay`. */
+  delay?: number;
+}
+
+/** A GenUI chunk script emitted by a {@link DummyRule}. */
+export interface DummyGenUIResponse {
+  kind: "genui";
+  /** Chunks streamed in order under one stream id; the last is flagged `done`. */
+  chunks: AIChunk[];
+}
+
+/** Constructor options for {@link DummyConnector}. */
+export interface DummyConnectorOptions {
+  /** Milliseconds before the echo reply is sent. Default `500`. */
+  replyDelay?: number;
+  /** Milliseconds `connect()` waits before resolving. Default `2000`. */
+  connectDelay?: number;
+  /** Connector identifier. Default `"dummy"`. */
+  name?: string;
+  /**
+   * Declarative response rules, evaluated in order before the built-in demo
+   * commands and the default echo. First match wins; no match falls through.
+   */
+  rules?: DummyRule[];
+}
+
+/** A rule paired with its pre-compiled regex (`null` = no text predicate). */
+interface CompiledRule {
+  rule: DummyRule;
+  regex: RegExp | null;
+}
+
+function isGenUIResponse(then: DummyRule["then"]): then is DummyGenUIResponse {
+  return (then as Partial<DummyGenUIResponse>).kind === "genui";
+}
+
+/** Deep-copy JSON-shaped rule data so emitted payloads never share state. */
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+/**
  * DummyConnector — local mock connector for development and testing.
  * Automatically replies after a configurable delay.
  * `connectDelay` simulates a real connection handshake (default 2000ms).
  * Sending "/disconnect" as a message triggers a graceful disconnect.
+ * Optional `rules` script replies declaratively (see {@link DummyRule}).
  */
 export class DummyConnector implements IConnector {
   readonly name: string;
@@ -37,6 +106,11 @@ export class DummyConnector implements IConnector {
   private toolCallHandler: ToolCallHandler | null = null;
   private replyDelay: number;
   private connectDelay: number;
+  private readonly _rules: DummyRule[];
+  private readonly _compiledRules: CompiledRule[];
+  /** Ids already emitted by rule responses — used to avoid id collisions. */
+  private readonly _emittedRuleIds = new Set<string>();
+  private _ruleEmitSeq = 0;
 
   // ── Multi-conversation demo state ─────────────────────────────────────
 
@@ -96,11 +170,95 @@ export class DummyConnector implements IConnector {
     })),
   ];
 
-  constructor(options: { replyDelay?: number; connectDelay?: number; name?: string } = {}) {
+  constructor(options: DummyConnectorOptions = {}) {
     this.name = options.name ?? "dummy";
     this.replyDelay = options.replyDelay ?? 500;
     this.connectDelay = options.connectDelay ?? 2000;
     this._conversations = DummyConnector._makeDemoConversations();
+    this._rules = [...(options.rules ?? [])];
+    this._compiledRules = DummyConnector._compileRules(this._rules);
+  }
+
+  /** The rule set this instance was constructed with. */
+  get rules(): readonly DummyRule[] {
+    return this._rules;
+  }
+
+  /**
+   * Pre-compile every rule's `textMatches` pattern. A rule whose pattern is
+   * not a valid regular expression is skipped with a warning — a typo in a
+   * demo config must never take the connector down.
+   */
+  private static _compileRules(rules: DummyRule[]): CompiledRule[] {
+    const compiled: CompiledRule[] = [];
+    rules.forEach((rule, index) => {
+      const pattern = rule.when?.textMatches;
+      if (pattern === undefined) {
+        compiled.push({ rule, regex: null });
+        return;
+      }
+      try {
+        compiled.push({ rule, regex: new RegExp(pattern) });
+      } catch (err) {
+        console.warn(
+          `[DummyConnector] Skipping rule #${index}: invalid textMatches regex ${JSON.stringify(pattern)} — ${(err as Error).message}`,
+        );
+      }
+    });
+    return compiled;
+  }
+
+  /** First rule matching `message`, or `undefined` to fall through. */
+  private _findRule(message: OutgoingMessage, text: string): DummyRule | undefined {
+    for (const { rule, regex } of this._compiledRules) {
+      const when = rule.when ?? {};
+      if (when.type !== undefined && when.type !== message.type) continue;
+      if (regex && !regex.test(text)) continue;
+      // A GenUI rule can only fire when the engine listens for chunks.
+      if (isGenUIResponse(rule.then) && !this.genUIChunkHandler) continue;
+      return rule;
+    }
+    return undefined;
+  }
+
+  /** Emit a matched rule's response after its delay. */
+  private _runRule(rule: DummyRule, message: OutgoingMessage): void {
+    const then = rule.then;
+    this.typingHandler?.(true);
+    setTimeout(() => {
+      this.typingHandler?.(false);
+      // Same read-receipt timing as the echo reply.
+      this.statusHandler?.(message.id, "read" as MessageStatus);
+
+      if (isGenUIResponse(then)) {
+        const handler = this.genUIChunkHandler;
+        if (!handler) return;
+        const streamId = `dummy-rule-${Date.now()}-${++this._ruleEmitSeq}`;
+        const chunks = then.chunks ?? [];
+        chunks.forEach((chunk, i) => {
+          handler(streamId, cloneJson(chunk), i === chunks.length - 1);
+        });
+        return;
+      }
+
+      const reply = cloneJson(then);
+      reply.id = this._uniqueRuleId(reply.id);
+      reply.timestamp = reply.timestamp ?? Date.now();
+      this.messageHandler?.(reply);
+    }, rule.delay ?? this.replyDelay);
+  }
+
+  /**
+   * Keep the template id on its first emission; afterwards (or when the
+   * template has no id) mint a fresh one so repeated matches never collide.
+   */
+  private _uniqueRuleId(templateId: string | undefined): string {
+    let id = templateId;
+    if (!id || this._emittedRuleIds.has(id)) {
+      id = `${templateId || "dummy-rule"}-${Date.now()}-${++this._ruleEmitSeq}`;
+    }
+    this._emittedRuleIds.add(id);
+    return id;
   }
 
   async connect(): Promise<void> {
@@ -120,6 +278,13 @@ export class DummyConnector implements IConnector {
 
     if (text.trim() === "/disconnect") {
       await this.disconnect();
+      return;
+    }
+
+    // Declarative rules run before the built-in demo commands and the echo.
+    const rule = this._findRule(message, text);
+    if (rule) {
+      this._runRule(rule, message);
       return;
     }
 

@@ -1,0 +1,105 @@
+{
+  "greeting": "مرحبًا",
+  "welcome": "أهلًا بك، {{name}}!",
+  "header": {
+    "title": "روبوت الدردشة Chativa",
+    "status": {
+      "connecting": "جارٍ الاتصال…",
+      "connected": "متصل",
+      "error": "خطأ في الاتصال",
+      "disconnected": "انقطع الاتصال",
+      "offline": "غير متصل"
+    },
+    "fullscreen": {
+      "enter": "ملء الشاشة",
+      "exit": "الخروج من ملء الشاشة"
+    },
+    "close": "إغلاق",
+    "minimize": "تصغير",
+    "search": {
+      "toggle": "بحث",
+      "placeholder": "ابحث في الرسائل…",
+      "clear": "مسح البحث"
+    }
+  },
+  "input": {
+    "placeholder": "اكتب رسالة…",
+    "send": "إرسال الرسالة",
+    "emoji": "رموز تعبيرية",
+    "attachFile": "إرفاق ملف",
+    "removeFile": "إزالة {{name}}",
+    "dropHere": "أفلت الملفات هنا",
+    "dropHereSubtitle": "أفلِت للإرفاق"
+  },
+  "messageList": {
+    "connecting": "جارٍ الاتصال…",
+    "emptyTitle": "كيف يمكنني مساعدتك؟",
+    "emptySubtitle": "أرسل رسالة للبدء.",
+    "newMessage": "رسالة جديدة",
+    "loadMore": "تحميل الرسائل السابقة",
+    "errorTitle": "انقطع الاتصال",
+    "errorSubtitle": "تعذّرت إعادة الاتصال. يُرجى المحاولة مرة أخرى.",
+    "retry": "إعادة المحاولة",
+    "reconnecting": "جارٍ إعادة الاتصال… (المحاولة {{attempt}})",
+    "searchEmpty": "لا توجد رسائل تطابق بحثك.",
+    "searchResult": "عدد النتائج: {{count}}",
+    "loadingHistory": "جارٍ تحميل الرسائل السابقة…",
+    "ariaLabel": "رسائل الدردشة",
+    "typingIndicator": "المساعد يكتب"
+  },
+  "message": {
+    "from": {
+      "bot": "المساعد",
+      "user": "أنت"
+    },
+    "likeButton": "أعجبتني هذه الرسالة",
+    "dislikeButton": "لم تعجبني هذه الرسالة",
+    "statusSending": "جارٍ الإرسال",
+    "statusSent": "تم الإرسال",
+    "statusRead": "تمت القراءة"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "ابحث عن رمز تعبيري…",
+    "noResults": "لا توجد نتائج"
+  },
+  "chatButton": {
+    "open": "فتح الدردشة",
+    "close": "إغلاق الدردشة"
+  },
+  "widget": {
+    "title": "الدردشة",
+    "disclaimer": "قد يكون المحتوى المُنشأ بالذكاء الاصطناعي غير دقيق."
+  },
+  "survey": {
+    "title": "كيف كانت تجربتك معنا؟",
+    "ratingLabel": "قيّم تجربتك",
+    "commentPlaceholder": "ما الذي يمكننا تحسينه؟",
+    "commentRequired": "يُرجى إخبارنا بما حدث من خطأ",
+    "submit": "إرسال",
+    "skip": "تخطٍّ",
+    "thankYouTitle": "تلقّينا ملاحظاتك!",
+    "thankYouBody": "شكرًا لك على أفكارك وتعليقاتك القيّمة.",
+    "close": "إغلاق",
+    "starLabel_zero": "{{count}} نجمة",
+    "starLabel_one": "{{count}} نجمة",
+    "starLabel_two": "{{count}} نجمتان",
+    "starLabel_few": "{{count}} نجوم",
+    "starLabel_many": "{{count}} نجمة",
+    "starLabel_other": "{{count}} نجمة"
+  },
+  "toolCalls": {
+    "running": "قيد التشغيل",
+    "completed": "مكتمل",
+    "error": "خطأ",
+    "parameters": "المعلمات",
+    "result": "النتيجة",
+    "summary_zero": "{{count}} عملية",
+    "summary_one": "{{count}} عملية",
+    "summary_two": "{{count}} عمليتان",
+    "summary_few": "{{count}} عمليات",
+    "summary_many": "{{count}} عملية",
+    "summary_other": "{{count}} عملية",
+    "failed": "فشل: {{count}}",
+    "ariaToggle": "إظهار تفاصيل استدعاءات الأدوات أو إخفاؤها"
+  }
+}

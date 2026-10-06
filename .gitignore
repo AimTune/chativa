@@ -10,6 +10,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+coverage
 lib
 *.local
 
@@ -27,3 +28,6 @@ website/.docusaurus
 *.njsproj
 *.sln
 *.sw?
+
+# Test coverage reports (vitest --coverage)
+coverage

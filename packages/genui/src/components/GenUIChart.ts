@@ -50,6 +50,10 @@ export class GenUIChart extends ChativaElement {
 
     /* Bar chart */
     .bar-chart {
+      /* The x-axis keeps its left-to-right order under RTL so bar charts
+         read the same way as the SVG line chart (which cannot mirror).
+         Title and legend still follow the surrounding direction. */
+      direction: ltr;
       display: flex;
       align-items: flex-end;
       gap: 6px;

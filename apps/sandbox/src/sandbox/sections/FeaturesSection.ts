@@ -12,6 +12,31 @@ import { sectionStyles } from "../sandboxShared";
 // `ConnectorRegistry: connector "dummy" not found` at boot.
 // @chativa/ui's i18n.ts initializes the same i18next singleton at runtime.
 
+// Languages bundled with @chativa/ui, labelled in their own language. Kept as a
+// literal (not imported from @chativa/ui) for the same reason as i18next above.
+const LANGUAGES: { label: string; value: string }[] = [
+  { label: "English", value: "en" },
+  { label: "Türkçe", value: "tr" },
+  { label: "Español", value: "es" },
+  { label: "Français", value: "fr" },
+  { label: "Deutsch", value: "de" },
+  { label: "Italiano", value: "it" },
+  { label: "Português (Brasil)", value: "pt-BR" },
+  { label: "Polski", value: "pl" },
+  { label: "Nederlands", value: "nl" },
+  { label: "Bahasa Indonesia", value: "id" },
+  { label: "Tiếng Việt", value: "vi" },
+  { label: "Русский", value: "ru" },
+  { label: "Українська", value: "uk" },
+  { label: "日本語", value: "ja" },
+  { label: "한국어", value: "ko" },
+  { label: "简体中文", value: "zh-CN" },
+  { label: "繁體中文", value: "zh-TW" },
+  { label: "हिन्दी", value: "hi" },
+  { label: "العربية", value: "ar" },
+  { label: "עברית", value: "he" },
+];
+
 @customElement("sandbox-features-section")
 export class FeaturesSection extends LitElement {
   static override styles = [sectionStyles];
@@ -72,12 +97,14 @@ export class FeaturesSection extends LitElement {
           <!-- Language -->
           <div>
             <div class="sub-label">Language</div>
-            <div class="toggle-group">
-              ${([{ label: "English", value: "en" }, { label: "Türkçe", value: "tr" }]).map((l) => html`
-                <button class="tg-btn ${this._lang.startsWith(l.value) ? "active" : ""}"
-                  @click=${() => i18next.changeLanguage(l.value)}>${l.label}</button>
+            <select
+              style="width:100%"
+              aria-label="Language"
+              @change=${(e: Event) => i18next.changeLanguage((e.target as HTMLSelectElement).value)}>
+              ${LANGUAGES.map((l) => html`
+                <option value=${l.value} ?selected=${(i18next.resolvedLanguage ?? this._lang) === l.value}>${l.label}</option>
               `)}
-            </div>
+            </select>
           </div>
 
         </div>
