@@ -9,6 +9,7 @@ const sidebars: SidebarsConfig = {
     "vue",
     "vue2",
     "angular",
+    "svelte",
     {
       type: "category",
       label: "Architecture",

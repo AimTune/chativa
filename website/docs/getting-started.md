@@ -142,6 +142,24 @@ The dynamic `import()` keeps the chat bundle out of your initial JavaScript payl
 
 Native apps embed the same widget through a WebView bridge — `@chativa/rn-webview`'s `<ChativaWebView>` gets full web feature parity (every message type, GenUI, every connector) with no UI code to port. See [React Native](./react-native.md).
 
+### Svelte (and SvelteKit)
+
+Svelte renders custom elements natively — import `@chativa/ui` in the browser and use `<chat-iva>` as-is. For typed props, callback-prop events, `$chatState` / `$messages` stores and SSR-safe loading in SvelteKit, use the `@chativa/svelte` wrapper:
+
+```svelte
+<script lang="ts">
+  import { ChatIva, ChatBotButton } from "@chativa/svelte";
+  import { DummyConnector } from "@chativa/connector-dummy";
+
+  const dummy = new DummyConnector();
+</script>
+
+<ChatBotButton />
+<ChatIva connector={dummy} onmessage={(m) => console.log(m)} />
+```
+
+See [Svelte & SvelteKit](./svelte.md).
+
 ### Vue 3
 
 Vue treats unknown tags with hyphens as custom elements out of the box, but you should opt in explicitly so it doesn't try to create components for them:
