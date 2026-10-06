@@ -1,0 +1,27 @@
+{
+  "name": "chativa-example-vue2-webpack",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Living usage doc for @chativa/vue2 — a Vue 2.7 + webpack 5 + vue-loader 15 app using Vue.use(Chativa) with <ChatIva> / <ChatBotButton> / <GenUIMessage> wired to @chativa/connector-dummy.",
+  "scripts": {
+    "dev": "webpack serve --mode development",
+    "build": "webpack --mode production"
+  },
+  "dependencies": {
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/genui": "workspace:*",
+    "@chativa/ui": "workspace:*",
+    "@chativa/vue2": "workspace:*",
+    "vue": "^2.7.16"
+  },
+  "devDependencies": {
+    "css-loader": "^7.1.2",
+    "html-webpack-plugin": "^5.6.3",
+    "vue-loader": "^15.11.1",
+    "vue-style-loader": "^4.1.3",
+    "webpack": "^5.101.0",
+    "webpack-cli": "^6.0.1",
+    "webpack-dev-server": "^5.2.2"
+  }
+}

@@ -6,6 +6,10 @@ const sidebars: SidebarsConfig = {
     "getting-started",
     "concepts",
     "react-native",
+    "vue",
+    "vue2",
+    "angular",
+    "svelte",
     {
       type: "category",
       label: "Architecture",

@@ -1,0 +1,29 @@
+{
+  "name": "chativa-example-sveltekit",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Living usage doc for @chativa/svelte — <ChativaProvider> + <ChatIva> + stores in a prerendered (SSR) SvelteKit app wired to @chativa/connector-dummy.",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/genui": "workspace:*",
+    "@chativa/svelte": "workspace:*",
+    "@chativa/ui": "workspace:*"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.10",
+    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3"
+  }
+}
