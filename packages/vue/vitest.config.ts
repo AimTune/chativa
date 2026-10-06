@@ -21,7 +21,9 @@ export default defineConfig({
       reporter: ["text", "html", "lcov", "json-summary"],
       include: ["src/**/*.ts"],
       exclude: ["src/**/__tests__/**", "src/**/*.test.ts", "src/index.ts", "src/vite-env.d.ts"],
-      thresholds: { lines: 80, functions: 80, branches: 70, statements: 80 },
+      // A few points under the measured numbers (statements 99.5, branches
+      // 92.3, functions 98.8, lines 100) so CI catches real regressions.
+      thresholds: { lines: 96, functions: 94, branches: 88, statements: 95 },
     },
   },
 });

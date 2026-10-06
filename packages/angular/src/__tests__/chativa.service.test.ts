@@ -75,6 +75,39 @@ describe("ChativaService", () => {
     expect(chatStore.getState().isOpened).toBe(false);
   });
 
+  it("toggle() flips the panel open state in the shared chatStore", () => {
+    const service = TestBed.inject(ChativaService);
+    chatStore.getState().close();
+
+    service.toggle();
+    expect(chatStore.getState().isOpened).toBe(true);
+    service.toggle();
+    expect(chatStore.getState().isOpened).toBe(false);
+  });
+
+  it("configure() with only a theme leaves connectors and extensions alone", () => {
+    const service = TestBed.inject(ChativaService);
+    const before = chatStore.getState().activeConnector;
+
+    service.configure({ theme: { colors: { primary: "#654321" } } });
+
+    expect(chatStore.getState().theme.colors.primary).toBe("#654321");
+    expect(chatStore.getState().activeConnector).toBe(before);
+    expect(service.listConnectors()).toEqual([]);
+    expect(service.listExtensions()).toEqual([]);
+  });
+
+  it("useConnector skips the store write when the connector is already active", () => {
+    const service = TestBed.inject(ChativaService);
+    service.useConnector(makeFakeConnector("svc-already-active"));
+
+    const listener = vi.fn();
+    const unsubscribe = chatStore.subscribe(listener);
+    expect(service.useConnector("svc-already-active")).toBe("svc-already-active");
+    expect(listener).not.toHaveBeenCalled();
+    unsubscribe();
+  });
+
   it("on() subscribes to EventBus and is cleaned up when the injector is destroyed", () => {
     const service = TestBed.inject(ChativaService);
     const a = vi.fn();

@@ -37,6 +37,7 @@
   "scripts": {
     "build": "svelte-package --input src --output dist --tsconfig tsconfig.build.json && node -e \"require('fs').rmSync('dist/__tests__', { recursive: true, force: true })\"",
     "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
   },
   "dependencies": {
