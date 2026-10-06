@@ -20,7 +20,8 @@
     "test:watch": "pnpm -r --filter @chativa/* exec vitest",
     "test:coverage": "pnpm -r --no-bail --filter @chativa/* run --if-present test:coverage",
     "coverage:summary": "node scripts/coverage-summary.mjs",
-    "typecheck": "pnpm -r --filter @chativa/* typecheck"
+    "typecheck": "pnpm -r --filter @chativa/* typecheck",
+    "i18n:check": "node scripts/i18n-check.mjs"
   },
   "devDependencies": {
     "jsdom":      "^28.1.0",

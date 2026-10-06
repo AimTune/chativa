@@ -1,0 +1,99 @@
+{
+  "greeting": "Ciao",
+  "welcome": "Ti diamo il benvenuto, {{name}}!",
+  "header": {
+    "title": "Chatbot Chativa",
+    "status": {
+      "connecting": "Connessione in corso…",
+      "connected": "Online",
+      "error": "Errore di connessione",
+      "disconnected": "Disconnesso",
+      "offline": "Offline"
+    },
+    "fullscreen": {
+      "enter": "Schermo intero",
+      "exit": "Esci da schermo intero"
+    },
+    "close": "Chiudi",
+    "minimize": "Riduci a icona",
+    "search": {
+      "toggle": "Cerca",
+      "placeholder": "Cerca nei messaggi…",
+      "clear": "Cancella ricerca"
+    }
+  },
+  "input": {
+    "placeholder": "Scrivi un messaggio…",
+    "send": "Invia messaggio",
+    "emoji": "Emoji",
+    "attachFile": "Allega file",
+    "removeFile": "Rimuovi {{name}}",
+    "dropHere": "Trascina qui i file",
+    "dropHereSubtitle": "Rilascia per allegare"
+  },
+  "messageList": {
+    "connecting": "Connessione in corso…",
+    "emptyTitle": "Come posso aiutarti?",
+    "emptySubtitle": "Invia un messaggio per iniziare.",
+    "newMessage": "Nuovo messaggio",
+    "loadMore": "Carica messaggi precedenti",
+    "errorTitle": "Connessione persa",
+    "errorSubtitle": "Impossibile riconnettersi. Riprova.",
+    "retry": "Riprova",
+    "reconnecting": "Riconnessione in corso… (tentativo {{attempt}})",
+    "searchEmpty": "Nessun messaggio corrisponde alla ricerca.",
+    "searchResult": "Risultati trovati: {{count}}",
+    "loadingHistory": "Caricamento dei messaggi precedenti…",
+    "ariaLabel": "Messaggi della chat",
+    "typingIndicator": "L'assistente sta scrivendo"
+  },
+  "message": {
+    "from": {
+      "bot": "Assistente",
+      "user": "Tu"
+    },
+    "likeButton": "Mi piace questo messaggio",
+    "dislikeButton": "Non mi piace questo messaggio",
+    "statusSending": "Invio in corso",
+    "statusSent": "Inviato",
+    "statusRead": "Letto"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Cerca emoji…",
+    "noResults": "Nessun risultato"
+  },
+  "chatButton": {
+    "open": "Apri la chat",
+    "close": "Chiudi la chat"
+  },
+  "widget": {
+    "title": "Chat",
+    "disclaimer": "I contenuti generati dall'IA potrebbero essere imprecisi."
+  },
+  "survey": {
+    "title": "Com'è andata?",
+    "ratingLabel": "Valuta la tua esperienza",
+    "commentPlaceholder": "Cosa potremmo migliorare?",
+    "commentRequired": "Dicci cosa non ha funzionato",
+    "submit": "Invia",
+    "skip": "Salta",
+    "thankYouTitle": "Abbiamo ricevuto il tuo feedback!",
+    "thankYouBody": "Grazie per le tue preziose osservazioni e i tuoi commenti.",
+    "close": "Chiudi",
+    "starLabel_one": "{{count}} stella",
+    "starLabel_many": "{{count}} di stelle",
+    "starLabel_other": "{{count}} stelle"
+  },
+  "toolCalls": {
+    "running": "In esecuzione",
+    "completed": "Completato",
+    "error": "Errore",
+    "parameters": "Parametri",
+    "result": "Risultato",
+    "summary_one": "{{count}} operazione",
+    "summary_many": "{{count}} di operazioni",
+    "summary_other": "{{count}} operazioni",
+    "failed": "Non riuscite: {{count}}",
+    "ariaToggle": "Mostra o nascondi i dettagli delle chiamate agli strumenti"
+  }
+}

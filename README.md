@@ -53,7 +53,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | **Generative UI** | [Stream LitElement components inline](docs/genui/overview.md) — forms, charts, tables, your own widgets. |
 | **Extensions** | [Middleware lifecycle](docs/extensions.md) for analytics, transformers, and slash commands. |
 | **Themable** | [CSS variables + JSON config + fluent builder](docs/theming.md). Four window modes. |
-| **i18n** | English & Turkish out of the box; [extend at runtime](docs/i18n.md). |
+| **i18n** | 20 languages out of the box (incl. pt-BR, zh-CN/zh-TW, ar, he); [extend at runtime](docs/i18n.md). |
 | **End-of-conversation survey** | [Star rating + comment](docs/survey.md), connector-routed. |
 | **Multi-conversation** | [Agent-panel mode](docs/multi-conversation.md) for helpdesk scenarios. |
 
