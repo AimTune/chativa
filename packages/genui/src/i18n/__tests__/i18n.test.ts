@@ -34,7 +34,7 @@ describe("GenUI i18n resources", () => {
   });
 
   it("interpolates the star count", () => {
-    expect(i18next.t("genui.rating.starLabel", { lng: "en", count: 4 })).toBe("4 star");
+    expect(i18next.t("genui.rating.starLabel", { lng: "en", count: 4 })).toBe("4 stars");
     expect(i18next.t("genui.rating.starLabel", { lng: "tr", count: 4 })).toBe("4 yıldız");
   });
 
