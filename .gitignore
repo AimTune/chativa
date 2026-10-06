@@ -29,5 +29,5 @@ website/.docusaurus
 *.sln
 *.sw?
 
-# Test coverage reports
+# Test coverage reports (vitest --coverage)
 coverage
