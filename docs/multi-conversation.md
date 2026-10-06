@@ -49,3 +49,5 @@ The widget treats it as a single engine — UI components don't need to know whe
 ## Test coverage
 
 `packages/core/src/application/__tests__/MultiConversationEngine.test.ts` (24 tests) covers the swap logic, unread propagation, and lazy mount behaviour. Use it as a reference when implementing the four optional methods on your own connector.
+
+On the UI side, `packages/ui/src/chat-ui/__tests__/ChatWidget.test.ts` and `packages/ui/src/chat-ui/__tests__/AgentPanel.test.ts` drive `<chat-iva>` and `<agent-panel>` against a fake connector and check that `conversation-select`, `new-conversation` and `conversation-close` reach `switchConversation`, `createConversation` and `closeConversation`. Run them with coverage via `pnpm --filter @chativa/ui test:coverage`.

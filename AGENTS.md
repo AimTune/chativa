@@ -376,8 +376,9 @@ element dispatches a bubbling, composed `genui-component-event` instead.
 
 - Test file location mirrors source: `src/foo/bar.ts` → `src/foo/__tests__/bar.test.ts`
 - Run tests: `pnpm test`
-- Run with coverage: `pnpm test:coverage`
-- Coverage threshold: 80% for application layer
+- Run with coverage: `pnpm test:coverage` (one package: `pnpm --filter @chativa/ui test:coverage`)
+- Coverage threshold: 80% for application layer. `packages/ui` enforces per-metric thresholds in `packages/ui/vitest.config.ts` — raise them when coverage goes up, never lower them to make CI pass
+- UI component tests mount the real element in jsdom (`document.body.appendChild`, `await el.updateComplete`, query `el.shadowRoot`). Use the helpers in `packages/ui/src/__tests__/testUtils.ts`: `mount()`, `createFakeConnector()` / `registerFakeConnector()` (an `IConnector` double whose methods are `vi.fn`s) and `resetGlobals()` (resets `chatStore`, `messageStore`, `conversationStore` and the connector / slash-command registries) in `beforeEach`
 - Always call `.clear()` on registries in `beforeEach`
 
 ### Test Patterns

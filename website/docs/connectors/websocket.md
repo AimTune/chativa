@@ -34,7 +34,7 @@ Schema: [`schemas/connectors/websocket.schema.json`](https://github.com/AimTune/
 |---|---|---|
 | `url` _(required)_ | — | `ws://` or `wss://` endpoint. |
 | `protocols` | `[]` | Sub-protocol(s) passed to the `WebSocket` constructor. |
-| `reconnect` | `true` | Auto-reconnect on socket close. |
+| `reconnect` | `true` | Auto-reconnect when the socket closes unexpectedly. Closing it with `disconnect()` never triggers a reconnect and cancels a pending one. |
 | `reconnectDelay` | `2000` | Milliseconds between reconnect attempts. |
 | `maxReconnectAttempts` | `5` | Stop reconnecting after this many failed attempts. |
 
