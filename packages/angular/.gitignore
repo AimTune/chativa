@@ -1,0 +1,3 @@
+# ng-packagr output and compiler cache
+/dist/
+/out-tsc/

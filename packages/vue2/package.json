@@ -1,0 +1,71 @@
+{
+  "name": "@chativa/vue2",
+  "version": "0.9.0",
+  "description": "Chativa Vue 2 — Vue 2.7 / Nuxt 2 wrapper components (ChatIva, ChatBotButton, GenUIMessage) and a Vue.use() plugin for the Chativa chat widget. Maintenance-mode package for legacy Vue 2 codebases.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "chativa",
+    "chat",
+    "vue",
+    "vue2",
+    "nuxt",
+    "nuxt2",
+    "web-component",
+    "wrapper"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "vite build",
+    "test": "vitest run --passWithNoTests",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1",
+    "@chativa/genui": ">=0.0.1",
+    "vue": "^2.7.0"
+  },
+  "peerDependenciesMeta": {
+    "@chativa/genui": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@chativa/genui": "workspace:*",
+    "@vitest/coverage-v8": "^4.0.18",
+    "@vue/test-utils": "^1.3.6",
+    "jsdom": "^28.1.0",
+    "terser": "^5.46.0",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
+    "vite-plugin-dts": "^4.5.4",
+    "vitest": "^4.0.18",
+    "vue": "^2.7.16",
+    "vue-template-compiler": "^2.7.16"
+  }
+}
