@@ -61,6 +61,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | | |
 |---|---|
 | [Getting started](docs/getting-started.md) | 5-minute embed walkthrough |
+| [Vue 3](docs/vue.md) | `@chativa/vue` — typed components, plugin, composables, Nuxt/SSR |
 | [Angular](docs/angular.md) | `@chativa/angular` — standalone components, NgModule, `ChativaService` |
 | [Architecture](docs/architecture.md) | Hexagonal layers, dependency rules, request flow |
 | [Configuration](docs/configuration.md) | `ChativaSettings` and `ThemeConfig` reference |
@@ -91,6 +92,7 @@ packages/
   connector-mekik/      @chativa/connector-mekik
   connector-sse/         @chativa/connector-sse
   connector-http/        @chativa/connector-http
+  vue/                   @chativa/vue             Vue 3 / Nuxt 3 wrapper
   angular/               @chativa/angular         Angular wrapper components (ng-packagr)
 
 apps/

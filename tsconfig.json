@@ -11,6 +11,9 @@
       "path": "packages/react"
     },
     {
+      "path": "packages/vue"
+    },
+    {
       "path": "packages/rn-webview"
     },
     {

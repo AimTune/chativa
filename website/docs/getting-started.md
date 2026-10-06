@@ -170,6 +170,8 @@ app.mount("#app");
 </template>
 ```
 
+Prefer typed components, camelCase `v-on` events and reactive composables? `@chativa/vue` wraps the same elements as `<ChatIva>` / `<ChatBotButton>` with a `ChativaPlugin`, and it is SSR-safe for Nuxt 3. See [Vue 3](./vue.md).
+
 ### Angular
 
 For Angular 16+ apps, `@chativa/angular` provides standalone wrapper components with typed inputs and outputs (`<chativa-chat-iva [connector]="dummy" (message)="onMessage($event)" />`), an `NgModule`, `provideChativa()` and a `ChativaService`, and works with both Zone.js and zoneless change detection. See [Angular](./angular.md).
