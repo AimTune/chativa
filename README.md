@@ -119,6 +119,7 @@ pnpm dev              # serve the sandbox at http://localhost:5173
 pnpm build            # build all packages
 pnpm test             # run all tests
 pnpm test:coverage    # all tests with coverage; fails below per-package thresholds
+pnpm --filter @chativa/ui test:coverage   # coverage for the UI components only
 pnpm typecheck        # strict type-check across the workspace
 ```
 
