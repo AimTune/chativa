@@ -3,6 +3,7 @@
  * i18n bootstrap.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { svg } from "lit";
 import { chatStore, i18next, t, SlashCommandRegistry } from "@chativa/core";
 import "../i18n/i18n";
 import { render } from "../render";
@@ -115,14 +116,15 @@ describe("renderIcon()", () => {
   afterEach(() => resetGlobals());
 
   it("returns the fallback when the theme does not override the icon", () => {
-    const fallback = { kind: "fallback" };
+    const fallback = svg`<path d="M1 1"/>`;
     expect(renderIcon("send", fallback)).toBe(fallback);
   });
 
   it("returns the theme's custom SVG markup when overridden", () => {
     chatStore.getState().setTheme({ icons: { send: '<path d="M0 0"/>' } });
-    const result = renderIcon("send", "fallback") as { values?: unknown[] };
-    expect(result).not.toBe("fallback");
+    const fallback = svg`<path d="M1 1"/>`;
+    const result = renderIcon("send", fallback) as { values?: unknown[] };
+    expect(result).not.toBe(fallback);
     expect(result.values).toEqual(['<path d="M0 0"/>']);
   });
 });

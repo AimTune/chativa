@@ -60,6 +60,12 @@ export class ToolCallCard extends LitElement {
       white-space: nowrap;
     }
 
+    .description {
+      color: #475569;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
     .chip {
       display: inline-flex;
       align-items: center;
@@ -231,7 +237,7 @@ export class ToolCallCard extends LitElement {
           <svg class="tool-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
           </svg>
-          <span class="name" dir="auto">${tc.name}</span>
+          <span class="name" dir="auto" title=${tc.description ? `${tc.name} — ${tc.description}` : tc.name}>${tc.name}</span>
           ${this._renderChip(tc)}
           <svg class="chevron ${this._expanded ? "open" : ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6 9l6 6 6-6"/>
@@ -241,6 +247,9 @@ export class ToolCallCard extends LitElement {
         ${this._expanded
           ? html`
               <div class="body">
+                ${tc.description
+                  ? html`<div class="description" dir="auto">${tc.description}</div>`
+                  : nothing}
                 ${hasParams
                   ? html`<div>
                       <div class="section-label">${t("toolCalls.parameters")}</div>

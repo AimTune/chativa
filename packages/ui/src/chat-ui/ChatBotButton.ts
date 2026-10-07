@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, svg } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
@@ -212,7 +212,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              ${renderIcon("chatLauncher", html`<path
+              ${renderIcon("chatLauncher", svg`<path
                 d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
               />`)}
             </svg>
@@ -226,7 +226,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              ${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" />`)}
+              ${renderIcon("close", svg`<path d="M18 6L6 18M6 6l12 12" />`)}
             </svg>
           </span>
         </slot>

@@ -50,6 +50,21 @@ describe("ToolCallCard", () => {
     expect($(el, ".body")).toBeNull();
   });
 
+  it("shows the full name and description on hover, and the description when expanded", async () => {
+    const el = await mount<Card>("tool-call-card", { toolCall: { ...running, name: "a-rather-long-tool-name-that-truncates" } });
+    expect($(el, ".name")!.getAttribute("title")).toBe("a-rather-long-tool-name-that-truncates — Searching the web");
+
+    $(el, ".head")!.click();
+    await el.updateComplete;
+    expect($(el, ".description")!.textContent).toBe("Searching the web");
+
+    const plain = await mount<Card>("tool-call-card", { toolCall: done });
+    expect($(plain, ".name")!.getAttribute("title")).toBe("weather");
+    $(plain, ".head")!.click();
+    await plain.updateComplete;
+    expect($(plain, ".description")).toBeNull();
+  });
+
   it("prints string results verbatim and survives non-serialisable results", async () => {
     const str = await mount<Card>("tool-call-card", { toolCall: { ...done, id: "s", params: undefined, result: "plain text" } });
     $(str, ".head")!.click();
