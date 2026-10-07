@@ -56,7 +56,17 @@
     "dislikeButton": "Bu mesajı beğenme",
     "statusSending": "Gönderiliyor",
     "statusSent": "Gönderildi",
-    "statusRead": "Okundu"
+    "statusRead": "Okundu",
+    "actionsLabel": "Mesaj işlemleri",
+    "copy": "Kopyala",
+    "copyCode": "Kodu kopyala",
+    "copied": "Kopyalandı",
+    "regenerate": "Yanıtı yeniden oluştur",
+    "edit": "Mesajı düzenle",
+    "editLabel": "Mesajınızı düzenleyin",
+    "editSave": "Gönder",
+    "editCancel": "İptal",
+    "moreActions": "Diğer işlemler"
   },
   "emojiPicker": {
     "searchPlaceholder": "Emoji ara…",

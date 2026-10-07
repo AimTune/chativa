@@ -56,7 +56,17 @@
     "dislikeButton": "No me gusta este mensaje",
     "statusSending": "Enviando",
     "statusSent": "Enviado",
-    "statusRead": "Leído"
+    "statusRead": "Leído",
+    "actionsLabel": "Acciones del mensaje",
+    "copy": "Copiar",
+    "copyCode": "Copiar código",
+    "copied": "Copiado",
+    "regenerate": "Regenerar respuesta",
+    "edit": "Editar mensaje",
+    "editLabel": "Edita tu mensaje",
+    "editSave": "Enviar",
+    "editCancel": "Cancelar",
+    "moreActions": "Más acciones"
   },
   "emojiPicker": {
     "searchPlaceholder": "Buscar emoji…",

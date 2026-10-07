@@ -9,6 +9,7 @@ import { WeatherCard } from "./components/WeatherCard";
 import { ApprovalForm } from "./components/ApprovalForm";
 import type { LinkMetadata } from "@chativa/ui";
 import { bindDummyDemoHooks, getDummyOptions } from "./sandbox/connectorSwap";
+import { registerSandboxMessageActions } from "./sandbox/messageActions";
 
 // Register connector BEFORE UI loads so connectedCallback can find it
 const connector = new DummyConnector(getDummyOptions());
@@ -24,6 +25,9 @@ GenUIRegistry.register("order-card", OrderCard);
 GenUIRegistry.register("data-table", DataTable);
 GenUIRegistry.register("weather-card", WeatherCard);
 GenUIRegistry.register("approval-form", ApprovalForm);
+
+// Custom message actions (Share / Report / Translate) in the bar under messages
+registerSandboxMessageActions();
 
 // Install link preview extension by default
 ExtensionRegistry.install(new LinkPreviewExtension({ maxUrlsPerMessage: 3 }));

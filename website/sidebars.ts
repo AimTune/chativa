@@ -59,6 +59,7 @@ const sidebars: SidebarsConfig = {
       label: "Features",
       items: [
         "survey",
+        "message-actions",
         "multi-conversation",
         "i18n",
       ],

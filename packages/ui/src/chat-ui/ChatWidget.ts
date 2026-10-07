@@ -319,6 +319,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.addEventListener("chat-action", this._onChatAction as EventListener);
     this.addEventListener("chat-retry", this._onChatRetry as EventListener);
     this.addEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.addEventListener("chativa-regenerate", this._onRegenerate as EventListener);
+    this.addEventListener("chativa-edit-message", this._onEditMessage as EventListener);
     this.addEventListener("send-file", this._onSendFile as EventListener);
     this.addEventListener("chat-load-history", this._onLoadHistory as EventListener);
     this.addEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
@@ -355,6 +357,8 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
     this.removeEventListener("chat-retry", this._onChatRetry as EventListener);
     this.removeEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.removeEventListener("chativa-regenerate", this._onRegenerate as EventListener);
+    this.removeEventListener("chativa-edit-message", this._onEditMessage as EventListener);
     this.removeEventListener("send-file", this._onSendFile as EventListener);
     this.removeEventListener("chat-load-history", this._onLoadHistory as EventListener);
     this.removeEventListener("genui-send-event", this._onGenUISendEvent as EventListener);
@@ -485,6 +489,18 @@ export class ChatWidget extends ChatbotMixin(LitElement) {
     this._engine
       .sendFeedback(e.detail.messageId, e.detail.feedback)
       .catch((err: unknown) => console.error("[ChatWidget] Feedback failed:", err));
+  };
+
+  private _onRegenerate = (e: CustomEvent<{ messageId: string }>) => {
+    this._engine
+      .regenerate(e.detail.messageId)
+      .catch((err: unknown) => console.error("[ChatWidget] Regenerate failed:", err));
+  };
+
+  private _onEditMessage = (e: CustomEvent<{ messageId: string; text: string }>) => {
+    this._engine
+      .editMessage(e.detail.messageId, e.detail.text)
+      .catch((err: unknown) => console.error("[ChatWidget] Edit failed:", err));
   };
 
   private _onChatRetry = () => {

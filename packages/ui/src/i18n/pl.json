@@ -56,7 +56,17 @@
     "dislikeButton": "Nie podoba mi się ta wiadomość",
     "statusSending": "Wysyłanie",
     "statusSent": "Wysłano",
-    "statusRead": "Przeczytano"
+    "statusRead": "Przeczytano",
+    "actionsLabel": "Akcje wiadomości",
+    "copy": "Kopiuj",
+    "copyCode": "Kopiuj kod",
+    "copied": "Skopiowano",
+    "regenerate": "Wygeneruj odpowiedź ponownie",
+    "edit": "Edytuj wiadomość",
+    "editLabel": "Edytuj swoją wiadomość",
+    "editSave": "Wyślij",
+    "editCancel": "Anuluj",
+    "moreActions": "Więcej akcji"
   },
   "emojiPicker": {
     "searchPlaceholder": "Szukaj emoji…",

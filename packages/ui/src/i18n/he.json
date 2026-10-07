@@ -56,7 +56,17 @@
     "dislikeButton": "לא אהבתי את ההודעה",
     "statusSending": "נשלחת",
     "statusSent": "נשלחה",
-    "statusRead": "נקראה"
+    "statusRead": "נקראה",
+    "actionsLabel": "פעולות הודעה",
+    "copy": "העתקה",
+    "copyCode": "העתקת קוד",
+    "copied": "הועתק",
+    "regenerate": "יצירת תשובה מחדש",
+    "edit": "עריכת הודעה",
+    "editLabel": "ערכו את ההודעה",
+    "editSave": "שליחה",
+    "editCancel": "ביטול",
+    "moreActions": "פעולות נוספות"
   },
   "emojiPicker": {
     "searchPlaceholder": "חיפוש אימוג'י…",

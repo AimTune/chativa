@@ -49,6 +49,18 @@ export interface EventBusPayloadMap {
   genui_components_registered: { definitions: GenUIComponentDefinition[] };
   /** A connector tool call started or changed state (upsert by `id`). */
   tool_call_updated: ToolCall;
+  /** The user copied a message, or a code block inside one. */
+  message_copied: { messageId: string; format: "text" | "markdown" | "code" };
+  /**
+   * The latest bot reply was regenerated. `mode` is `"native"` when the
+   * connector's `regenerate()` ran, `"fallback"` when the user's message was
+   * re-sent as a new turn.
+   */
+  message_regenerated: { messageId: string; mode: "native" | "fallback" };
+  /** The user copied a tool call's parameters, result or error from its card. */
+  tool_call_copied: { toolCallId: string; part: "params" | "result" | "error" };
+  /** The latest user message was edited and re-sent (see `message_regenerated` for `mode`). */
+  message_edited: { messageId: string; text: string; mode: "native" | "fallback" };
 }
 
 export type EventBusEventName = keyof EventBusPayloadMap;

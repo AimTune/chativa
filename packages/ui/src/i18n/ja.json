@@ -56,7 +56,17 @@
     "dislikeButton": "このメッセージを低く評価",
     "statusSending": "送信中",
     "statusSent": "送信済み",
-    "statusRead": "既読"
+    "statusRead": "既読",
+    "actionsLabel": "メッセージの操作",
+    "copy": "コピー",
+    "copyCode": "コードをコピー",
+    "copied": "コピーしました",
+    "regenerate": "回答を再生成",
+    "edit": "メッセージを編集",
+    "editLabel": "メッセージを編集",
+    "editSave": "送信",
+    "editCancel": "キャンセル",
+    "moreActions": "その他の操作"
   },
   "emojiPicker": {
     "searchPlaceholder": "絵文字を検索…",

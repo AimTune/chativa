@@ -19,6 +19,26 @@ export type ConnectorStatus =
     | "disconnected";
 
 /**
+ * How the active connector supports one message action:
+ * - `supported`   — the connector implements it and the backend allows it
+ * - `unsupported` — the connector does not implement it (the UI may emulate
+ *   it when `theme.messageActions.fallback` is on)
+ * - `denied`      — the backend reported it as not allowed; never shown
+ */
+export type CapabilitySupport = "supported" | "unsupported" | "denied";
+
+/** Per-action support, resolved by ChatEngine from the connector + its announcements. */
+export interface MessageActionSupport {
+    regenerate: CapabilitySupport;
+    editMessage: CapabilitySupport;
+}
+
+const NO_MESSAGE_ACTIONS: MessageActionSupport = {
+    regenerate: "unsupported",
+    editMessage: "unsupported",
+};
+
+/**
  * Options for {@link ChatStoreState.setTyping} when turning typing on.
  *
  * - `durationMs` — auto-clear after N ms. Calling `setTyping(true, {durationMs})`
@@ -65,6 +85,11 @@ export interface ChatStoreState {
      * the next bot message arrives (the snapshot moves onto that message).
      */
     activeToolCalls: ToolCall[];
+    /**
+     * Whether the active connector can regenerate / edit messages. Written by
+     * ChatEngine on init and whenever the connector reports capabilities.
+     */
+    messageActionSupport: MessageActionSupport;
 
     toggle: () => void;
     open: () => void;
@@ -91,6 +116,7 @@ export interface ChatStoreState {
     upsertToolCall: (toolCall: ToolCall) => void;
     /** Drop all collected tool calls (e.g. after attaching them to a message). */
     clearToolCalls: () => void;
+    setMessageActionSupport: (support: MessageActionSupport) => void;
     /**
      * Reset all per-session runtime fields (history pagination, typing,
      * unread, reconnect attempts) back to their initial values. Preserves
@@ -125,6 +151,7 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     showMessageStatus: true,
     searchQuery: "",
     activeToolCalls: [],
+    messageActionSupport: NO_MESSAGE_ACTIONS,
 
     toggle: () => {
         setState((s) => ({
@@ -234,6 +261,9 @@ const store = createStore<ChatStoreState>((setState, getState) => ({
     },
 
     clearToolCalls: () => setState(() => ({ activeToolCalls: [] })),
+
+    setMessageActionSupport: (support: MessageActionSupport) =>
+        setState(() => ({ messageActionSupport: { ...support } })),
 
     resetSession: () => {
         if (_typingTimer !== null) {

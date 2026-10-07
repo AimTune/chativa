@@ -125,6 +125,36 @@ export interface DisclaimerConfig {
 }
 
 /**
+ * Per-message action bar (copy, regenerate, edit) shown under messages.
+ *
+ * Regenerate and edit only appear when the connector supports them —
+ * `IConnector.regenerate` / `IConnector.editMessage` — and the backend has not
+ * turned them off through `IConnector.onCapabilities`. `fallback` opts into a
+ * client-side emulation for connectors that support neither.
+ */
+export interface MessageActionsConfig {
+    /** Copy button on bot messages that carry text. Default: `true`. */
+    copy?: boolean;
+    /**
+     * Copy button on each fenced code block in text messages, and on the
+     * parameters / result / error sections of tool-call cards. Default: `true`.
+     */
+    codeBlockCopy?: boolean;
+    /** Regenerate button on the latest bot reply, when supported. Default: `true`. */
+    regenerate?: boolean;
+    /** Edit button on the latest user message, when supported. Default: `true`. */
+    edit?: boolean;
+    /**
+     * Show regenerate / edit even when the connector does not implement them,
+     * emulating both by re-sending the user's message as a new turn. The
+     * server sees a fresh turn, not a replacement, so earlier replies stay in
+     * its history. Never overrides a backend that reported the action as not
+     * allowed. Default: `false`.
+     */
+    fallback?: boolean;
+}
+
+/**
  * Names of the built-in icons that can be swapped via `ThemeConfig.icons`.
  * Each value must be inner SVG markup (e.g. `<path d="..."/>`), rendered
  * inside chativa's own `<svg>` wrapper — do not include an outer `<svg>` tag.
@@ -184,6 +214,8 @@ export interface ThemeConfig {
     disclaimer?: DisclaimerConfig;
     /** Custom SVG markup overrides for built-in icons, keyed by IconName. */
     icons?: IconsConfig;
+    /** Per-message action bar (copy, regenerate, edit). See `MessageActionsConfig`. */
+    messageActions?: MessageActionsConfig;
 }
 
 export const DEFAULT_THEME: ThemeConfig = {
@@ -260,6 +292,13 @@ export function mergeTheme(
                 ? {
                       ...(base.disclaimer ?? {}),
                       ...(overrides.disclaimer ?? {}),
+                  }
+                : undefined,
+        messageActions:
+            base.messageActions || overrides.messageActions
+                ? {
+                      ...(base.messageActions ?? {}),
+                      ...(overrides.messageActions ?? {}),
                   }
                 : undefined,
         icons:

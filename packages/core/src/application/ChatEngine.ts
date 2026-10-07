@@ -1,5 +1,11 @@
-import type { IConnector, FeedbackType, SurveyPayload } from "../domain/ports/IConnector";
+import type {
+  IConnector,
+  FeedbackType,
+  SurveyPayload,
+  ConnectorCapabilities,
+} from "../domain/ports/IConnector";
 import type { OutgoingMessage } from "../domain/entities/Message";
+import { createOutgoingMessage } from "../domain/entities/Message";
 import type { ToolCall } from "../domain/entities/ToolCall";
 import type {
   AIChunk,
@@ -11,7 +17,9 @@ import { ExtensionRegistry } from "./registries/ExtensionRegistry";
 import { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 import messageStore from "./stores/MessageStore";
 import chatStore from "./stores/ChatStore";
-import type { ConnectorStatus } from "./stores/ChatStore";
+import type { ConnectorStatus, CapabilitySupport } from "./stores/ChatStore";
+import type { StoredMessage } from "./stores/MessageStore";
+import { getLatestTurn, isReplyStreaming } from "./latestTurn";
 import { EventBus } from "./EventBus";
 import { genUIDefinitionStore } from "./GenUIDefinitionStore";
 import { createChativaContext } from "./createChativaContext";
@@ -148,6 +156,13 @@ export class ChatEngine {
       chatStore.getState().upsertToolCall(toolCall);
     });
 
+    // Message actions: what the connector implements, narrowed by whatever the
+    // backend announces (it may turn regenerate / edit off at runtime).
+    this._applyCapabilities({});
+    this.connector.onCapabilities?.((capabilities) => {
+      this._applyCapabilities(capabilities ?? {});
+    });
+
     // Inject Chativa context so connector event handlers can interact with the UI
     this.connector.setContext?.(createChativaContext());
 
@@ -200,7 +215,11 @@ export class ChatEngine {
   async send(message: OutgoingMessage): Promise<void> {
     const transformed = ExtensionRegistry.runBeforeSend(message);
     if (transformed === null) return; // extension blocked it
+    await this._deliver(transformed);
+  }
 
+  /** Add an already-transformed user message to the transcript and send it. */
+  private async _deliver(transformed: OutgoingMessage): Promise<void> {
     if (this.connector.addSentToHistory !== false) {
       const Component = MessageTypeRegistry.resolve(transformed.type);
       messageStore.getState().addMessage({
@@ -226,6 +245,121 @@ export class ChatEngine {
         messageStore.getState().updateById(transformed.id, { status: "sent" });
       }
     }
+  }
+
+  // ── Message actions: regenerate / edit ─────────────────────────────────
+
+  /**
+   * Publish per-action support: implemented by the connector, unless the
+   * backend's latest announcement says the action is not allowed.
+   */
+  private _applyCapabilities(announced: ConnectorCapabilities): void {
+    const resolve = (implemented: boolean, allowed: boolean | undefined): CapabilitySupport =>
+      allowed === false ? "denied" : implemented ? "supported" : "unsupported";
+    chatStore.getState().setMessageActionSupport({
+      regenerate: resolve(typeof this.connector.regenerate === "function", announced.regenerate),
+      editMessage: resolve(typeof this.connector.editMessage === "function", announced.editMessage),
+    });
+  }
+
+  /**
+   * Whether an action runs natively, through the client-side fallback, or not
+   * at all. The fallback needs `theme.messageActions.fallback` and never
+   * overrides a backend that reported the action as not allowed.
+   */
+  private _actionMode(support: CapabilitySupport): "native" | "fallback" | null {
+    if (support === "supported") return "native";
+    if (support === "denied") return null;
+    return chatStore.getState().theme.messageActions?.fallback === true ? "fallback" : null;
+  }
+
+  /** The latest turn, or null while it is still being produced. */
+  private _settledLatestTurn() {
+    const turn = getLatestTurn(messageStore.getState().messages);
+    if (chatStore.getState().isTyping || isReplyStreaming(turn.reply)) return null;
+    return turn;
+  }
+
+  private _removeMessages(messages: readonly StoredMessage[]): void {
+    const { removeById } = messageStore.getState();
+    for (const m of messages) removeById(m.id);
+  }
+
+  /**
+   * Produce the latest bot reply again. `messageId` must belong to that reply
+   * (any of its bubbles; the connector receives the id passed here). The old
+   * reply is removed from the transcript first; the new one streams in as usual.
+   *
+   * Uses `IConnector.regenerate` when available, otherwise — only with
+   * `theme.messageActions.fallback` — re-sends the user's last message as a
+   * new turn. Resolves `false` when nothing was done (unsupported, not the
+   * latest reply, or the reply is still streaming).
+   */
+  async regenerate(messageId: string): Promise<boolean> {
+    const mode = this._actionMode(chatStore.getState().messageActionSupport.regenerate);
+    if (!mode) return false;
+    const turn = this._settledLatestTurn();
+    if (!turn?.userMessage || !turn.reply.some((m) => m.id === messageId)) return false;
+
+    this._removeMessages(turn.reply);
+    if (mode === "native") {
+      await this.connector.regenerate!(messageId);
+    } else {
+      // The stored message already went through onBeforeSend when it was
+      // first sent — re-send it as is, under a fresh id so backends that
+      // de-duplicate by id treat it as a new turn.
+      await this.connector.sendMessage({
+        ...createOutgoingMessage("", turn.userMessage.type),
+        data: { ...turn.userMessage.data },
+      });
+    }
+    EventBus.emit("message_regenerated", { messageId, mode });
+    return true;
+  }
+
+  /**
+   * Replace the latest user message's text and re-run the turn from it.
+   * Every message after it is removed first.
+   *
+   * Uses `IConnector.editMessage` when available (the bubble keeps its id),
+   * otherwise — only with `theme.messageActions.fallback` — removes the
+   * original bubble and sends the edited text as a new message. Both paths run
+   * `onBeforeSend` extensions. Resolves `false` when nothing was done.
+   */
+  async editMessage(messageId: string, text: string): Promise<boolean> {
+    const mode = this._actionMode(chatStore.getState().messageActionSupport.editMessage);
+    const trimmed = text.trim();
+    if (!mode || !trimmed) return false;
+    const turn = this._settledLatestTurn();
+    const original = turn?.userMessage;
+    if (!turn || !original || original.id !== messageId) return false;
+
+    const data = { ...original.data, text: trimmed };
+    if (mode === "fallback") {
+      const next = ExtensionRegistry.runBeforeSend({
+        ...createOutgoingMessage(trimmed, original.type),
+        data,
+      });
+      if (next === null) return false;
+      this._removeMessages([original, ...turn.reply]);
+      await this._deliver(next);
+    } else {
+      const edited = ExtensionRegistry.runBeforeSend({
+        id: original.id,
+        type: original.type,
+        data,
+        timestamp: Date.now(),
+      });
+      if (edited === null) return false;
+      this._removeMessages(turn.reply);
+      const { updateById } = messageStore.getState();
+      updateById(messageId, { data: edited.data, status: "sending" });
+      await this.connector.editMessage!(messageId, edited);
+      const current = messageStore.getState().messages.find((m) => m.id === messageId);
+      if (current?.status === "sending") updateById(messageId, { status: "sent" });
+    }
+    EventBus.emit("message_edited", { messageId, text: trimmed, mode });
+    return true;
   }
 
   async sendFile(file: File, metadata?: Record<string, unknown>): Promise<void> {

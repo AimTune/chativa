@@ -56,7 +56,17 @@
     "dislikeButton": "이 메시지 싫어요",
     "statusSending": "보내는 중",
     "statusSent": "보냄",
-    "statusRead": "읽음"
+    "statusRead": "읽음",
+    "actionsLabel": "메시지 작업",
+    "copy": "복사",
+    "copyCode": "코드 복사",
+    "copied": "복사됨",
+    "regenerate": "응답 다시 생성",
+    "edit": "메시지 편집",
+    "editLabel": "메시지 편집",
+    "editSave": "보내기",
+    "editCancel": "취소",
+    "moreActions": "더보기"
   },
   "emojiPicker": {
     "searchPlaceholder": "이모지 검색…",

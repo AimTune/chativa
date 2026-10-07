@@ -58,6 +58,7 @@ import "./chat-ui/LinkPreviewCard";
 import "./chat-ui/ToolCallCard";
 import "./chat-ui/ToolCallActivity";
 import "./chat-ui/MessageFeedback";
+import "./chat-ui/MessageActions";
 
 import { MessageTypeRegistry } from "@chativa/core";
 import { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
@@ -67,6 +68,9 @@ export type { LinkMetadata, LinkMetadataFetcher } from "./chat-ui/LinkPreviewCar
 export { ToolCallCard } from "./chat-ui/ToolCallCard";
 export { ToolCallActivity } from "./chat-ui/ToolCallActivity";
 export { MessageFeedback } from "./chat-ui/MessageFeedback";
+export { MessageActions, resolveBuiltInActions } from "./chat-ui/MessageActions";
+export type { BuiltInMessageActions, MessageActionInputs } from "./chat-ui/MessageActions";
+export { MessageActionRegistry } from "@chativa/core";
 MessageTypeRegistry.register(
   "end-of-conversation-survey",
   EndOfConversationSurvey as unknown as typeof HTMLElement,

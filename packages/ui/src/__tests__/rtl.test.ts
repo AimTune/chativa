@@ -235,7 +235,7 @@ describe("layout invariants under dir=rtl", () => {
     expect(text).toMatch(/\.message\.user \.bubble\s*\{[^}]*border-start-end-radius:\s*4px/);
 
     const list = cssOf("chat-message-list");
-    expect(list).toMatch(/\.message-feedback\.avatar-offset\s*\{\s*margin-inline-start:\s*36px/);
+    expect(list).toMatch(/\.message-toolbar\.avatar-offset\s*\{\s*margin-inline-start:\s*36px/);
     expect(list).toMatch(/\.tool-activity-attached\.avatar-offset\s*\{\s*margin-inline-start:\s*36px/);
     expect(list).toMatch(/\.typing-bubble\s*\{[^}]*border-end-start-radius:\s*4px/);
 
@@ -275,7 +275,7 @@ describe("no physical left/right in component styles", () => {
     "default-text-message", "quick-reply-message", "image-message", "card-message",
     "buttons-message", "file-message", "video-message", "carousel-message",
     "emoji-picker", "conversation-list", "agent-panel", "end-of-conversation-survey",
-    "link-preview-card", "tool-call-card", "tool-call-activity", "message-feedback",
+    "link-preview-card", "tool-call-card", "tool-call-activity", "message-feedback", "message-actions",
     "genui-message", "genui-text-block", "genui-card", "genui-form", "genui-alert",
     "genui-chart", "genui-date-picker", "genui-image-gallery", "genui-list",
     "genui-progress", "genui-quick-replies", "genui-rating", "genui-steps", "genui-table",

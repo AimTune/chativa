@@ -57,8 +57,11 @@ Each optional method automatically advertises a feature to the widget:
 | `loadHistory(cursor)` | Scroll-to-top pagination. |
 | `onMessageStatus(cb)` | Sending / sent / read tick indicators. |
 | `sendFeedback(id, "like" \| "dislike")` | Like/dislike on bot messages. |
+| `regenerate(messageId)` | Regenerate button on the latest bot reply. |
+| `editMessage(messageId, message)` | Edit button on the latest user message. |
+| `onCapabilities(cb)` | Lets the server switch regenerate / edit off at runtime (`cb({ regenerate: false })`). See [Message actions](../message-actions.md#supporting-them-in-a-connector). |
 | `sendSurvey(payload)` | End-of-conversation survey. |
-| `onToolCall(cb)` | Tool-call activity rows (upserted by `id`). |
+| `onToolCall(cb)` | Tool-call activity rows (upserted by `id`); each call expands into a card whose parameters / result / error can be copied. |
 | `onGenUIChunk(cb)` | Streaming GenUI components. |
 | `receiveComponentEvent(streamId, name, payload)` | Echo GenUI events back to the bot. |
 | `listConversations` / `createConversation` / `switchConversation` / `closeConversation` / `onConversationUpdate` | Multi-conversation mode. |

@@ -8,6 +8,32 @@ const DEMO_MESSAGES: Array<{ label: string; msg: Record<string, unknown> }> = [
     msg: { type: "text", data: { text: "Hello! This is a **text** message with _markdown_ support." } },
   },
   {
+    // Two fenced blocks, each gets its own copy button (messageActions.codeBlockCopy).
+    label: "🧑‍💻 Code Block",
+    msg: {
+      type: "text",
+      data: {
+        text: [
+          "Here is a fetch helper:",
+          "",
+          "```ts",
+          "export async function getJson<T>(url: string): Promise<T> {",
+          "  const res = await fetch(url);",
+          "  if (!res.ok) throw new Error(`HTTP ${res.status}`);",
+          "  return res.json() as Promise<T>;",
+          "}",
+          "```",
+          "",
+          "And how to call it:",
+          "",
+          "```bash",
+          "curl -s https://api.example.com/items | jq '.[0]'",
+          "```",
+        ].join("\n"),
+      },
+    },
+  },
+  {
     label: "🔗 Link Preview",
     msg: { type: "text", data: { text: "Check out this link: https://github.com" } },
   },

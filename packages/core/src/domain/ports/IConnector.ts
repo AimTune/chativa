@@ -44,6 +44,24 @@ export interface SurveyPayload {
 /** Called when a conversation's metadata changes (e.g. unread count, status, last message). */
 export type ConversationHandler = (conversation: Conversation) => void;
 
+/**
+ * Message-action capabilities a connector — or the server behind it —
+ * announces at runtime through {@link IConnector.onCapabilities}.
+ *
+ * `false` means "not allowed": the action is hidden even when the connector
+ * implements the method (e.g. the server turned it off for this tenant).
+ * `true` or an absent key leaves the decision to the connector's static
+ * support — a connector without `regenerate()` cannot regenerate natively no
+ * matter what the server says.
+ */
+export interface ConnectorCapabilities {
+  /** Regenerate the latest bot reply (`IConnector.regenerate`). */
+  regenerate?: boolean;
+  /** Edit and re-send the latest user message (`IConnector.editMessage`). */
+  editMessage?: boolean;
+}
+export type CapabilitiesHandler = (capabilities: ConnectorCapabilities) => void;
+
 export interface IConnector {
   /** Unique identifier used to select this connector at runtime. */
   readonly name: string;
@@ -95,6 +113,35 @@ export interface IConnector {
    * its backend (DirectLine event, POST request, hub invoke, …).
    */
   sendSurvey?(payload: SurveyPayload): Promise<void>;
+
+  /**
+   * Optional: ask the backend to produce the latest bot reply again.
+   * `messageId` is the id of the last bot message of that reply. ChatEngine has
+   * already removed the old reply from the transcript; the new one arrives
+   * through the normal `onMessage` / `onGenUIChunk` paths.
+   *
+   * Implementing it shows the Regenerate action on the latest reply (unless
+   * `onCapabilities` reports `regenerate: false`).
+   */
+  regenerate?(messageId: string): Promise<void>;
+
+  /**
+   * Optional: replace the latest user message and re-run the turn from it.
+   * `message` carries the original id with the edited `data`. ChatEngine has
+   * already updated the bubble and removed every message after it.
+   *
+   * Implementing it shows the Edit action on the latest user message (unless
+   * `onCapabilities` reports `editMessage: false`).
+   */
+  editMessage?(messageId: string, message: OutgoingMessage): Promise<void>;
+
+  /**
+   * Optional: report which message actions the backend allows. Call it
+   * whenever the server announces them (e.g. in a handshake frame); each call
+   * replaces the previous announcement. Connectors that never call it are
+   * judged by their static support alone.
+   */
+  onCapabilities?(callback: CapabilitiesHandler): void;
 
   /** Optional: upload a file to the backend. */
   sendFile?(file: File, metadata?: Record<string, unknown>): Promise<void>;

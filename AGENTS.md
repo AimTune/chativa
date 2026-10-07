@@ -125,7 +125,8 @@ import type { IConnector } from "../domain/IConnector";
 ### Connector packages (`packages/connector-*/`) — Adapters
 - Each package = one connector class implementing `IConnector`
 - Must handle `connect()` / `disconnect()` lifecycle
-- Optional capabilities are feature-detected: `sendFile`, `loadHistory`, `onMessageStatus`, `sendFeedback`, `onGenUIChunk`, `receiveComponentEvent`
+- Optional capabilities are feature-detected: `sendFile`, `loadHistory`, `onMessageStatus`, `sendFeedback`, `onGenUIChunk`, `receiveComponentEvent`, `regenerate`, `editMessage`
+- `onCapabilities(cb)` lets the backend narrow those at runtime (`cb({ regenerate: false })`); a reported `false` always hides the action
 
 ### `packages/ui/src/` — Chat Widget
 - LitElement Web Components only

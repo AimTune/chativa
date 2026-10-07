@@ -20,7 +20,15 @@ export type {
   SurveyPayload,
   MessageStatusHandler,
   ConversationHandler,
+  ConnectorCapabilities,
+  CapabilitiesHandler,
 } from "./ports/IConnector";
+export type {
+  IMessageAction,
+  MessageActionContext,
+  MessageActionSender,
+} from "./ports/IMessageAction";
+export { resolveMessageActionLabel, messageActionMatches } from "./ports/IMessageAction";
 // Note: GenUIChunkHandler is exported from ./entities/GenUI above
 export type { IExtension, ExtensionContext, MessageTransformer } from "./ports/IExtension";
 export type { ISlashCommand, CommandContext } from "./ports/ISlashCommand";
@@ -38,6 +46,7 @@ export type {
   WindowMode,
   EndOfConversationSurveyConfig,
   DisclaimerConfig,
+  MessageActionsConfig,
   IconName,
   IconsConfig,
 } from "./value-objects/Theme";
