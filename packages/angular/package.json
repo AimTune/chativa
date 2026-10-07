@@ -27,6 +27,7 @@
   "scripts": {
     "build": "ng-packagr -p ng-package.json -c tsconfig.lib.json",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc -p tsconfig.lib.json --noEmit"
   },
   "dependencies": {
@@ -48,6 +49,7 @@
     "@chativa/connector-dummy": "workspace:*",
     "@chativa/core": "workspace:*",
     "@chativa/ui": "workspace:*",
+    "@vitest/coverage-v8": "4.0.18",
     "jsdom": "^28.1.0",
     "ng-packagr": "~16.2.3",
     "rxjs": "~7.8.0",

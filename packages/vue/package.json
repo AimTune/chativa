@@ -38,6 +38,7 @@
   "scripts": {
     "build": "vite build",
     "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

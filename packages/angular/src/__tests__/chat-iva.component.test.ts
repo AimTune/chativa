@@ -147,6 +147,52 @@ describe("ChatIvaComponent", () => {
     chatStore.getState().close();
   });
 
+  it("leaves the active connector untouched when the connector input is nullish", () => {
+    const before = chatStore.getState().activeConnector;
+    const fixture = TestBed.createComponent(ChatIvaComponent);
+    fixture.componentRef.instance.connector = null;
+    fixture.componentRef.instance.connector = undefined;
+    expect(chatStore.getState().activeConnector).toBe(before);
+  });
+
+  it("does not re-register or rewrite the store when the same connector is set again", () => {
+    const fixture = TestBed.createComponent(ChatIvaComponent);
+    const component = fixture.componentRef.instance;
+    const connector = makeFakeConnector("ng-test-connector-6");
+
+    component.connector = connector;
+    expect(chatStore.getState().activeConnector).toBe("ng-test-connector-6");
+
+    const listener = vi.fn();
+    const unsubscribe = chatStore.subscribe(listener);
+    component.connector = connector; // already registered and active → no store churn
+    expect(listener).not.toHaveBeenCalled();
+    expect(
+      ConnectorRegistry.list().filter((name) => name === "ng-test-connector-6"),
+    ).toHaveLength(1);
+    unsubscribe();
+  });
+
+  it('accepts the string forms "true"/"false" and never re-applies fullscreen state the store already has', () => {
+    chatStore.getState().setFullscreen(true);
+    chatStore.getState().setAllowFullscreen(false);
+
+    const fixture = TestBed.createComponent(ChatIvaComponent);
+    const component = fixture.componentRef.instance;
+
+    component.fullscreenOnly = "false";
+    expect(component.fullscreenOnly).toBe(false);
+    expect(chatStore.getState().isFullscreen).toBe(true); // "false" = no opinion, nothing reset
+
+    component.fullscreenOnly = "true"; // store already fullscreen with the toggle off → left as is
+    expect(component.fullscreenOnly).toBe(true);
+    expect(chatStore.getState().isFullscreen).toBe(true);
+    expect(chatStore.getState().allowFullscreen).toBe(false);
+
+    chatStore.getState().setFullscreen(false);
+    chatStore.getState().setAllowFullscreen(true);
+  });
+
   it("applies fullscreenOnly through the store, and treats false as no opinion", () => {
     chatStore.getState().setFullscreen(false);
     chatStore.getState().setAllowFullscreen(true);

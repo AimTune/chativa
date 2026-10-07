@@ -23,6 +23,31 @@ class HostComponent {
   onSend = vi.fn<(detail: GenUISendEventDetail) => void>();
 }
 
+@Component({
+  standalone: true,
+  imports: [GenUIMessageComponent],
+  template: `
+    <chativa-genui-message
+      [messageData]="data"
+      [sender]="sender"
+      [messageId]="messageId"
+      [timestamp]="timestamp"
+      [hideAvatar]="hideAvatar"
+      [status]="status"
+      [debug]="debug"
+    />
+  `,
+})
+class DefaultsHostComponent {
+  data: Record<string, unknown> | null = null;
+  sender: "user" | "bot" | null = null;
+  messageId: string | null = null;
+  timestamp: number | null = null;
+  hideAvatar: boolean | null = null;
+  status: string | null = null;
+  debug: boolean | null = null;
+}
+
 afterEach(() => {
   TestBed.resetTestingModule();
 });
@@ -51,6 +76,37 @@ describe("GenUIMessageComponent", () => {
     fixture.componentInstance.data = next;
     fixture.detectChanges();
     expect(el["messageData"]).toBe(next);
+  });
+
+  it("falls back to safe defaults for nullish inputs and honours explicit values", async () => {
+    const fixture = TestBed.createComponent(DefaultsHostComponent);
+    fixture.detectChanges();
+    await waitFor(() => {
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector("genui-message")).not.toBeNull();
+    });
+    const el = fixture.nativeElement.querySelector("genui-message") as HTMLElement &
+      Record<string, unknown>;
+
+    // Nullish inputs reach the element as the documented defaults, never null.
+    expect(el["messageData"]).toEqual({});
+    expect(el["sender"]).toBe("bot");
+    expect(el["messageId"]).toBe("");
+    expect(el["timestamp"]).toBe(0);
+    expect(el["hideAvatar"]).toBe(false);
+    expect(el["status"]).toBe("sent");
+    expect(el["debug"]).toBe(false);
+
+    const host = fixture.componentInstance;
+    host.sender = "user";
+    host.status = "read";
+    host.hideAvatar = true;
+    host.debug = true;
+    fixture.detectChanges();
+    expect(el["sender"]).toBe("user");
+    expect(el["status"]).toBe("read");
+    expect(el["hideAvatar"]).toBe(true);
+    expect(el["debug"]).toBe(true);
   });
 
   it("forwards genui-send-event as the genuiSendEvent output and stops after destroy", async () => {

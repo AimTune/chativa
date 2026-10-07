@@ -26,7 +26,9 @@ export default defineConfig({
       reporter: ["text", "html", "lcov", "json-summary"],
       include: ["src/**/*.{ts,svelte}"],
       exclude: ["src/**/__tests__/**", "src/index.ts"],
-      thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
+      // A few points under the measured numbers (statements 100, branches
+      // 96.7, functions 100, lines 100) so CI catches real regressions.
+      thresholds: { lines: 96, functions: 96, branches: 92, statements: 96 },
     },
   },
 });

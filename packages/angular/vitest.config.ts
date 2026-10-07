@@ -29,6 +29,15 @@ export default defineConfig({
     setupFiles: ["src/test-setup.ts"],
     include: ["src/**/__tests__/**/*.test.ts"],
     testTimeout: 20000,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov", "json-summary"],
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/__tests__/**", "src/test-setup.ts", "src/public-api.ts"],
+      // A few points under the measured numbers (statements 99.1, branches
+      // 98.7, functions 98.7, lines 100) so CI catches real regressions.
+      thresholds: { lines: 96, statements: 95, functions: 94, branches: 93 },
+    },
     server: {
       deps: {
         // Load Angular through Vite (not Node) so the alias above also
