@@ -14,6 +14,15 @@
       "default": [],
       "description": "Declarative response rules (DummyRule[]). Evaluated in order against every outgoing user message before the built-in demo commands and the echo; first match wins, no match falls through. Pattern matching only — no executable code.",
       "items": { "$ref": "#/definitions/DummyRule" }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Simulated backend permissions for the message actions (ConnectorCapabilities), announced through onCapabilities. false hides the action; omit to allow it. Change at runtime with setCapabilities().",
+      "properties": {
+        "regenerate":  { "type": "boolean", "description": "Allow regenerating the latest bot reply." },
+        "editMessage": { "type": "boolean", "description": "Allow editing the latest user message." }
+      }
     }
   },
   "definitions": {

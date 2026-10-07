@@ -56,7 +56,17 @@
     "dislikeButton": "Не нравится это сообщение",
     "statusSending": "Отправляется",
     "statusSent": "Отправлено",
-    "statusRead": "Прочитано"
+    "statusRead": "Прочитано",
+    "actionsLabel": "Действия с сообщением",
+    "copy": "Копировать",
+    "copyCode": "Копировать код",
+    "copied": "Скопировано",
+    "regenerate": "Сгенерировать ответ заново",
+    "edit": "Изменить сообщение",
+    "editLabel": "Измените сообщение",
+    "editSave": "Отправить",
+    "editCancel": "Отмена",
+    "moreActions": "Другие действия"
   },
   "emojiPicker": {
     "searchPlaceholder": "Поиск эмодзи…",

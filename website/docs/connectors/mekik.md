@@ -59,6 +59,8 @@ Every mekik transport carries the same JSON frames. The connector routes them li
 | `genui_event` | client → server | Sent when a mounted GenUI component fires an event (form submit, card action…). |
 | `error` | server → client | Auth rejection — surfaced via `onAuthError`, followed by close code 4401. |
 | `survey` | client → server | `sendSurvey()` payload. |
+| `regenerate` | client → server | `regenerate()` — `{ type: "regenerate", messageId }`. Only sent to servers that advertise it. |
+| `edit` | client → server | `editMessage()` — `{ type: "edit", messageId, data }`. Only sent to servers that advertise it. |
 
 Unknown frame types and unknown fields are ignored on both sides — that's the protocol's forward-compatibility rule, so a newer server can't break an older client.
 
@@ -297,13 +299,30 @@ connector.receiveComponentEvent("stream-1", "submit", { email: "a@b.com" });
 // → { "type": "genui_event", "streamId": "stream-1", "eventType": "submit", "payload": {...} }
 ```
 
+## Regenerate and edit
+
+The connector implements `regenerate()` and `editMessage()`, but the widget only shows the Regenerate and Edit [message actions](../message-actions.md) when the server allows them. The server allows them in its `welcome` frame:
+
+```json
+{ "type": "welcome", "data": { "conversationId": "…", "capabilities": { "regenerate": true, "edit": true } } }
+```
+
+The connector reports this through `onCapabilities`. Before the first `welcome`, and for any `welcome` without `capabilities`, both are off: a server that doesn't support the `regenerate` / `edit` frames would answer them with `bad_request`. Every `welcome` (including after a reconnect) replaces the previous report, so the buttons follow the server you are connected to.
+
+| Action | Frame sent |
+|---|---|
+| Regenerate | `{ "type": "regenerate", "messageId": "<id of the clicked bot bubble>" }` |
+| Edit | `{ "type": "edit", "messageId": "<id of the user message>", "data": { "text": "…" } }` |
+
+> **Server support pending.** The `capabilities` field and the `regenerate` / `edit` frames are not yet part of mekik's PROTOCOL.md. Current mekik servers don't advertise them, so the buttons stay hidden until server support lands.
+
 ## Offline queue
 
 With `queueOfflineMessages: true` (the default) a send that happens while the socket is down is queued and flushed on the next connect. The promise resolves **only when the payload actually reaches the wire**, so the bubble stays on "sending" instead of being stamped "sent" for a message the server never received.
 
 ## Capabilities
 
-Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`.
+Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`, `regenerate` / `editMessage` / `onCapabilities` (server-gated, see [Regenerate and edit](#regenerate-and-edit)).
 
 Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation.
 

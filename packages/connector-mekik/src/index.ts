@@ -10,6 +10,8 @@ import type {
   GenUIComponentsHandler,
   GenUIComponentDefinition,
   GenUIEventOptions,
+  CapabilitiesHandler,
+  ConnectorCapabilities,
 } from "@chativa/core";
 import type { OutgoingMessage, MessageAction } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
@@ -354,6 +356,13 @@ export class MekikConnector implements IConnector {
    */
   private _serverSkills: MekikSkillSummary[] = [];
   private skillsHandler: MekikSkillsHandler | null = null;
+  /**
+   * Message actions the server allows, from `welcome.data.capabilities`.
+   * Both off until a welcome says otherwise: a server that never advertises
+   * them would answer a `regenerate` / `edit` frame with `bad_request`.
+   */
+  private _messageActions: ConnectorCapabilities = { regenerate: false, editMessage: false };
+  private capabilitiesHandler: CapabilitiesHandler | null = null;
   private skillUseHandler: MekikSkillUseHandler | null = null;
 
   /** The `auth` adapter, or one desugared from the legacy `token` option. */
@@ -576,6 +585,35 @@ export class MekikConnector implements IConnector {
    * already arrived (or was restored from cache during the handshake) is
    * replayed immediately, like {@link onGenUIComponents}.
    */
+  /**
+   * Which message actions the server allows. Announced immediately (both off
+   * before the first `welcome`) and again on every `welcome`, so the Regenerate
+   * and Edit buttons appear only on servers that advertise
+   * `capabilities: { regenerate: true, edit: true }`.
+   */
+  onCapabilities(callback: CapabilitiesHandler): void {
+    this.capabilitiesHandler = callback;
+    callback({ ...this._messageActions });
+  }
+
+  /**
+   * Ask the server to re-run the latest turn and stream a new reply:
+   * `{ type: "regenerate", messageId }`. Only offered when the server's
+   * `welcome` advertised `capabilities.regenerate`.
+   */
+  async regenerate(messageId: string): Promise<void> {
+    await this.sendOrQueue(JSON.stringify({ type: "regenerate", messageId }));
+  }
+
+  /**
+   * Replace the latest user message and re-run the turn from it:
+   * `{ type: "edit", messageId, data }`. Only offered when the server's
+   * `welcome` advertised `capabilities.edit`.
+   */
+  async editMessage(messageId: string, message: OutgoingMessage): Promise<void> {
+    await this.sendOrQueue(JSON.stringify({ type: "edit", messageId, data: message.data }));
+  }
+
   onSkills(callback: MekikSkillsHandler): void {
     this.skillsHandler = callback;
     if (this._serverSkills.length > 0) callback([...this._serverSkills]);
@@ -1028,6 +1066,16 @@ export class MekikConnector implements IConnector {
         this.watermark = 0;
       }
       if (this.options.resumeConversation) this.saveSession();
+
+      // Message actions the server allows (regenerate / edit). Absent means
+      // not supported — re-announce so a reconnect to a different server
+      // version can switch the buttons on or off.
+      const caps = (data.data as Record<string, unknown> | undefined)?.capabilities;
+      this._messageActions = {
+        regenerate: isRecord(caps) && caps.regenerate === true,
+        editMessage: isRecord(caps) && caps.edit === true,
+      };
+      this.capabilitiesHandler?.({ ...this._messageActions });
 
       // Frames replayed after this welcome carry seq ≤ the server's current
       // watermark — that boundary is what keeps historic (already-resolved)

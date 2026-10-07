@@ -27,6 +27,7 @@ import type {
   AvatarConfig,
   EndOfConversationSurveyConfig,
   DisclaimerConfig,
+  MessageActionsConfig,
   IconName,
 } from "../Theme";
 
@@ -51,6 +52,7 @@ const EXPECTED_THEME: { [K in keyof Required<ThemeConfig>]: true } = {
   endOfConversationSurvey: true,
   disclaimer: true,
   icons: true,
+  messageActions: true,
 };
 
 const EXPECTED_COLORS: { [K in keyof Required<ThemeColors>]: true } = {
@@ -104,6 +106,16 @@ const EXPECTED_DISCLAIMER: {
   enabled: true,
   bottomText: true,
   conversationStartText: true,
+};
+
+const EXPECTED_MESSAGE_ACTIONS: {
+  [K in keyof Required<MessageActionsConfig>]: true;
+} = {
+  copy: true,
+  codeBlockCopy: true,
+  regenerate: true,
+  edit: true,
+  fallback: true,
 };
 
 const EXPECTED_ICONS: { [K in IconName]: true } = {
@@ -167,6 +179,12 @@ describe("schema drift — schemas/theme.schema.json ↔ ThemeConfig", () => {
   it("DisclaimerConfig fields match schema.properties.disclaimer.properties", () => {
     expect(keys(themeSchema.properties?.disclaimer?.properties)).toEqual(
       keys(EXPECTED_DISCLAIMER),
+    );
+  });
+
+  it("MessageActionsConfig fields match schema.properties.messageActions.properties", () => {
+    expect(keys(themeSchema.properties?.messageActions?.properties)).toEqual(
+      keys(EXPECTED_MESSAGE_ACTIONS),
     );
   });
 

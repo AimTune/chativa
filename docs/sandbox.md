@@ -14,7 +14,7 @@ The sandbox is a single Vite app at `apps/sandbox/`. The customisation panel doc
 | Appearance | Theme presets, colors, position, size, layout, window mode | `apps/sandbox/src/sandbox/sections/AppearanceSection.ts` |
 | Connector | Active connector + status, kind picker (Dummy, DirectLine, mekik), per-kind options, capability matrix | `ConnectorSection.ts` |
 | Rules | Add / edit / reorder / remove `DummyConnector` [scripted rules](./connectors/dummy.md#scripted-rules); **Apply** rebuilds the dummy | `RulesSection.ts` |
-| Features | `enableSearch`, `enableFileUpload`, `enableMultiConversation`, `showMessageStatus`, `allowFullscreen`, `hideButtonOnOpen` | `FeaturesSection.ts` |
+| Features | `enableSearch`, `enableFileUpload`, `enableMultiConversation`, `showMessageStatus`, `allowFullscreen`, `hideButtonOnOpen`, message actions (theme switches + simulated server permissions), language | `FeaturesSection.ts` |
 | Messages | Inject demo messages of every built-in type | `MessagesSection.ts` |
 | GenUI | Trigger every demo stream (form, card, table, chart, …) | `GenUISection.ts` |
 | Typing | On/off + duration vs. until-message | `TypingSection.ts` |
@@ -51,6 +51,28 @@ The Rules tab is an editor for [`DummyConnector` scripted rules](./connectors/du
 - **Delay (ms)** → `delay` (empty = the connector's `replyDelay`).
 
 Use **+ Add rule** for a blank rule, **Load example** for the help-menu / cancel-flow pair from the connector docs, the arrows to reorder (first match wins) and ✕ to remove. **Apply** validates every rule, then rebuilds the `DummyConnector` through the same swap path as the Connector tab's **Connect** button (keeping the reply / connect delays set there) and re-points the Messages / GenUI demo buttons at the new instance. If another connector is active, Apply switches back to Dummy.
+
+## Message actions
+
+The sandbox registers three example [custom message actions](./message-actions.md#custom-actions) at startup (`apps/sandbox/src/sandbox/messageActions.ts`). They use the default `placement: "menu"`, so they sit in the "⋮" menu at the end of the row, after the built-in copy, regenerate and edit buttons. Their labels come with `translations` for Turkish, German, French and Spanish; switch the widget language to see them change.
+
+| Action | Icon | Shown on | What it does |
+|---|---|---|---|
+| Share | 📤 | Bot text messages (`messageTypes: ["text"]`) | Opens the Web Share sheet; without the Web Share API, copies the text instead. |
+| Report | 🚩 | Bot messages except GenUI widgets (`excludeMessageTypes: ["genui"]`) | Marks the message as reported (`data.reported`), which hides the action again through `isVisible`. |
+| Translate | 🌐 | Bot and user `text` / `buttons` / `quick-reply` messages (`appliesTo: ["bot", "user"]`) | Opens the text in Google Translate in a new tab. |
+
+To try the code-block copy buttons, click **🧑‍💻 Code Block** in the Messages tab: it injects a bot message with two fenced blocks, each with its own **Copy code** button. The **🔧 Tool Calls** buttons on the same tab (or sending `/tools`) produce tool-call cards whose Parameters / Result / Error sections have copy buttons once expanded.
+
+The dummy connector implements regenerate and edit, so those buttons show as well. Regenerating replays your last message; before you have typed anything, it replays the last user message of the loaded history.
+
+The **Features** tab has a **Message actions** group to switch them off and on. Everything is on by default.
+
+| Switch | What it sets |
+|---|---|
+| Copy, Code / tool-call copy, Regenerate, Edit | `theme.messageActions.copy` / `codeBlockCopy` / `regenerate` / `edit` |
+| Fallback (emulate) | `theme.messageActions.fallback` (off by default; only matters for connectors without regenerate / edit) |
+| Server allows regenerate / Server allows edit | Calls the dummy's `setCapabilities()`, simulating a backend that refuses the action. It persists when the dummy is rebuilt from another tab. |
 
 ## Generated config
 

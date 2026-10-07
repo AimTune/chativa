@@ -28,6 +28,9 @@ Schema: [`schemas/connectors/dummy.schema.json`](https://github.com/AimTune/chat
 | `replyDelay` | `500` | Milliseconds before the echo reply is returned after a message is sent. |
 | `connectDelay` | `2000` | Milliseconds to wait before `connect()` resolves — simulates a real handshake. Set to `0` in tests. |
 | `rules` | `[]` | Declarative response rules (`DummyRule[]`) — see [Scripted rules](#scripted-rules). |
+| `capabilities` | `{}` | Simulated server permissions for the [message actions](../message-actions.md), e.g. `{ regenerate: false }`. Change them at runtime with `connector.setCapabilities({...})`. |
+
+The dummy implements `regenerate()` (replays your last message, or before you have typed anything the last user message of the loaded history; the echo reads `Echo (regenerated): …`) and `editMessage()` (answers the edited text), so the sandbox shows both buttons.
 
 The options object is exported as the `DummyConnectorOptions` type.
 

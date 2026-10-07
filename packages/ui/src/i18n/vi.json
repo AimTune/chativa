@@ -56,7 +56,17 @@
     "dislikeButton": "Không thích tin nhắn này",
     "statusSending": "Đang gửi",
     "statusSent": "Đã gửi",
-    "statusRead": "Đã xem"
+    "statusRead": "Đã xem",
+    "actionsLabel": "Thao tác tin nhắn",
+    "copy": "Sao chép",
+    "copyCode": "Sao chép mã",
+    "copied": "Đã sao chép",
+    "regenerate": "Tạo lại câu trả lời",
+    "edit": "Chỉnh sửa tin nhắn",
+    "editLabel": "Chỉnh sửa tin nhắn của bạn",
+    "editSave": "Gửi",
+    "editCancel": "Hủy",
+    "moreActions": "Thao tác khác"
   },
   "emojiPicker": {
     "searchPlaceholder": "Tìm biểu tượng cảm xúc…",

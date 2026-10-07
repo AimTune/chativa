@@ -11,6 +11,7 @@ import {
   conversationStore,
   ConnectorRegistry,
   SlashCommandRegistry,
+  MessageActionRegistry,
   DEFAULT_THEME,
   type IConnector,
   type MessageHandler,
@@ -169,10 +170,12 @@ export function resetGlobals(): void {
     historyCursor: undefined,
     searchQuery: "",
     activeToolCalls: [],
+    messageActionSupport: { regenerate: "unsupported", editMessage: "unsupported" },
   });
   messageStore.getState().clear();
   conversationStore.getState().setConversations([]);
   conversationStore.getState().setActive(null);
   ConnectorRegistry.clear();
   SlashCommandRegistry.clear();
+  MessageActionRegistry.clear();
 }

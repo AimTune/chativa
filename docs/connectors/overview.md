@@ -44,6 +44,9 @@ All optional methods are feature-detected at runtime. A capability is "advertise
 | History pagination | `loadHistory` | ✅ |   |   | ✅ |   | ✅ | ✅ |
 | Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   |   |   |
 | Like / dislike feedback | `sendFeedback` | ✅ |   |   | ✅ |   |   |   |
+| Regenerate reply | `regenerate` | ✅ |   |   |   | ✅¹ |   |   |
+| Edit and resend | `editMessage` | ✅ |   |   |   | ✅¹ |   |   |
+| Server-controlled action permissions | `onCapabilities` | ✅ |   |   |   | ✅ |   |   |
 | End-of-conversation survey | `sendSurvey` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Tool calls | `onToolCall` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
 | GenUI streaming | `onGenUIChunk` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
@@ -52,6 +55,8 @@ All optional methods are feature-detected at runtime. A capability is "advertise
 | Multi-conversation | `listConversations` & co | ✅ |   |   |   |   |   |   |
 
 > Empty cells are connectors that simply don't implement the method — the corresponding UI feature degrades gracefully (e.g. the file upload button hides itself when `sendFile` is missing).
+>
+> ¹ Only once the mekik server's `welcome` frame advertises them. See [mekik → Regenerate and edit](./mekik.md#regenerate-and-edit). Connectors without regenerate / edit can emulate them with [`messageActions.fallback`](../message-actions.md#fallback).
 
 ## Configuration
 

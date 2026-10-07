@@ -56,7 +56,17 @@
     "dislikeButton": "Не подобається це повідомлення",
     "statusSending": "Надсилається",
     "statusSent": "Надіслано",
-    "statusRead": "Прочитано"
+    "statusRead": "Прочитано",
+    "actionsLabel": "Дії з повідомленням",
+    "copy": "Копіювати",
+    "copyCode": "Копіювати код",
+    "copied": "Скопійовано",
+    "regenerate": "Згенерувати відповідь знову",
+    "edit": "Редагувати повідомлення",
+    "editLabel": "Відредагуйте повідомлення",
+    "editSave": "Надіслати",
+    "editCancel": "Скасувати",
+    "moreActions": "Інші дії"
   },
   "emojiPicker": {
     "searchPlaceholder": "Пошук емодзі…",

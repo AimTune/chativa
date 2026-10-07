@@ -1,16 +1,21 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, svg, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
-import { t } from "@chativa/core";
+import { t, chatStore, EventBus } from "@chativa/core";
 import "../i18n/i18n";
 import type { ToolCall } from "@chativa/core";
+import { copyText } from "../utils/clipboard";
+
+type ToolCallPart = "params" | "result" | "error";
+
+const COPIED_MS = 1500;
 
 /**
  * <tool-call-card> — a single tool invocation.
  *
  * Collapsed: one row with the tool name, a status chip
  * (running / completed / error) and a chevron. Expanded: the invocation
- * parameters plus the result or error payload. Errors expand automatically
- * so failures are visible at a glance.
+ * parameters plus the result or error payload, each with a copy button.
+ * Errors expand automatically so failures are visible at a glance.
  */
 @customElement("tool-call-card")
 export class ToolCallCard extends LitElement {
@@ -132,13 +137,50 @@ export class ToolCallCard extends LitElement {
       gap: 8px;
     }
 
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
     .section-label {
       font-size: 0.62rem;
       font-weight: 600;
       letter-spacing: 0.08em;
       text-transform: uppercase;
       color: #94a3b8;
-      margin-bottom: 4px;
+    }
+
+    .copy-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 1px 6px;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      background: none;
+      color: #94a3b8;
+      font: inherit;
+      font-size: 0.65rem;
+      cursor: pointer;
+    }
+
+    .copy-btn:hover,
+    .copy-btn:focus-visible {
+      border-color: #e2e8f0;
+      background: #f8fafc;
+      color: #64748b;
+    }
+
+    .copy-btn.copied {
+      color: var(--chativa-success-color, #16a34a);
+    }
+
+    .copy-btn svg {
+      width: 12px;
+      height: 12px;
     }
 
     pre {
@@ -170,6 +212,56 @@ export class ToolCallCard extends LitElement {
   @property({ type: Object }) toolCall: ToolCall | null = null;
 
   @state() private _expanded = false;
+  /** The section whose "Copied" confirmation is showing. */
+  @state() private _copied: ToolCallPart | null = null;
+  private _copiedTimer: ReturnType<typeof setTimeout> | null = null;
+
+  override disconnectedCallback(): void {
+    if (this._copiedTimer !== null) clearTimeout(this._copiedTimer);
+    super.disconnectedCallback();
+  }
+
+  private async _copy(part: ToolCallPart, text: string) {
+    const tc = this.toolCall;
+    if (!tc || !(await copyText(text))) return;
+    EventBus.emit("tool_call_copied", { toolCallId: tc.id, part });
+    this._copied = part;
+    if (this._copiedTimer !== null) clearTimeout(this._copiedTimer);
+    this._copiedTimer = setTimeout(() => {
+      this._copiedTimer = null;
+      this._copied = null;
+    }, COPIED_MS);
+  }
+
+  /** Section heading with an optional copy button at its inline end. */
+  private _renderSectionHead(part: ToolCallPart, label: string, text: string) {
+    // Same switch as the code-block copy buttons in text messages.
+    const copyable = chatStore.getState().theme.messageActions?.codeBlockCopy !== false;
+    const copied = this._copied === part;
+    const buttonLabel = copied ? t("message.copied") : `${t("message.copy")}: ${label}`;
+    return html`
+      <div class="section-head">
+        <div class="section-label">${label}</div>
+        ${copyable
+          ? html`<button
+              type="button"
+              class="copy-btn ${copied ? "copied" : ""}"
+              data-part=${part}
+              aria-label=${buttonLabel}
+              title=${buttonLabel}
+              @click=${() => this._copy(part, text)}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                ${copied
+                  ? svg`<path d="M5 12.5l4.5 4.5L19 7.5"/>`
+                  : svg`<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>`}
+              </svg>
+              <span>${copied ? t("message.copied") : t("message.copy")}</span>
+            </button>`
+          : nothing}
+      </div>
+    `;
+  }
   /** Once the user toggles manually, stop auto-expanding on error. */
   private _userToggled = false;
   private _autoExpandedFor: string | null = null;
@@ -252,19 +344,19 @@ export class ToolCallCard extends LitElement {
                   : nothing}
                 ${hasParams
                   ? html`<div>
-                      <div class="section-label">${t("toolCalls.parameters")}</div>
+                      ${this._renderSectionHead("params", t("toolCalls.parameters"), this._pretty(tc.params))}
                       <pre>${this._pretty(tc.params)}</pre>
                     </div>`
                   : nothing}
                 ${hasResult
                   ? html`<div>
-                      <div class="section-label">${t("toolCalls.result")}</div>
+                      ${this._renderSectionHead("result", t("toolCalls.result"), this._pretty(tc.result))}
                       <pre>${this._pretty(tc.result)}</pre>
                     </div>`
                   : nothing}
                 ${hasError
                   ? html`<div>
-                      <div class="section-label">${t("toolCalls.error")}</div>
+                      ${this._renderSectionHead("error", t("toolCalls.error"), String(tc.error))}
                       <div class="error-box">${tc.error}</div>
                     </div>`
                   : nothing}

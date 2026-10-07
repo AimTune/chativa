@@ -55,6 +55,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | **Themable** | [CSS variables + JSON config + fluent builder](docs/theming.md). Four window modes. |
 | **i18n** | 20 languages out of the box (incl. pt-BR, zh-CN/zh-TW, ar, he); [extend at runtime](docs/i18n.md). |
 | **End-of-conversation survey** | [Star rating + comment](docs/survey.md), connector-routed. |
+| **Message actions** | [Copy (incl. code blocks), regenerate, edit-and-resend](docs/message-actions.md) — shown when the connector and its server support them — plus custom actions. |
 | **Multi-conversation** | [Agent-panel mode](docs/multi-conversation.md) for helpdesk scenarios. |
 
 ## Documentation
@@ -76,6 +77,7 @@ Full guide → [docs/getting-started.md](docs/getting-started.md).
 | [EventBus](docs/events.md) | Every analytics event — payload and when it fires |
 | [Slash commands](docs/slash-commands.md) | Built-ins + registering your own |
 | [Survey](docs/survey.md) | End-of-conversation flow |
+| [Message actions](docs/message-actions.md) | Copy, regenerate, edit, custom actions |
 | [Multi-conversation](docs/multi-conversation.md) | Agent-panel mode |
 | [i18n](docs/i18n.md) | Localisation |
 | [Sandbox](docs/sandbox.md) | The hosted playground |

@@ -25,6 +25,7 @@ const EXPECTED_OPTIONS: { [K in keyof Required<DummyConnectorOptions>]: true } =
   replyDelay: true,
   connectDelay: true,
   rules: true,
+  capabilities: true,
 };
 
 const EXPECTED_RULE: { [K in keyof Required<DummyRule>]: true } = {

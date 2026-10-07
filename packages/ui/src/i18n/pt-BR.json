@@ -56,7 +56,17 @@
     "dislikeButton": "Não curtir esta mensagem",
     "statusSending": "Enviando",
     "statusSent": "Enviada",
-    "statusRead": "Lida"
+    "statusRead": "Lida",
+    "actionsLabel": "Ações da mensagem",
+    "copy": "Copiar",
+    "copyCode": "Copiar código",
+    "copied": "Copiado",
+    "regenerate": "Gerar resposta novamente",
+    "edit": "Editar mensagem",
+    "editLabel": "Edite sua mensagem",
+    "editSave": "Enviar",
+    "editCancel": "Cancelar",
+    "moreActions": "Mais ações"
   },
   "emojiPicker": {
     "searchPlaceholder": "Pesquisar emoji…",

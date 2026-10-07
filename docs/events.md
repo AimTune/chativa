@@ -42,6 +42,10 @@ The types are exported too: `EventBusEventName` (the union of event names) and `
 | `survey_submitted` | `SurveyPayload` | The user submitted the [end-of-conversation survey](./survey.md) and `ChatEngine.sendSurvey()` returned. Fires even if the connector has no `sendSurvey`. |
 | `genui_components_registered` | `{ definitions: GenUIComponentDefinition[] }` | The connector announced server-defined GenUI components via `onGenUIComponents` and at least one was new. `definitions` holds only the newly published ones. |
 | `tool_call_updated` | `ToolCall` | The connector reported a tool-call lifecycle update via `onToolCall` (upsert by `id`: `running` → `completed` / `error`). Fires for calls still in the live buffer and for calls already attached to a delivered message. |
+| `message_copied` | `{ messageId: string; format: "text" \| "markdown" \| "code" }` | The user copied a bot message from its [action bar](./message-actions.md) (`"text"`, or `"markdown"` with <kbd>Shift</kbd>) or a code block inside one (`"code"`). Does not fire when the clipboard write fails. |
+| `tool_call_copied` | `{ toolCallId: string; part: "params" \| "result" \| "error" }` | The user copied a section of a [tool-call card](./message-actions.md#tool-call-cards). Does not fire when the clipboard write fails. |
+| `message_regenerated` | `{ messageId: string; mode: "native" \| "fallback" }` | `ChatEngine.regenerate()` removed the latest reply and asked for a new one: through `connector.regenerate()` (`"native"`), or by re-sending the user's message (`"fallback"`). `messageId` is the bubble the user clicked. Fires after the connector call resolves. |
+| `message_edited` | `{ messageId: string; text: string; mode: "native" \| "fallback" }` | `ChatEngine.editMessage()` replaced the latest user message and re-ran the turn: through `connector.editMessage()` (`"native"`), or as a new message (`"fallback"`). `messageId` is the original message's id. |
 
 `ConnectorStatus` is `"idle" | "connecting" | "connected" | "error" | "disconnected"`. `"idle"` is the store's initial value and is never emitted.
 

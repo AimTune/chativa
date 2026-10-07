@@ -130,11 +130,11 @@ describe("ChatMessageList — messages", () => {
   it("offsets bot extras under the avatar unless showBot is false", async () => {
     add(bot("b1", "one"));
     const el = await render();
-    expect($(el, "message-feedback")!.classList.contains("avatar-offset")).toBe(true);
+    expect($(el, ".bot-message .message-toolbar")!.classList.contains("avatar-offset")).toBe(true);
 
     chatStore.getState().setTheme({ avatar: { showBot: false } });
     await el.updateComplete;
-    expect($(el, "message-feedback")!.classList.contains("avatar-offset")).toBe(false);
+    expect($(el, ".bot-message .message-toolbar")!.classList.contains("avatar-offset")).toBe(false);
   });
 
   it("attaches a tool-call trace above bot messages that carry toolCalls", async () => {

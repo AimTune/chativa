@@ -3,6 +3,7 @@ import {
   messageStore,
   ConnectorRegistry,
   type IConnector,
+  type ConnectorCapabilities,
 } from "@chativa/core";
 import { DummyConnector, type DummyRule } from "@chativa/connector-dummy";
 
@@ -15,10 +16,12 @@ export interface SandboxDummyOptions {
   replyDelay: number;
   connectDelay: number;
   rules: DummyRule[];
+  /** Simulated server permissions for regenerate / edit. `{}` = both allowed. */
+  capabilities: ConnectorCapabilities;
 }
 
 /** Mirrors the instance `main.ts` registers on page load. */
-let _dummyOptions: SandboxDummyOptions = { replyDelay: 500, connectDelay: 2000, rules: [] };
+let _dummyOptions: SandboxDummyOptions = { replyDelay: 500, connectDelay: 2000, rules: [], capabilities: {} };
 const _listeners = new Set<(opts: SandboxDummyOptions) => void>();
 
 export function getDummyOptions(): SandboxDummyOptions {
@@ -43,7 +46,19 @@ export function buildDummyConnector(name?: string): DummyConnector {
     replyDelay: Number(o.replyDelay) || 0,
     connectDelay: Number(o.connectDelay) || 0,
     rules: o.rules,
+    capabilities: o.capabilities,
   });
+}
+
+/**
+ * Simulate the server allowing or refusing regenerate / edit: stored in the
+ * shared options (so a rebuilt dummy keeps it) and pushed to the live dummy,
+ * whose `onCapabilities` announcement updates the widget immediately.
+ */
+export function setDummyCapabilities(patch: ConnectorCapabilities): void {
+  const capabilities = { ..._dummyOptions.capabilities, ...patch };
+  setDummyOptions({ capabilities });
+  activeDummy()?.setCapabilities(capabilities);
 }
 
 // ── Demo hooks ────────────────────────────────────────────────────────

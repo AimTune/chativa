@@ -56,7 +56,17 @@
     "dislikeButton": "यह संदेश नापसंद करें",
     "statusSending": "भेजा जा रहा है",
     "statusSent": "भेजा गया",
-    "statusRead": "पढ़ा गया"
+    "statusRead": "पढ़ा गया",
+    "actionsLabel": "संदेश क्रियाएँ",
+    "copy": "कॉपी करें",
+    "copyCode": "कोड कॉपी करें",
+    "copied": "कॉपी हो गया",
+    "regenerate": "जवाब फिर से बनाएँ",
+    "edit": "संदेश संपादित करें",
+    "editLabel": "अपना संदेश संपादित करें",
+    "editSave": "भेजें",
+    "editCancel": "रद्द करें",
+    "moreActions": "और क्रियाएँ"
   },
   "emojiPicker": {
     "searchPlaceholder": "इमोजी खोजें…",

@@ -56,7 +56,17 @@
     "dislikeButton": "لم تعجبني هذه الرسالة",
     "statusSending": "جارٍ الإرسال",
     "statusSent": "تم الإرسال",
-    "statusRead": "تمت القراءة"
+    "statusRead": "تمت القراءة",
+    "actionsLabel": "إجراءات الرسالة",
+    "copy": "نسخ",
+    "copyCode": "نسخ الكود",
+    "copied": "تم النسخ",
+    "regenerate": "إعادة إنشاء الرد",
+    "edit": "تعديل الرسالة",
+    "editLabel": "عدّل رسالتك",
+    "editSave": "إرسال",
+    "editCancel": "إلغاء",
+    "moreActions": "مزيد من الإجراءات"
   },
   "emojiPicker": {
     "searchPlaceholder": "ابحث عن رمز تعبيري…",

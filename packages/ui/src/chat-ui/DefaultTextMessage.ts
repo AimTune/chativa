@@ -2,15 +2,26 @@ import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
-import { t } from "@chativa/core";
+import { t, escapeHtml, EventBus } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
+import { copyText } from "../utils/clipboard";
 import type { LinkMetadataFetcher } from "./LinkPreviewCard";
 import "./LinkPreviewCard";
 
 /** Private-use sentinel swapped for the caret span after markdown parsing. */
 const STREAM_CARET_TOKEN = "";
 const STREAM_CARET_HTML = '<span class="stream-caret" aria-hidden="true"></span>';
+
+const CODE_COPIED_MS = 1500;
+
+/** Wrap every `<pre>` block in a container with a copy button (see `_onBubbleClick`). */
+function withCodeCopyButtons(parsed: string): string {
+  if (!parsed.includes("<pre>")) return parsed;
+  const label = escapeHtml(t("message.copyCode"));
+  const open = `<div class="code-block"><button type="button" class="code-copy" aria-label="${label}" title="${label}">${label}</button><pre>`;
+  return parsed.split("<pre>").join(open).split("</pre>").join("</pre></div>");
+}
 
 @customElement("default-text-message")
 export class DefaultTextMessage extends LitElement {
@@ -81,14 +92,55 @@ export class DefaultTextMessage extends LitElement {
       font-size: 0.82em;
       font-family: monospace;
     }
+    /* Long code lines scroll inside the block; the bubble never widens past
+       its max-width (see .content / .bubble min-width: 0). The scrollbar is
+       styled so it stays visible, also where the OS uses overlay scrollbars. */
     .message.bot .bubble pre {
       background: rgba(0,0,0,0.06);
       border-radius: 6px;
       padding: 8px 12px;
       overflow-x: auto;
+      max-width: 100%;
+      box-sizing: border-box;
       margin: 6px 0;
     }
+    .message.bot .bubble pre::-webkit-scrollbar { height: 8px; }
+    .message.bot .bubble pre::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.04);
+      border-radius: 4px;
+    }
+    .message.bot .bubble pre::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.28);
+      border-radius: 4px;
+    }
+    .message.bot .bubble pre::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.4); }
+    @supports not selector(::-webkit-scrollbar) {
+      .message.bot .bubble pre {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.28) rgba(0,0,0,0.04);
+      }
+    }
     .message.bot .bubble pre code { background: none; padding: 0; }
+    .message.bot .bubble .code-block { position: relative; max-width: 100%; }
+    .message.bot .bubble .code-block pre { padding-top: 26px; }
+    .code-copy {
+      position: absolute;
+      top: 4px;
+      inset-inline-end: 4px;
+      padding: 2px 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.85);
+      color: #475569;
+      font: inherit;
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      cursor: pointer;
+      opacity: 0.85;
+    }
+    .code-copy:hover,
+    .code-copy:focus-visible { opacity: 1; }
+    .code-copy.copied { color: var(--chativa-success-color, #16a34a); }
     .message.bot .bubble a { color: #4f46e5; text-decoration: underline; }
     .message.bot .bubble ul,
     .message.bot .bubble ol { margin: 4px 0; padding-inline-start: 18px; }
@@ -129,6 +181,9 @@ export class DefaultTextMessage extends LitElement {
       display: flex;
       flex-direction: column;
       gap: 3px;
+      /* Let the bubble shrink below its content's widest line (a long code
+         line), so wide content scrolls inside instead of widening the row. */
+      min-width: 0;
     }
 
     .message.user .content {
@@ -141,6 +196,8 @@ export class DefaultTextMessage extends LitElement {
       line-height: 1.5;
       word-break: break-word;
       max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .message.bot .bubble {
@@ -319,6 +376,25 @@ export class DefaultTextMessage extends LitElement {
     `;
   }
 
+  /** Delegated click handler for the code-block copy buttons inside the parsed Markdown. */
+  private async _onBubbleClick(e: Event) {
+    const button = (e.target as Element | null)?.closest?.(".code-copy");
+    if (!(button instanceof HTMLElement)) return;
+    const code = button.parentElement?.querySelector("pre")?.textContent ?? "";
+    if (!code || !(await copyText(code))) return;
+    EventBus.emit("message_copied", { messageId: this.messageId, format: "code" });
+    const label = t("message.copyCode");
+    const copied = t("message.copied");
+    button.textContent = copied;
+    button.setAttribute("aria-label", copied);
+    button.classList.add("copied");
+    setTimeout(() => {
+      button.textContent = label;
+      button.setAttribute("aria-label", label);
+      button.classList.remove("copied");
+    }, CODE_COPIED_MS);
+  }
+
   private _renderLinkPreviews() {
     const urls = this.messageData?.urls as string[] | undefined;
     if (!urls || urls.length === 0) return nothing;
@@ -354,9 +430,17 @@ export class DefaultTextMessage extends LitElement {
         isStreaming ? raw + STREAM_CARET_TOKEN : raw,
         { async: false }
       ) as string;
+      // Code blocks get a copy button once the text has settled — a block
+      // still streaming in would copy half its content.
+      const codeCopy =
+        !isUser &&
+        !isStreaming &&
+        chatStore.getState().theme.messageActions?.codeBlockCopy !== false;
       const withCaret = isStreaming
         ? parsed.replace(STREAM_CARET_TOKEN, STREAM_CARET_HTML)
-        : parsed;
+        : codeCopy
+          ? withCodeCopyButtons(parsed)
+          : parsed;
       bubbleContent = unsafeHTML(withCaret);
     }
 
@@ -374,7 +458,7 @@ export class DefaultTextMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
-          <div class="bubble"><div class="bubble-text" dir="auto">${bubbleContent}</div></div>
+          <div class="bubble"><div class="bubble-text" dir="auto" @click=${this._onBubbleClick}>${bubbleContent}</div></div>
           ${this._renderLinkPreviews()}
           ${this._time || showStatus ? html`
             <div class="meta">

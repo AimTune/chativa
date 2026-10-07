@@ -56,7 +56,17 @@
     "dislikeButton": "Duim omlaag voor dit bericht",
     "statusSending": "Wordt verzonden",
     "statusSent": "Verzonden",
-    "statusRead": "Gelezen"
+    "statusRead": "Gelezen",
+    "actionsLabel": "Berichtacties",
+    "copy": "Kopiëren",
+    "copyCode": "Code kopiëren",
+    "copied": "Gekopieerd",
+    "regenerate": "Antwoord opnieuw genereren",
+    "edit": "Bericht bewerken",
+    "editLabel": "Bewerk je bericht",
+    "editSave": "Verzenden",
+    "editCancel": "Annuleren",
+    "moreActions": "Meer acties"
   },
   "emojiPicker": {
     "searchPlaceholder": "Emoji zoeken…",

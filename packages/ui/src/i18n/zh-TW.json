@@ -56,7 +56,17 @@
     "dislikeButton": "不喜歡這則訊息",
     "statusSending": "傳送中",
     "statusSent": "已傳送",
-    "statusRead": "已讀"
+    "statusRead": "已讀",
+    "actionsLabel": "訊息操作",
+    "copy": "複製",
+    "copyCode": "複製程式碼",
+    "copied": "已複製",
+    "regenerate": "重新產生回答",
+    "edit": "編輯訊息",
+    "editLabel": "編輯你的訊息",
+    "editSave": "傳送",
+    "editCancel": "取消",
+    "moreActions": "更多操作"
   },
   "emojiPicker": {
     "searchPlaceholder": "搜尋表情符號…",

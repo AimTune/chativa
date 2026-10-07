@@ -1,8 +1,9 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { chatStore, type ThemeConfig, type DeepPartial } from "@chativa/core";
+import { chatStore, type ThemeConfig, type DeepPartial, type MessageActionsConfig } from "@chativa/core";
 import i18next from "i18next";
 import { sectionStyles } from "../sandboxShared";
+import { getDummyOptions, setDummyCapabilities, subscribeDummyOptions } from "../connectorSwap";
 
 // Import i18next directly (the singleton) instead of from "@chativa/ui".
 // The @chativa/ui index has side-effect imports that call
@@ -44,22 +45,58 @@ export class FeaturesSection extends LitElement {
   @state() private _open = true;
   @state() private _theme: ThemeConfig = chatStore.getState().theme;
   @state() private _lang = i18next.language ?? "en";
+  @state() private _serverCaps = getDummyOptions().capabilities;
   private _unsub!: () => void;
+  private _unsubDummy!: () => void;
   private _onLang = (lng: string) => { this._lang = lng; };
 
   connectedCallback() {
     super.connectedCallback();
     this._unsub = chatStore.subscribe(() => { this._theme = chatStore.getState().theme; });
+    this._unsubDummy = subscribeDummyOptions((o) => { this._serverCaps = o.capabilities; });
     i18next.on("languageChanged", this._onLang);
   }
 
   disconnectedCallback() {
     this._unsub?.();
+    this._unsubDummy?.();
     i18next.off("languageChanged", this._onLang);
     super.disconnectedCallback();
   }
 
   private _set(o: DeepPartial<ThemeConfig>) { chatStore.getState().setTheme(o); }
+
+  /** On/Off pair; `on` is the current state, `set` receives the new one. */
+  private _onOff(label: string, on: boolean, set: (v: boolean) => void, hint?: string) {
+    return html`
+      <div>
+        <div class="sub-label" title=${hint ?? ""}>${label}</div>
+        <div class="toggle-group">
+          <button class="tg-btn ${on ? "active" : ""}" @click=${() => set(true)}>On</button>
+          <button class="tg-btn ${!on ? "active" : ""}" @click=${() => set(false)}>Off</button>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderMessageActions() {
+    const cfg: MessageActionsConfig = this._theme.messageActions ?? {};
+    const action = (key: keyof MessageActionsConfig, label: string, hint: string, defaultOn = true) =>
+      this._onOff(label, defaultOn ? cfg[key] !== false : cfg[key] === true, (v) => this._set({ messageActions: { [key]: v } }), hint);
+    const server = (key: "regenerate" | "editMessage", label: string) =>
+      this._onOff(label, this._serverCaps[key] !== false, (v) => setDummyCapabilities({ [key]: v }),
+        "Simulates the backend allowing the action (DummyConnector.setCapabilities). Off hides it even when the theme allows it.");
+    return html`
+      <div class="sub-label" style="margin-top:4px;font-weight:600">Message actions</div>
+      ${action("copy", "Copy", "Copy button on bot messages")}
+      ${action("codeBlockCopy", "Code / tool-call copy", "Copy buttons on code blocks and tool-call sections")}
+      ${action("regenerate", "Regenerate", "Regenerate button on the latest reply (theme switch)")}
+      ${action("edit", "Edit", "Edit button on the latest user message (theme switch)")}
+      ${action("fallback", "Fallback (emulate)", "Emulate regenerate / edit for connectors without them", false)}
+      ${server("regenerate", "Server allows regenerate")}
+      ${server("editMessage", "Server allows edit")}
+    `;
+  }
 
   render() {
     return html`
@@ -93,6 +130,8 @@ export class FeaturesSection extends LitElement {
                 @click=${() => this._set({ enableMultiConversation: false })}>Off</button>
             </div>
           </div>
+
+          ${this._renderMessageActions()}
 
           <!-- Language -->
           <div>

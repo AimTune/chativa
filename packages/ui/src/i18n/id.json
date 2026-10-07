@@ -56,7 +56,17 @@
     "dislikeButton": "Tidak sukai pesan ini",
     "statusSending": "Mengirim",
     "statusSent": "Terkirim",
-    "statusRead": "Dibaca"
+    "statusRead": "Dibaca",
+    "actionsLabel": "Tindakan pesan",
+    "copy": "Salin",
+    "copyCode": "Salin kode",
+    "copied": "Disalin",
+    "regenerate": "Buat ulang respons",
+    "edit": "Edit pesan",
+    "editLabel": "Edit pesan Anda",
+    "editSave": "Kirim",
+    "editCancel": "Batal",
+    "moreActions": "Tindakan lainnya"
   },
   "emojiPicker": {
     "searchPlaceholder": "Cari emoji…",
