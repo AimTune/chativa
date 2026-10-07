@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, svg } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
@@ -323,8 +323,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
               title=${t("header.search.toggle")}
             >
               ${this._searchOpen
-                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" />`)}</svg>`
-                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("search", html`<circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />`)}</svg>`}
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("close", svg`<path d="M18 6L6 18M6 6l12 12" />`)}</svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("search", svg`<circle cx="11" cy="11" r="7" /><path d="M21 21l-4.35-4.35" />`)}</svg>`}
             </button>
           ` : nothing}
 
@@ -336,8 +336,8 @@ class ChatHeader extends ChatbotMixin(LitElement) {
               title="${isFullscreen ? t("header.fullscreen.exit") : t("header.fullscreen.enter")}"
             >
               ${isFullscreen
-                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("minimizeFullscreen", html`<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />`)}</svg>`
-                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("maximizeFullscreen", html`<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />`)}</svg>`}
+                ? html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("minimizeFullscreen", svg`<path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />`)}</svg>`
+                : html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">${renderIcon("maximizeFullscreen", svg`<path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" />`)}</svg>`}
             </button>
           ` : nothing}
 
@@ -348,7 +348,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
             title="${t("header.minimize")}"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
-              ${renderIcon("minimize", html`<path d="M6 12h12" />`)}
+              ${renderIcon("minimize", svg`<path d="M6 12h12" />`)}
             </svg>
           </button>
 
@@ -359,7 +359,7 @@ class ChatHeader extends ChatbotMixin(LitElement) {
             title="${t("header.close")}"
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" xmlns="http://www.w3.org/2000/svg">
-              ${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" />`)}
+              ${renderIcon("close", svg`<path d="M18 6L6 18M6 6l12 12" />`)}
             </svg>
           </button>
         </div>
