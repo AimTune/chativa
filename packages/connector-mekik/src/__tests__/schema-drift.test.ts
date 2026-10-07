@@ -37,6 +37,8 @@ const EXPECTED: { [K in keyof Required<MekikConnectorOptions>]: true } = {
   onAuthError: true,
   tools: true,
   allowDynamicTools: true,
+  skills: true,
+  allowDynamicSkills: true,
 };
 
 // ── Schema accessor ────────────────────────────────────────────────────
