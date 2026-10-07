@@ -254,6 +254,40 @@ The chips are kept visible after the tap (`keepActions`) so the transcript still
     "id": "call-1", "name": "get_weather", "status": "completed", "result": "18°C" } }
 ```
 
+## Skills
+
+mekik servers can give their agents [Agent Skills](https://agentskills.io) (mekik `PROTOCOL.md` §12). The connector implements the whole client side of that contract.
+
+**Server catalog.** Right after `welcome` the server announces its skill catalog (level-1 summaries: name, description, tags). The connector caches it per URL and hands the hash back on reconnect (`hello.skillsHash`), so an unchanged catalog is never re-sent — the same ETag handshake as server-defined GenUI components:
+
+```ts
+connector.onSkills((skills) => renderSkillBadges(skills)); // replayed if it already arrived
+connector.serverSkills; // the current level-1 summaries (empty before the first catalog)
+```
+
+**Skill traces.** When the agent loads a skill, a persistent `skill` frame travels with the transcript — like `tool_call`, the same `data.id` is re-sent on replay, so treat deliveries as upserts:
+
+```ts
+connector.onSkillUse((use) => {
+  // { id, name, status: "loaded" | "error", source?, error? }
+});
+```
+
+**Client-declared skills.** The page can declare inline skills of its own — a house style, the names its screens use. Declarations travel in `hello.skills` and are re-sent on every reconnect; a `client_skills` frame replaces the set at runtime. The server side is **off by default**: a server that did not opt in (`MekikOptions.clientSkills`) ignores declarations entirely, and a client skill can never shadow a server skill.
+
+```ts
+const connector = new MekikConnector({
+  url: "wss://bot.example.com/chat",
+  skills: [{
+    name: "ui-conventions",
+    description: "How this app names its screens and actions.",
+    instructions: "# UI conventions\nUse the names from the sidebar.",
+  }],
+});
+```
+
+Like tools, the set is **sealed at construction**: `registerSkill` / `unregisterSkill` require `allowDynamicSkills: true`, so injected script cannot rewrite what a server-side model will read.
+
 ## Generative UI
 
 `genui` frames stream an [`AIChunk`](../genui/streaming.md) per `streamId`, mounting a registered GenUI component inline as it arrives. Events fired by that component travel back as `genui_event`, which makes GenUI bidirectional over the same socket:
