@@ -1,0 +1,105 @@
+{
+  "greeting": "こんにちは",
+  "welcome": "ようこそ、{{name}} さん！",
+  "header": {
+    "title": "Chativa チャットボット",
+    "status": {
+      "connecting": "接続中…",
+      "connected": "オンライン",
+      "error": "接続エラー",
+      "disconnected": "切断されました",
+      "offline": "オフライン"
+    },
+    "fullscreen": {
+      "enter": "全画面表示",
+      "exit": "全画面表示を終了"
+    },
+    "close": "閉じる",
+    "minimize": "最小化",
+    "search": {
+      "toggle": "検索",
+      "placeholder": "メッセージを検索…",
+      "clear": "検索をクリア"
+    }
+  },
+  "input": {
+    "placeholder": "メッセージを入力…",
+    "send": "メッセージを送信",
+    "emoji": "絵文字",
+    "attachFile": "ファイルを添付",
+    "removeFile": "{{name}} を削除",
+    "dropHere": "ここにファイルをドロップ",
+    "dropHereSubtitle": "離すと添付されます"
+  },
+  "messageList": {
+    "connecting": "接続中…",
+    "emptyTitle": "どのようなご用件でしょうか？",
+    "emptySubtitle": "メッセージを送信して始めましょう。",
+    "newMessage": "新着メッセージ",
+    "loadMore": "以前のメッセージを読み込む",
+    "errorTitle": "接続が切れました",
+    "errorSubtitle": "再接続できませんでした。もう一度お試しください。",
+    "retry": "再試行",
+    "reconnecting": "再接続中…（{{attempt}} 回目）",
+    "searchEmpty": "検索に一致するメッセージはありません。",
+    "searchResult": "{{count}} 件見つかりました",
+    "loadingHistory": "以前のメッセージを読み込み中…",
+    "ariaLabel": "チャットメッセージ",
+    "typingIndicator": "アシスタントが入力中"
+  },
+  "message": {
+    "from": {
+      "bot": "アシスタント",
+      "user": "あなた"
+    },
+    "likeButton": "このメッセージを高く評価",
+    "dislikeButton": "このメッセージを低く評価",
+    "statusSending": "送信中",
+    "statusSent": "送信済み",
+    "statusRead": "既読",
+    "actionsLabel": "メッセージの操作",
+    "copy": "コピー",
+    "copyCode": "コードをコピー",
+    "copied": "コピーしました",
+    "regenerate": "回答を再生成",
+    "edit": "メッセージを編集",
+    "editLabel": "メッセージを編集",
+    "editSave": "送信",
+    "editCancel": "キャンセル",
+    "moreActions": "その他の操作"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "絵文字を検索…",
+    "noResults": "見つかりませんでした"
+  },
+  "chatButton": {
+    "open": "チャットを開く",
+    "close": "チャットを閉じる"
+  },
+  "widget": {
+    "title": "チャット",
+    "disclaimer": "AI が生成したコンテンツは不正確な場合があります。"
+  },
+  "survey": {
+    "title": "ご満足いただけましたか？",
+    "ratingLabel": "今回のご体験を評価してください",
+    "commentPlaceholder": "改善できる点を教えてください",
+    "commentRequired": "問題があった点をお聞かせください",
+    "submit": "送信",
+    "skip": "スキップ",
+    "thankYouTitle": "フィードバックを受け付けました！",
+    "thankYouBody": "貴重なご意見・ご感想をありがとうございます。",
+    "close": "閉じる",
+    "starLabel_other": "星 {{count}} つ"
+  },
+  "toolCalls": {
+    "running": "実行中",
+    "completed": "完了",
+    "error": "エラー",
+    "parameters": "パラメーター",
+    "result": "結果",
+    "summary_other": "{{count}} 件の操作",
+    "failed": "{{count}} 件失敗",
+    "ariaToggle": "ツール呼び出しの詳細を表示／非表示"
+  }
+}

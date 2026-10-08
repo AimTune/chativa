@@ -89,6 +89,9 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
     }
 
     .stars {
+      /* Rating scales read left-to-right (1 → max) even in RTL UIs — the
+         conventional rule; labels and buttons around them still mirror. */
+      direction: ltr;
       display: flex;
       justify-content: center;
       gap: 6px;
@@ -150,7 +153,7 @@ export class EndOfConversationSurvey extends ChatbotMixin(LitElement) {
       margin: -6px 0 8px;
       font-size: 0.75rem;
       color: #ef4444;
-      text-align: left;
+      text-align: start;
     }
 
     /* ── Thank-you state ──────────────────────────────────────── */

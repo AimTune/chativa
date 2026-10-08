@@ -5,14 +5,23 @@ export { ConnectorRegistry } from "./registries/ConnectorRegistry";
 export { MessageTypeRegistry } from "./registries/MessageTypeRegistry";
 export { ExtensionRegistry } from "./registries/ExtensionRegistry";
 export { SlashCommandRegistry } from "./registries/SlashCommandRegistry";
+export { MessageActionRegistry } from "./registries/MessageActionRegistry";
 export { default as chatStore } from "./stores/ChatStore";
 export { default as messageStore } from "./stores/MessageStore";
 export { default as conversationStore } from "./stores/ConversationStore";
-export type { ChatStoreState, ConnectorStatus, TypingOptions } from "./stores/ChatStore";
+export type {
+  ChatStoreState,
+  ConnectorStatus,
+  TypingOptions,
+  CapabilitySupport,
+  MessageActionSupport,
+} from "./stores/ChatStore";
 export type { StoredMessage, MessageStoreState } from "./stores/MessageStore";
 export type { ConversationStoreState } from "./stores/ConversationStore";
 export { genUIDefinitionStore } from "./GenUIDefinitionStore";
 export { EventBus } from "./EventBus";
+export { getLatestTurn, isReplyStreaming } from "./latestTurn";
+export type { LatestTurn } from "./latestTurn";
 export type { EventBusPayloadMap, EventBusEventName } from "./EventBus";
 export type { ChativaContext } from "./ChativaContext";
 export { createChativaContext } from "./createChativaContext";

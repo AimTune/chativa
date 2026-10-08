@@ -8,14 +8,32 @@ import {
   type ThemeConfig,
   type DeepPartial,
 } from "@chativa/core";
+import type { DummyRule } from "@chativa/connector-dummy";
 import { sectionStyles } from "../sandboxShared";
+import {
+  activeDummy,
+  buildDummyConnector,
+  setDummyOptions,
+  swapConnector,
+} from "../connectorSwap";
 
 const SETTINGS_SCHEMA_URL =
   "https://chativa.aimtune.dev/schemas/chativa-settings.schema.json";
 
+/**
+ * Sandbox-only object form of `connector`, emitted when the active
+ * DummyConnector has rules (Rules tab). `window.chativaSettings.connector`
+ * only accepts a name or an instance, so the HTML snippet collapses this back
+ * to the name — rules must be passed to `new DummyConnector({ rules })` in code.
+ */
+interface DummyConnectorSpec {
+  name: string;
+  dummy: { rules: DummyRule[] };
+}
+
 interface ChativaSettingsLike {
   $schema?: string;
-  connector?: string;
+  connector?: string | DummyConnectorSpec;
   theme?: DeepPartial<ThemeConfig>;
   locale?: string;
   i18n?: Record<string, unknown>;
@@ -81,7 +99,12 @@ function buildSettings(): ChativaSettingsLike {
     DEFAULT_THEME as unknown as Record<string, unknown>,
   );
   const settings: ChativaSettingsLike = { $schema: SETTINGS_SCHEMA_URL };
-  if (state.activeConnector) settings.connector = state.activeConnector;
+  const dummy = activeDummy();
+  if (dummy && dummy.rules.length > 0) {
+    settings.connector = { name: dummy.name, dummy: { rules: [...dummy.rules] } };
+  } else if (state.activeConnector) {
+    settings.connector = state.activeConnector;
+  }
   if (themeDiff) settings.theme = themeDiff as DeepPartial<ThemeConfig>;
   const lng = i18next.isInitialized ? i18next.language : undefined;
   if (lng && lng !== "en") settings.locale = lng;
@@ -93,8 +116,14 @@ function buildHtmlSnippet(settings: ChativaSettingsLike): string {
   // Strip the $schema field — it isn't valid for window.chativaSettings.
   const { $schema: _ignored, ...runtime } = settings;
   void _ignored;
+  // window.chativaSettings.connector must be a name — rules can't ride along.
+  let note = "";
+  if (typeof runtime.connector === "object") {
+    runtime.connector = runtime.connector.name;
+    note = `\n  // DummyConnector rules are not loaded from chativaSettings — register\n  // new DummyConnector({ rules }) yourself (see the Config JSON for the rules).`;
+  }
   const json = JSON.stringify(runtime, null, 2);
-  return `<script>
+  return `<script>${note}
   window.chativaSettings = ${json};
 </script>
 <script type="module" src="https://unpkg.com/@chativa/ui/dist/chativa.js"></script>
@@ -112,8 +141,24 @@ function buildHtmlSnippet(settings: ChativaSettingsLike): string {
 function validateSettings(input: unknown): string | null {
   if (!isPlainObject(input)) return "Top-level value must be an object.";
   const obj = input as Record<string, unknown>;
+  if ("connector" in obj && isPlainObject(obj.connector)) {
+    const spec = obj.connector as Record<string, unknown>;
+    if (typeof spec.name !== "string" || !spec.name) {
+      return "`connector.name` must be a non-empty string.";
+    }
+    if (!isPlainObject(spec.dummy) || !Array.isArray((spec.dummy as Record<string, unknown>).rules)) {
+      return "Object `connector` must look like { name, dummy: { rules: [...] } } (DummyConnector rules).";
+    }
+    const rules = (spec.dummy as { rules: unknown[] }).rules;
+    for (const [i, r] of rules.entries()) {
+      if (!isPlainObject(r) || !isPlainObject(r.when) || !isPlainObject(r.then)) {
+        return `connector.dummy.rules[${i}] must be an object with \`when\` and \`then\` objects.`;
+      }
+    }
+    return validateRest(obj);
+  }
   if ("connector" in obj && typeof obj.connector !== "string") {
-    return "`connector` must be a string (the registered connector name).";
+    return "`connector` must be a string (the registered connector name) or { name, dummy: { rules } }.";
   }
   if ("connector" in obj) {
     const name = obj.connector as string;
@@ -122,6 +167,11 @@ function validateSettings(input: unknown): string | null {
       return `Connector "${name}" is not registered. Available: ${known}.`;
     }
   }
+  return validateRest(obj);
+}
+
+/** Validate the non-connector fields of a pasted ChativaSettings object. */
+function validateRest(obj: Record<string, unknown>): string | null {
   if ("theme" in obj && !isPlainObject(obj.theme)) {
     return "`theme` must be an object.";
   }
@@ -136,7 +186,11 @@ function validateSettings(input: unknown): string | null {
 
 /** Apply parsed settings to the live store. */
 function applySettings(settings: ChativaSettingsLike): void {
-  if (settings.connector) {
+  if (typeof settings.connector === "object") {
+    // Rebuild the DummyConnector with the pasted rules (Rules tab picks them up).
+    setDummyOptions({ rules: settings.connector.dummy.rules });
+    swapConnector(buildDummyConnector(settings.connector.name));
+  } else if (settings.connector) {
     chatStore.getState().setConnector(settings.connector);
   }
   if (settings.theme) {

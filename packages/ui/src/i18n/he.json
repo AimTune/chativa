@@ -1,0 +1,109 @@
+{
+  "greeting": "שלום",
+  "welcome": "ברוכים הבאים, {{name}}!",
+  "header": {
+    "title": "צ'אטבוט Chativa",
+    "status": {
+      "connecting": "מתחבר…",
+      "connected": "מחובר",
+      "error": "שגיאת חיבור",
+      "disconnected": "החיבור נותק",
+      "offline": "לא מקוון"
+    },
+    "fullscreen": {
+      "enter": "מסך מלא",
+      "exit": "יציאה ממסך מלא"
+    },
+    "close": "סגירה",
+    "minimize": "מזעור",
+    "search": {
+      "toggle": "חיפוש",
+      "placeholder": "חיפוש הודעות…",
+      "clear": "ניקוי החיפוש"
+    }
+  },
+  "input": {
+    "placeholder": "הקלידו הודעה…",
+    "send": "שליחת הודעה",
+    "emoji": "אימוג'י",
+    "attachFile": "צירוף קובץ",
+    "removeFile": "הסרת {{name}}",
+    "dropHere": "גררו קבצים לכאן",
+    "dropHereSubtitle": "שחררו כדי לצרף"
+  },
+  "messageList": {
+    "connecting": "מתחבר…",
+    "emptyTitle": "איך אפשר לעזור?",
+    "emptySubtitle": "שלחו הודעה כדי להתחיל.",
+    "newMessage": "הודעה חדשה",
+    "loadMore": "טעינת הודעות קודמות",
+    "errorTitle": "החיבור אבד",
+    "errorSubtitle": "לא הצלחנו להתחבר מחדש. נסו שוב.",
+    "retry": "ניסיון חוזר",
+    "reconnecting": "מתחבר מחדש… (ניסיון {{attempt}})",
+    "searchEmpty": "אין הודעות התואמות לחיפוש.",
+    "searchResult": "תוצאות שנמצאו: {{count}}",
+    "loadingHistory": "טוען הודעות קודמות…",
+    "ariaLabel": "הודעות הצ'אט",
+    "typingIndicator": "העוזר מקליד"
+  },
+  "message": {
+    "from": {
+      "bot": "עוזר",
+      "user": "אני"
+    },
+    "likeButton": "אהבתי את ההודעה",
+    "dislikeButton": "לא אהבתי את ההודעה",
+    "statusSending": "נשלחת",
+    "statusSent": "נשלחה",
+    "statusRead": "נקראה",
+    "actionsLabel": "פעולות הודעה",
+    "copy": "העתקה",
+    "copyCode": "העתקת קוד",
+    "copied": "הועתק",
+    "regenerate": "יצירת תשובה מחדש",
+    "edit": "עריכת הודעה",
+    "editLabel": "ערכו את ההודעה",
+    "editSave": "שליחה",
+    "editCancel": "ביטול",
+    "moreActions": "פעולות נוספות"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "חיפוש אימוג'י…",
+    "noResults": "אין תוצאות"
+  },
+  "chatButton": {
+    "open": "פתיחת הצ'אט",
+    "close": "סגירת הצ'אט"
+  },
+  "widget": {
+    "title": "צ'אט",
+    "disclaimer": "תוכן שנוצר על ידי בינה מלאכותית עשוי להיות לא מדויק."
+  },
+  "survey": {
+    "title": "איך היה?",
+    "ratingLabel": "דרגו את החוויה שלכם",
+    "commentPlaceholder": "מה נוכל לשפר?",
+    "commentRequired": "ספרו לנו מה השתבש",
+    "submit": "שליחה",
+    "skip": "דילוג",
+    "thankYouTitle": "קיבלנו את המשוב שלכם!",
+    "thankYouBody": "תודה על המחשבות וההערות החשובות שלכם.",
+    "close": "סגירה",
+    "starLabel_one": "כוכב {{count}}",
+    "starLabel_two": "{{count}} כוכבים",
+    "starLabel_other": "{{count}} כוכבים"
+  },
+  "toolCalls": {
+    "running": "פועל",
+    "completed": "הושלם",
+    "error": "שגיאה",
+    "parameters": "פרמטרים",
+    "result": "תוצאה",
+    "summary_one": "פעולה {{count}}",
+    "summary_two": "{{count}} פעולות",
+    "summary_other": "{{count}} פעולות",
+    "failed": "נכשלו: {{count}}",
+    "ariaToggle": "הצגה או הסתרה של פרטי הקריאות לכלים"
+  }
+}

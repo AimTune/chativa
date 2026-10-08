@@ -1,0 +1,60 @@
+{
+  "name": "@chativa/angular",
+  "version": "0.9.0",
+  "description": "Chativa Angular — standalone components (chativa-chat-iva, chativa-chat-bot-button, chativa-genui-message), an NgModule and ChativaService wrapping the Chativa chat widget for Angular 16+ apps.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "keywords": [
+    "chativa",
+    "chat",
+    "angular",
+    "web-component",
+    "wrapper"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "directory": "dist",
+    "linkDirectory": true
+  },
+  "scripts": {
+    "build": "ng-packagr -p ng-package.json -c tsconfig.lib.json",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc -p tsconfig.lib.json --noEmit"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "peerDependencies": {
+    "@angular/common": ">=16.0.0",
+    "@angular/core": ">=16.0.0",
+    "@chativa/core": ">=0.0.1",
+    "@chativa/ui": ">=0.0.1"
+  },
+  "devDependencies": {
+    "@angular/common": "~16.2.12",
+    "@angular/compiler": "~16.2.12",
+    "@angular/compiler-cli": "~16.2.12",
+    "@angular/core": "~16.2.12",
+    "@angular/platform-browser": "~16.2.12",
+    "@angular/platform-browser-dynamic": "~16.2.12",
+    "@chativa/connector-dummy": "workspace:*",
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*",
+    "@vitest/coverage-v8": "4.0.18",
+    "jsdom": "^28.1.0",
+    "ng-packagr": "~16.2.3",
+    "rxjs": "~7.8.0",
+    "typescript": "~5.1.6",
+    "vitest": "^4.0.18",
+    "zone.js": "~0.13.3"
+  }
+}

@@ -32,5 +32,11 @@ export default defineConfig({
     },
     sourcemap: true,
   },
-  plugins: [dts({ rollupTypes: true })],
+  plugins: [dts({
+      rollupTypes: true,
+      // Keep @chativa/* imports as package specifiers in the emitted .d.ts —
+      // otherwise the tsconfig `paths` aliases get rewritten to
+      // "../../core/src/index.ts", which does not exist once published.
+      aliasesExclude: [/^@chativa\//],
+    })],
 });

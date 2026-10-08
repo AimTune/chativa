@@ -2,12 +2,79 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://chativa.aimtune.dev/schemas/connectors/dummy.schema.json",
   "title": "DummyConnectorOptions",
-  "description": "Constructor options for DummyConnector — local mock connector used in dev/tests. Source: packages/connector-dummy/src/DummyConnector.ts.",
+  "description": "Constructor options for DummyConnector — local mock connector used in dev/tests. Source: packages/connector-dummy/src/DummyConnector.ts → DummyConnectorOptions.",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "name":         { "type": "string", "default": "dummy", "description": "Override the connector identifier (lets you register multiple dummies)." },
     "replyDelay":   { "type": "integer", "minimum": 0, "default": 500,  "description": "Milliseconds before the echo reply is returned after a message is sent." },
-    "connectDelay": { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait before connect() resolves — simulates a real handshake." }
-  }
+    "connectDelay": { "type": "integer", "minimum": 0, "default": 2000, "description": "Milliseconds to wait before connect() resolves — simulates a real handshake." },
+    "rules": {
+      "type": "array",
+      "default": [],
+      "description": "Declarative response rules (DummyRule[]). Evaluated in order against every outgoing user message before the built-in demo commands and the echo; first match wins, no match falls through. Pattern matching only — no executable code.",
+      "items": { "$ref": "#/definitions/DummyRule" }
+    },
+    "capabilities": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Simulated backend permissions for the message actions (ConnectorCapabilities), announced through onCapabilities. false hides the action; omit to allow it. Change at runtime with setCapabilities().",
+      "properties": {
+        "regenerate":  { "type": "boolean", "description": "Allow regenerating the latest bot reply." },
+        "editMessage": { "type": "boolean", "description": "Allow editing the latest user message." }
+      }
+    }
+  },
+  "definitions": {
+    "DummyRule": {
+      "title": "DummyRule",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["when", "then"],
+      "properties": {
+        "when": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Predicate over the outgoing message. Every field that is set must match; an empty object matches every message.",
+          "properties": {
+            "type":        { "type": "string", "description": "Match by outgoing message type (exact comparison).", "examples": ["text"] },
+            "textMatches": { "type": "string", "description": "Regular expression source (no slashes, no flags) tested against data.text. An invalid pattern disables the rule with a console warning.", "examples": ["^/(help|yardım)$", "(cancel|iptal)"] }
+          }
+        },
+        "then": {
+          "description": "Response emitted on a match: a static IncomingMessage (its id is replaced with a fresh one when it would collide with an earlier emission), or a GenUI chunk script.",
+          "anyOf": [
+            { "$ref": "../messages/incoming-message.schema.json" },
+            {
+              "title": "DummyGenUIResponse",
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "chunks"],
+              "properties": {
+                "kind":   { "const": "genui" },
+                "chunks": { "type": "array", "description": "AIChunk[] streamed in order under one stream id; the last chunk is flagged done.", "items": { "$ref": "../genui/ai-chunk.schema.json" } }
+              }
+            }
+          ]
+        },
+        "delay": { "type": "integer", "minimum": 0, "description": "Milliseconds before `then` is emitted. Defaults to replyDelay." }
+      }
+    }
+  },
+  "examples": [
+    {
+      "replyDelay": 500,
+      "rules": [
+        {
+          "when": { "textMatches": "^/(help|yardım)$" },
+          "then": { "id": "help", "type": "buttons", "from": "bot", "data": { "text": "How can I help?", "buttons": [{ "label": "Order status" }, { "label": "Talk to a human" }] } }
+        },
+        {
+          "when": { "textMatches": "(cancel|iptal)" },
+          "then": { "kind": "genui", "chunks": [{ "type": "text", "content": "Sure — which order?", "id": 1 }] },
+          "delay": 300
+        }
+      ]
+    }
+  ]
 }

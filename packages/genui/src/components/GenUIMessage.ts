@@ -36,7 +36,7 @@ export class GenUIMessage extends ChativaElement {
       align-items: flex-end;
       gap: 8px;
       max-width: 82%;
-      margin-right: auto;
+      margin-inline-end: auto;
       margin-bottom: 2px;
     }
 
@@ -375,7 +375,7 @@ export class GenUIMessage extends ChativaElement {
               </div>
             ` : nothing}
           </div>
-          ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time" aria-hidden="true"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;

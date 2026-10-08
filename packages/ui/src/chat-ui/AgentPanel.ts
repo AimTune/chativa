@@ -9,6 +9,7 @@ import {
   type GenUIEventOptions,
 } from "@chativa/core";
 import { registerCommand } from "../commands/index";
+import { DirectionController } from "../i18n/rtl";
 import "./ConversationList";
 import "./ChatHeader";
 import "./ChatMessageList";
@@ -17,7 +18,8 @@ import "./ChatInput";
 /**
  * `<agent-panel>` — embedded multi-conversation panel for agent / support desk use.
  *
- * Shows a sidebar with the conversation list on the left and the active chat on the right.
+ * Shows a sidebar with the conversation list on the inline-start side (left in
+ * LTR, right in RTL) and the active chat beside it.
  * Does NOT show a floating button — it's meant to be embedded directly in an application.
  *
  * Attributes:
@@ -89,6 +91,9 @@ export class AgentPanel extends LitElement {
   `;
 
   @property({ type: String }) connector = "dummy";
+
+  /** Mirrors the active language onto `dir` (an author-set `dir` wins). */
+  protected readonly _direction = new DirectionController(this);
   @property({ type: String, attribute: "sidebar-width" }) sidebarWidth = "260px";
 
   @state() private _activeId: string | null = null;
@@ -134,6 +139,8 @@ export class AgentPanel extends LitElement {
     this.addEventListener("conversation-close", this._onConvClose as EventListener);
     this.addEventListener("chat-action", this._onChatAction as EventListener);
     this.addEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.addEventListener("chativa-regenerate", this._onRegenerate as EventListener);
+    this.addEventListener("chativa-edit-message", this._onEditMessage as EventListener);
     this.addEventListener("chat-retry", this._onRetry as EventListener);
     this.addEventListener("send-file", this._onSendFile as EventListener);
     this.addEventListener("chat-load-history", this._onLoadHistory as EventListener);
@@ -149,6 +156,8 @@ export class AgentPanel extends LitElement {
     this.removeEventListener("conversation-close", this._onConvClose as EventListener);
     this.removeEventListener("chat-action", this._onChatAction as EventListener);
     this.removeEventListener("chativa-feedback", this._onFeedback as EventListener);
+    this.removeEventListener("chativa-regenerate", this._onRegenerate as EventListener);
+    this.removeEventListener("chativa-edit-message", this._onEditMessage as EventListener);
     this.removeEventListener("chat-retry", this._onRetry as EventListener);
     this.removeEventListener("send-file", this._onSendFile as EventListener);
     this.removeEventListener("chat-load-history", this._onLoadHistory as EventListener);
@@ -190,6 +199,18 @@ export class AgentPanel extends LitElement {
     this._engine.chatEngine
       .send(createOutgoingMessage(text))
       .catch((err: unknown) => console.error("[AgentPanel] Action send failed:", err));
+  };
+
+  private _onRegenerate = (e: CustomEvent<{ messageId: string }>) => {
+    this._engine.chatEngine
+      .regenerate(e.detail.messageId)
+      .catch((err: unknown) => console.error("[AgentPanel] Regenerate failed:", err));
+  };
+
+  private _onEditMessage = (e: CustomEvent<{ messageId: string; text: string }>) => {
+    this._engine.chatEngine
+      .editMessage(e.detail.messageId, e.detail.text)
+      .catch((err: unknown) => console.error("[AgentPanel] Edit failed:", err));
   };
 
   private _onFeedback = (e: CustomEvent<{ messageId: string; feedback: "like" | "dislike" }>) => {

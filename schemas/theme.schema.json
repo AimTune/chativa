@@ -119,6 +119,19 @@
       }
     },
 
+    "messageActions": {
+      "type": "object",
+      "description": "Per-message action bar. Regenerate and edit appear only when the connector implements IConnector.regenerate / editMessage and the backend has not reported them as not allowed (IConnector.onCapabilities).",
+      "additionalProperties": false,
+      "properties": {
+        "copy":          { "type": "boolean", "default": true,  "description": "Copy button on bot messages that carry text." },
+        "codeBlockCopy": { "type": "boolean", "default": true,  "description": "Copy button on each fenced code block in text messages, and on the parameters / result / error sections of tool-call cards." },
+        "regenerate":    { "type": "boolean", "default": true,  "description": "Regenerate button on the latest bot reply, when the connector supports it." },
+        "edit":          { "type": "boolean", "default": true,  "description": "Edit button on the latest user message, when the connector supports it." },
+        "fallback":      { "type": "boolean", "default": false, "description": "Show regenerate/edit for connectors that do not implement them, emulated by re-sending the user's message as a new turn. Never overrides a backend that reported the action as not allowed." }
+      }
+    },
+
     "icons": {
       "type": "object",
       "description": "Custom icon overrides. Each value is inner SVG markup (e.g. '<path d=\"...\"/>') rendered inside chativa's own <svg> wrapper (fill/stroke=currentColor) \u2014 do not include an outer <svg> tag.",

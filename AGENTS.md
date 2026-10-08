@@ -30,7 +30,11 @@ packages/
 ├── connector-dummy/    @chativa/connector-dummy
 ├── connector-websocket/ @chativa/connector-websocket
 ├── connector-signalr/  @chativa/connector-signalr
-└── connector-directline/ @chativa/connector-directline
+├── connector-directline/ @chativa/connector-directline
+├── react/              @chativa/react    — React / Next.js wrapper
+├── vue2/               @chativa/vue2     — Vue 2.7 / Nuxt 2 wrapper (maintenance mode)
+├── angular/            @chativa/angular  — Angular 16+ wrapper (ng-packagr build, publishes from dist/)
+└── svelte/             @chativa/svelte   — Svelte 5 / SvelteKit wrapper
 apps/
 └── sandbox/            — Interactive demo app
 ```
@@ -48,17 +52,23 @@ Several `domain/` types have a paired JSON Schema under `schemas/` (see [schemas
 
 Enforcement is automated:
 
-1. **Compile-time** — `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` declares mapped-type contracts (`{ [K in keyof Required<T>]: true }`). Adding or removing a field on `ThemeConfig`, `ThemeColors`, `LayoutConfig`, `AvatarConfig`, or `EndOfConversationSurveyConfig` fails `pnpm typecheck` until the contract is updated.
-2. **Runtime** — the same test reads `schemas/theme.schema.json` and asserts that `properties` keys exactly match those contracts. A drift fails `pnpm test`.
+1. **Compile-time** — each `schema-drift.test.ts` declares mapped-type contracts (`{ [K in keyof Required<T>]: true }`). Adding or removing a field on a paired type fails `pnpm typecheck` until the contract is updated.
+2. **Runtime** — the same test reads the paired schema under `schemas/` and asserts that its `properties` keys exactly match those contracts. A drift fails `pnpm test`.
+
+Drift tests live next to the type they guard:
+
+| Test | Guards |
+|---|---|
+| `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` | `ThemeConfig` and its sub-objects ↔ `theme.schema.json` |
+| `packages/core/src/domain/entities/__tests__/schema-drift.test.ts` | `IncomingMessage`, `OutgoingMessage`, `MessageAction`, `HistoryResult`, `Conversation`, `SurveyPayload`, `ToolCall` ↔ `messages/*.schema.json`; every `AIChunk` variant ↔ `genui/ai-chunk.schema.json` `oneOf` |
+| `packages/connector-*/src/__tests__/schema-drift.test.ts` | each connector's options type ↔ `connectors/<name>.schema.json` (kept in the connector's own package — no cross-package imports into core) |
 
 When you add a new schema-paired type:
 
 1. Add the type in the appropriate `domain/` file.
 2. Mirror it in a new file under `schemas/` (copy the closest sibling as a template).
 3. Add a row to [schemas/README.md](./schemas/README.md).
-4. Extend `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block.
-
-Connector option types (`*ConnectorOptions`) and message/genui shapes also have schemas — keep them in sync by inspection. The drift test only mechanically guards the high-traffic `ThemeConfig` for now; extending it to those types is welcome.
+4. Extend the nearest `schema-drift.test.ts` with a new mapped-type contract + `expect(keys(...)).toEqual(...)` block. A new connector package gets its own `src/__tests__/schema-drift.test.ts` (copy a sibling connector's).
 
 ---
 
@@ -115,7 +125,8 @@ import type { IConnector } from "../domain/IConnector";
 ### Connector packages (`packages/connector-*/`) — Adapters
 - Each package = one connector class implementing `IConnector`
 - Must handle `connect()` / `disconnect()` lifecycle
-- Optional capabilities are feature-detected: `sendFile`, `loadHistory`, `onMessageStatus`, `sendFeedback`, `onGenUIChunk`, `receiveComponentEvent`
+- Optional capabilities are feature-detected: `sendFile`, `loadHistory`, `onMessageStatus`, `sendFeedback`, `onGenUIChunk`, `receiveComponentEvent`, `regenerate`, `editMessage`
+- `onCapabilities(cb)` lets the backend narrow those at runtime (`cb({ regenerate: false })`); a reported `false` always hides the action
 
 ### `packages/ui/src/` — Chat Widget
 - LitElement Web Components only
@@ -372,8 +383,9 @@ element dispatches a bubbling, composed `genui-component-event` instead.
 
 - Test file location mirrors source: `src/foo/bar.ts` → `src/foo/__tests__/bar.test.ts`
 - Run tests: `pnpm test`
-- Run with coverage: `pnpm test:coverage`
-- Coverage threshold: 80% for application layer
+- Run with coverage: `pnpm test:coverage` (one package: `pnpm --filter @chativa/ui test:coverage`)
+- Coverage threshold: 80% for application layer. `packages/ui` enforces per-metric thresholds in `packages/ui/vitest.config.ts` — raise them when coverage goes up, never lower them to make CI pass
+- UI component tests mount the real element in jsdom (`document.body.appendChild`, `await el.updateComplete`, query `el.shadowRoot`). Use the helpers in `packages/ui/src/__tests__/testUtils.ts`: `mount()`, `createFakeConnector()` / `registerFakeConnector()` (an `IConnector` double whose methods are `vi.fn`s) and `resetGlobals()` (resets `chatStore`, `messageStore`, `conversationStore` and the connector / slash-command registries) in `beforeEach`
 - Always call `.clear()` on registries in `beforeEach`
 
 ### Test Patterns

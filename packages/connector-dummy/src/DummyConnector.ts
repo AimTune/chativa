@@ -15,14 +15,92 @@ import type {
   ConversationHandler,
   ToolCall,
   ToolCallHandler,
+  CapabilitiesHandler,
+  ConnectorCapabilities,
 } from "@chativa/core";
 import type { OutgoingMessage } from "@chativa/core";
+
+/**
+ * A declarative response rule for {@link DummyConnector}.
+ *
+ * Rules are pure data — pattern matching only, no executable code — so a rule
+ * set can travel inside a JSON config blob. They are evaluated in order
+ * against every outgoing user message; the first match wins.
+ */
+export interface DummyRule {
+  /**
+   * Predicate over the user's outgoing message. Every field that is set must
+   * match (logical AND); an empty `when` matches every message.
+   */
+  when: {
+    /** Match by outgoing message `type` (exact comparison), e.g. `"text"`. */
+    type?: string;
+    /**
+     * Regular expression source (no surrounding slashes, no flags) tested
+     * against `data.text`. An invalid pattern disables the rule with a
+     * `console.warn` instead of throwing.
+     */
+    textMatches?: string;
+  };
+  /**
+   * What to emit on a match: either a static `IncomingMessage`, or a GenUI
+   * chunk script streamed through `onGenUIChunk`.
+   */
+  then: IncomingMessage | DummyGenUIResponse;
+  /** Milliseconds before `then` is emitted. Defaults to `replyDelay`. */
+  delay?: number;
+}
+
+/** A GenUI chunk script emitted by a {@link DummyRule}. */
+export interface DummyGenUIResponse {
+  kind: "genui";
+  /** Chunks streamed in order under one stream id; the last is flagged `done`. */
+  chunks: AIChunk[];
+}
+
+/** Constructor options for {@link DummyConnector}. */
+export interface DummyConnectorOptions {
+  /** Milliseconds before the echo reply is sent. Default `500`. */
+  replyDelay?: number;
+  /** Milliseconds `connect()` waits before resolving. Default `2000`. */
+  connectDelay?: number;
+  /** Connector identifier. Default `"dummy"`. */
+  name?: string;
+  /**
+   * Declarative response rules, evaluated in order before the built-in demo
+   * commands and the default echo. First match wins; no match falls through.
+   */
+  rules?: DummyRule[];
+  /**
+   * Simulated backend permissions for the message actions, announced through
+   * `onCapabilities`. The dummy implements regenerate and edit, so both show
+   * by default; pass `{ regenerate: false }` to see a server turn one off.
+   * Change it at runtime with `setCapabilities()`.
+   */
+  capabilities?: ConnectorCapabilities;
+}
+
+/** A rule paired with its pre-compiled regex (`null` = no text predicate). */
+interface CompiledRule {
+  rule: DummyRule;
+  regex: RegExp | null;
+}
+
+function isGenUIResponse(then: DummyRule["then"]): then is DummyGenUIResponse {
+  return (then as Partial<DummyGenUIResponse>).kind === "genui";
+}
+
+/** Deep-copy JSON-shaped rule data so emitted payloads never share state. */
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
 
 /**
  * DummyConnector — local mock connector for development and testing.
  * Automatically replies after a configurable delay.
  * `connectDelay` simulates a real connection handshake (default 2000ms).
  * Sending "/disconnect" as a message triggers a graceful disconnect.
+ * Optional `rules` script replies declaratively (see {@link DummyRule}).
  */
 export class DummyConnector implements IConnector {
   readonly name: string;
@@ -35,8 +113,19 @@ export class DummyConnector implements IConnector {
   private genUIChunkHandler: GenUIChunkHandler | null = null;
   private conversationHandler: ConversationHandler | null = null;
   private toolCallHandler: ToolCallHandler | null = null;
+  private capabilitiesHandler: CapabilitiesHandler | null = null;
+  private _capabilities: ConnectorCapabilities;
+  /** The last message the user sent (or edited) — what regenerate replays. */
+  private _lastUserMessage: OutgoingMessage | null = null;
+  /** Set while replaying for regenerate, so the echo reply says so. */
+  private _regenerating = false;
   private replyDelay: number;
   private connectDelay: number;
+  private readonly _rules: DummyRule[];
+  private readonly _compiledRules: CompiledRule[];
+  /** Ids already emitted by rule responses — used to avoid id collisions. */
+  private readonly _emittedRuleIds = new Set<string>();
+  private _ruleEmitSeq = 0;
 
   // ── Multi-conversation demo state ─────────────────────────────────────
 
@@ -96,11 +185,96 @@ export class DummyConnector implements IConnector {
     })),
   ];
 
-  constructor(options: { replyDelay?: number; connectDelay?: number; name?: string } = {}) {
+  constructor(options: DummyConnectorOptions = {}) {
     this.name = options.name ?? "dummy";
     this.replyDelay = options.replyDelay ?? 500;
     this.connectDelay = options.connectDelay ?? 2000;
     this._conversations = DummyConnector._makeDemoConversations();
+    this._rules = [...(options.rules ?? [])];
+    this._compiledRules = DummyConnector._compileRules(this._rules);
+    this._capabilities = { ...(options.capabilities ?? {}) };
+  }
+
+  /** The rule set this instance was constructed with. */
+  get rules(): readonly DummyRule[] {
+    return this._rules;
+  }
+
+  /**
+   * Pre-compile every rule's `textMatches` pattern. A rule whose pattern is
+   * not a valid regular expression is skipped with a warning — a typo in a
+   * demo config must never take the connector down.
+   */
+  private static _compileRules(rules: DummyRule[]): CompiledRule[] {
+    const compiled: CompiledRule[] = [];
+    rules.forEach((rule, index) => {
+      const pattern = rule.when?.textMatches;
+      if (pattern === undefined) {
+        compiled.push({ rule, regex: null });
+        return;
+      }
+      try {
+        compiled.push({ rule, regex: new RegExp(pattern) });
+      } catch (err) {
+        console.warn(
+          `[DummyConnector] Skipping rule #${index}: invalid textMatches regex ${JSON.stringify(pattern)} — ${(err as Error).message}`,
+        );
+      }
+    });
+    return compiled;
+  }
+
+  /** First rule matching `message`, or `undefined` to fall through. */
+  private _findRule(message: OutgoingMessage, text: string): DummyRule | undefined {
+    for (const { rule, regex } of this._compiledRules) {
+      const when = rule.when ?? {};
+      if (when.type !== undefined && when.type !== message.type) continue;
+      if (regex && !regex.test(text)) continue;
+      // A GenUI rule can only fire when the engine listens for chunks.
+      if (isGenUIResponse(rule.then) && !this.genUIChunkHandler) continue;
+      return rule;
+    }
+    return undefined;
+  }
+
+  /** Emit a matched rule's response after its delay. */
+  private _runRule(rule: DummyRule, message: OutgoingMessage): void {
+    const then = rule.then;
+    this.typingHandler?.(true);
+    setTimeout(() => {
+      this.typingHandler?.(false);
+      // Same read-receipt timing as the echo reply.
+      this.statusHandler?.(message.id, "read" as MessageStatus);
+
+      if (isGenUIResponse(then)) {
+        const handler = this.genUIChunkHandler;
+        if (!handler) return;
+        const streamId = `dummy-rule-${Date.now()}-${++this._ruleEmitSeq}`;
+        const chunks = then.chunks ?? [];
+        chunks.forEach((chunk, i) => {
+          handler(streamId, cloneJson(chunk), i === chunks.length - 1);
+        });
+        return;
+      }
+
+      const reply = cloneJson(then);
+      reply.id = this._uniqueRuleId(reply.id);
+      reply.timestamp = reply.timestamp ?? Date.now();
+      this.messageHandler?.(reply);
+    }, rule.delay ?? this.replyDelay);
+  }
+
+  /**
+   * Keep the template id on its first emission; afterwards (or when the
+   * template has no id) mint a fresh one so repeated matches never collide.
+   */
+  private _uniqueRuleId(templateId: string | undefined): string {
+    let id = templateId;
+    if (!id || this._emittedRuleIds.has(id)) {
+      id = `${templateId || "dummy-rule"}-${Date.now()}-${++this._ruleEmitSeq}`;
+    }
+    this._emittedRuleIds.add(id);
+    return id;
   }
 
   async connect(): Promise<void> {
@@ -117,9 +291,19 @@ export class DummyConnector implements IConnector {
 
   async sendMessage(message: OutgoingMessage): Promise<void> {
     const text = (message.data as { text?: string }).text ?? "";
+    this._lastUserMessage = message;
+    const regenerated = this._regenerating;
+    this._regenerating = false;
 
     if (text.trim() === "/disconnect") {
       await this.disconnect();
+      return;
+    }
+
+    // Declarative rules run before the built-in demo commands and the echo.
+    const rule = this._findRule(message, text);
+    if (rule) {
+      this._runRule(rule, message);
       return;
     }
 
@@ -156,9 +340,10 @@ export class DummyConnector implements IConnector {
       
       // If user sent a URL, include a link in the reply for preview demo
       const hasUrl = /https?:\/\//i.test(text);
+      const echo = regenerated ? "Echo (regenerated)" : "Echo";
       const replyText = hasUrl
-        ? `Echo: ${text}\n\nHere's a related resource: https://example.com`
-        : `Echo: ${text}`;
+        ? `${echo}: ${text}\n\nHere's a related resource: https://example.com`
+        : `${echo}: ${text}`;
       
       this.messageHandler?.({
         id: replyId,
@@ -1042,6 +1227,31 @@ export class DummyConnector implements IConnector {
     this.toolCallHandler = callback;
   }
 
+  // ── Message actions ──────────────────────────────────────────────
+
+  onCapabilities(callback: CapabilitiesHandler): void {
+    this.capabilitiesHandler = callback;
+    callback({ ...this._capabilities });
+  }
+
+  /** Simulate the backend changing which message actions it allows. */
+  setCapabilities(capabilities: ConnectorCapabilities): void {
+    this._capabilities = { ...capabilities };
+    this.capabilitiesHandler?.({ ...this._capabilities });
+  }
+
+  /** Replay the last user message; the echo reply is marked "(regenerated)". */
+  async regenerate(_messageId: string): Promise<void> {
+    if (!this._lastUserMessage) return;
+    this._regenerating = true;
+    await this.sendMessage(this._lastUserMessage);
+  }
+
+  /** Answer the edited message as if it had just been sent. */
+  async editMessage(_messageId: string, message: OutgoingMessage): Promise<void> {
+    await this.sendMessage(message);
+  }
+
   async sendFeedback(messageId: string, feedback: FeedbackType): Promise<void> {
     console.log(`[DummyConnector] Feedback received — messageId: ${messageId}, feedback: ${feedback}`);
   }
@@ -1076,9 +1286,25 @@ export class DummyConnector implements IConnector {
     if (!page) {
       return { messages: [], hasMore: false };
     }
+    const messages = [...page].reverse(); // oldest-first within page
+    // Regenerate replays the user's last message. Before they type anything,
+    // that is the last user message of the first history page, in the order
+    // the transcript shows it — remember it, or regenerating a history reply
+    // would remove it with nothing to replace it.
+    if (!this._lastUserMessage && pageIndex === 0) {
+      const lastUser = [...messages].reverse().find((m) => m.from === "user");
+      if (lastUser) {
+        this._lastUserMessage = {
+          id: lastUser.id,
+          type: lastUser.type,
+          data: { ...lastUser.data },
+          timestamp: lastUser.timestamp,
+        };
+      }
+    }
     const nextPage = pageIndex + 1;
     return {
-      messages: [...page].reverse(), // oldest-first within page
+      messages,
       hasMore: nextPage < DummyConnector._historyPages.length,
       cursor: nextPage < DummyConnector._historyPages.length ? String(nextPage) : undefined,
     };

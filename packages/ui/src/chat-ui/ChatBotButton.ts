@@ -1,8 +1,9 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, svg } from "lit";
 import { customElement, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import { ChatbotMixin } from "../mixins/ChatbotMixin";
 import { renderIcon } from "../utils/icons";
+import { DirectionController } from "../i18n/rtl";
 
 const SIZE_PX: Record<string, number> = { small: 44, medium: 56, large: 68 };
 
@@ -120,7 +121,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
     .badge {
       position: absolute;
       top: -4px;
-      right: -4px;
+      inset-inline-end: -4px;
       min-width: 18px;
       height: 18px;
       padding: 0 4px;
@@ -157,6 +158,9 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
       }
     }
   `;
+
+  /** Mirrors the active language onto `dir` (an author-set `dir` wins). */
+  protected readonly _direction = new DirectionController(this);
 
   /** True when consumer has placed content in the default slot */
   @state() private _hasSlot = false;
@@ -208,7 +212,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              ${renderIcon("chatLauncher", html`<path
+              ${renderIcon("chatLauncher", svg`<path
                 d="M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2zm-2 10H6V10h12v2zm0-3H6V7h12v2z"
               />`)}
             </svg>
@@ -222,7 +226,7 @@ class ChatBotButton extends ChatbotMixin(LitElement) {
               xmlns="http://www.w3.org/2000/svg"
               aria-hidden="true"
             >
-              ${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" />`)}
+              ${renderIcon("close", svg`<path d="M18 6L6 18M6 6l12 12" />`)}
             </svg>
           </span>
         </slot>

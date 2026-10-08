@@ -23,6 +23,7 @@ Single source of truth for every JSON-serialisable Chativa contract. Each schema
 | [messages/history-result.schema.json](./messages/history-result.schema.json) | `domain/entities/Message.ts` → `HistoryResult` |
 | [messages/conversation.schema.json](./messages/conversation.schema.json) | `domain/entities/Conversation.ts` → `Conversation` |
 | [messages/survey-payload.schema.json](./messages/survey-payload.schema.json) | `domain/ports/IConnector.ts` → `SurveyPayload` |
+| [messages/tool-call.schema.json](./messages/tool-call.schema.json) | `domain/entities/ToolCall.ts` → `ToolCall` |
 
 ### Generative UI
 
@@ -36,7 +37,7 @@ Each connector's constructor `Options` interface:
 
 | Schema | TypeScript source |
 |---|---|
-| [connectors/dummy.schema.json](./connectors/dummy.schema.json) | `connector-dummy/src/DummyConnector.ts` |
+| [connectors/dummy.schema.json](./connectors/dummy.schema.json) | `connector-dummy/src/DummyConnector.ts` → `DummyConnectorOptions` (incl. `DummyRule`) — drift-tested in `connector-dummy/src/__tests__/schema-drift.test.ts` |
 | [connectors/websocket.schema.json](./connectors/websocket.schema.json) | `connector-websocket/src/WebSocketConnector.ts` → `WebSocketConnectorOptions` |
 | [connectors/signalr.schema.json](./connectors/signalr.schema.json) | `connector-signalr/src/SignalRConnector.ts` → `SignalRConnectorOptions` |
 | [connectors/directline.schema.json](./connectors/directline.schema.json) | `connector-directline/src/DirectLineConnector.ts` → `DirectLineConnectorOptions` |
@@ -62,17 +63,23 @@ VS Code, IntelliJ, and most editors will fetch the schema and provide auto-compl
 
 ## How the drift test works
 
-`packages/core/src/__tests__/schema-drift.test.ts` runs in `pnpm test`. It:
+Every schema in the index above is guarded by a `schema-drift.test.ts` that runs in `pnpm test`:
 
-1. Imports `ThemeConfig` keys via TypeScript reflection.
-2. Reads `schemas/theme.schema.json`.
+- `packages/core/src/domain/value-objects/__tests__/schema-drift.test.ts` — `theme.schema.json`
+- `packages/core/src/domain/entities/__tests__/schema-drift.test.ts` — `messages/*` and `genui/ai-chunk.schema.json` (each `oneOf` variant, matched by its `type` const)
+- `packages/connector-<name>/src/__tests__/schema-drift.test.ts` — `connectors/<name>.schema.json`
+
+Each test:
+
+1. Declares the type's keys as a mapped-type contract (`{ [K in keyof Required<T>]: true }`) — `pnpm typecheck` fails if the TypeScript type gains or loses a field.
+2. Reads the paired schema.
 3. Fails if any field exists on one side but not the other.
 
-When you add a field to `ThemeConfig`, the test fails until you mirror it in the schema.
+When you add a field to a paired type, typecheck and the test fail until you mirror it in the schema.
 
 ## Adding a new schema
 
 1. Add the TypeScript type in the appropriate `domain/` file.
 2. Create `schemas/<area>/<name>.schema.json` — copy the closest existing schema as a starting template.
 3. Add a row to this index.
-4. If the type is high-traffic (likely to drift), extend the drift test to cover it.
+4. Extend the nearest drift test (or, for a new connector, add one to its package) to cover it.

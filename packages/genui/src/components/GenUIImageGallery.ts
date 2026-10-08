@@ -95,7 +95,7 @@ export class GenUIImageGallery extends ChativaElement {
     .lightbox-close {
       position: absolute;
       top: 16px;
-      right: 16px;
+      inset-inline-end: 16px;
       background: none;
       border: none;
       color: white;
@@ -131,18 +131,17 @@ export class GenUIImageGallery extends ChativaElement {
     }
 
     .lightbox-nav.prev {
-      left: 16px;
+      inset-inline-start: 16px;
     }
 
     .lightbox-nav.next {
-      right: 16px;
+      inset-inline-end: 16px;
     }
 
     .lightbox-caption {
       position: absolute;
       bottom: 16px;
-      left: 0;
-      right: 0;
+      inset-inline: 0;
       text-align: center;
       color: rgba(255, 255, 255, 0.8);
       font-size: 0.875rem;
@@ -182,9 +181,12 @@ export class GenUIImageGallery extends ChativaElement {
 
   _onKeydown(e: KeyboardEvent) {
     if (this._lightboxIndex === null) return;
-    if (e.key === "Escape") this._close();
-    else if (e.key === "ArrowLeft") this._prev();
-    else if (e.key === "ArrowRight") this._next();
+    if (e.key === "Escape") return this._close();
+    // Arrow keys follow the visual order: under RTL "previous" sits on the
+    // right, so ArrowRight steps back and ArrowLeft steps forward.
+    const rtl = getComputedStyle(this).direction === "rtl";
+    if (e.key === "ArrowLeft") (rtl ? this._next() : this._prev());
+    else if (e.key === "ArrowRight") (rtl ? this._prev() : this._next());
   }
 
   override connectedCallback() {

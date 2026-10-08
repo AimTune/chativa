@@ -1,16 +1,27 @@
 import { LitElement, html, css, nothing } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
 import { marked } from "marked";
-import { t } from "@chativa/core";
+import { t, escapeHtml, EventBus } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
+import { copyText } from "../utils/clipboard";
 import type { LinkMetadataFetcher } from "./LinkPreviewCard";
 import "./LinkPreviewCard";
 
 /** Private-use sentinel swapped for the caret span after markdown parsing. */
 const STREAM_CARET_TOKEN = "";
 const STREAM_CARET_HTML = '<span class="stream-caret" aria-hidden="true"></span>';
+
+const CODE_COPIED_MS = 1500;
+
+/** Wrap every `<pre>` block in a container with a copy button (see `_onBubbleClick`). */
+function withCodeCopyButtons(parsed: string): string {
+  if (!parsed.includes("<pre>")) return parsed;
+  const label = escapeHtml(t("message.copyCode"));
+  const open = `<div class="code-block"><button type="button" class="code-copy" aria-label="${label}" title="${label}">${label}</button><pre>`;
+  return parsed.split("<pre>").join(open).split("</pre>").join("</pre></div>");
+}
 
 @customElement("default-text-message")
 export class DefaultTextMessage extends LitElement {
@@ -28,11 +39,11 @@ export class DefaultTextMessage extends LitElement {
     }
 
     .message.bot {
-      margin-right: auto;
+      margin-inline-end: auto;
     }
 
     .message.user {
-      margin-left: auto;
+      margin-inline-start: auto;
       flex-direction: row-reverse;
     }
 
@@ -81,17 +92,58 @@ export class DefaultTextMessage extends LitElement {
       font-size: 0.82em;
       font-family: monospace;
     }
+    /* Long code lines scroll inside the block; the bubble never widens past
+       its max-width (see .content / .bubble min-width: 0). The scrollbar is
+       styled so it stays visible, also where the OS uses overlay scrollbars. */
     .message.bot .bubble pre {
       background: rgba(0,0,0,0.06);
       border-radius: 6px;
       padding: 8px 12px;
       overflow-x: auto;
+      max-width: 100%;
+      box-sizing: border-box;
       margin: 6px 0;
     }
+    .message.bot .bubble pre::-webkit-scrollbar { height: 8px; }
+    .message.bot .bubble pre::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.04);
+      border-radius: 4px;
+    }
+    .message.bot .bubble pre::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.28);
+      border-radius: 4px;
+    }
+    .message.bot .bubble pre::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.4); }
+    @supports not selector(::-webkit-scrollbar) {
+      .message.bot .bubble pre {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(0,0,0,0.28) rgba(0,0,0,0.04);
+      }
+    }
     .message.bot .bubble pre code { background: none; padding: 0; }
+    .message.bot .bubble .code-block { position: relative; max-width: 100%; }
+    .message.bot .bubble .code-block pre { padding-top: 26px; }
+    .code-copy {
+      position: absolute;
+      top: 4px;
+      inset-inline-end: 4px;
+      padding: 2px 8px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.85);
+      color: #475569;
+      font: inherit;
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      cursor: pointer;
+      opacity: 0.85;
+    }
+    .code-copy:hover,
+    .code-copy:focus-visible { opacity: 1; }
+    .code-copy.copied { color: var(--chativa-success-color, #16a34a); }
     .message.bot .bubble a { color: #4f46e5; text-decoration: underline; }
     .message.bot .bubble ul,
-    .message.bot .bubble ol { margin: 4px 0; padding-left: 18px; }
+    .message.bot .bubble ol { margin: 4px 0; padding-inline-start: 18px; }
     .message.bot .bubble strong { font-weight: 600; }
     .message.bot .bubble em { font-style: italic; }
 
@@ -108,12 +160,30 @@ export class DefaultTextMessage extends LitElement {
     }
     .message.user .bubble a { color: #ffffff; text-decoration: underline; }
     .message.user .bubble ul,
-    .message.user .bubble ol { margin: 4px 0; padding-left: 18px; }
+    .message.user .bubble ol { margin: 4px 0; padding-inline-start: 18px; }
+
+    /* Bidi: the text inside a bubble picks its own base direction from its
+       first strong character (dir="auto" on .bubble-text), so an English
+       reply in an Arabic UI keeps its punctuation in place — while the
+       bubble itself (corners, alignment) follows the widget direction.
+       Links and inline code are isolated so URLs / identifiers never
+       reorder the sentence around them; code blocks always read LTR. */
+    .bubble a,
+    .bubble code {
+      unicode-bidi: isolate;
+    }
+    .bubble pre {
+      direction: ltr;
+      text-align: left;
+    }
 
     .content {
       display: flex;
       flex-direction: column;
       gap: 3px;
+      /* Let the bubble shrink below its content's widest line (a long code
+         line), so wide content scrolls inside instead of widening the row. */
+      min-width: 0;
     }
 
     .message.user .content {
@@ -126,18 +196,22 @@ export class DefaultTextMessage extends LitElement {
       line-height: 1.5;
       word-break: break-word;
       max-width: 100%;
+      min-width: 0;
+      box-sizing: border-box;
     }
 
     .message.bot .bubble {
       background: var(--chativa-bubble-bot-bg, #f1f5f9);
       color: var(--chativa-bubble-bot-color, #0f172a);
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 16px;
+      border-start-start-radius: 4px;
     }
 
     .message.user .bubble {
       background: var(--chativa-bubble-user-bg, var(--chativa-primary-color, #4f46e5));
       color: var(--chativa-bubble-user-color, #ffffff);
-      border-radius: 16px 4px 16px 16px;
+      border-radius: 16px;
+      border-start-end-radius: 4px;
     }
 
     /* Streaming caret — shown while a bot bubble is still being streamed
@@ -146,7 +220,7 @@ export class DefaultTextMessage extends LitElement {
       display: inline-block;
       width: 2px;
       height: 1em;
-      margin-left: 1px;
+      margin-inline-start: 1px;
       vertical-align: text-bottom;
       background: currentColor;
       opacity: 0.7;
@@ -194,54 +268,6 @@ export class DefaultTextMessage extends LitElement {
       to { transform: rotate(360deg); }
     }
 
-    .feedback {
-      display: flex;
-      gap: 2px;
-      opacity: 0;
-      transition: opacity 0.15s;
-      padding: 0 2px;
-    }
-
-    .message.bot:hover .feedback,
-    .feedback.active {
-      opacity: 1;
-    }
-
-    .feedback-btn {
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      padding: 2px 5px;
-      cursor: pointer;
-      font-size: 0.75rem;
-      line-height: 1;
-      color: #94a3b8;
-      transition: border-color 0.15s, background 0.15s, color 0.15s;
-    }
-
-    .feedback-btn:hover {
-      border-color: #e2e8f0;
-      background: #f8fafc;
-      color: #64748b;
-    }
-
-    .feedback-btn.selected-like {
-      border-color: #bbf7d0;
-      background: #f0fdf4;
-      color: #16a34a;
-    }
-
-    .feedback-btn.selected-dislike {
-      border-color: #fecaca;
-      background: #fef2f2;
-      color: #dc2626;
-    }
-
-    .feedback-btn:disabled {
-      cursor: default;
-      opacity: 0.7;
-    }
-
     .link-previews {
       display: flex;
       flex-direction: column;
@@ -259,24 +285,7 @@ export class DefaultTextMessage extends LitElement {
   @property({ type: String }) status: MessageStatus = "sent";
   @property({ type: Function }) metadataFetcher: LinkMetadataFetcher | null = null;
 
-  @state() private _feedback: "like" | "dislike" | null = null;
-
   private _onLangChange = () => { this.requestUpdate(); };
-
-  /** Whether feedback is locked by the bot (DisableFeedbackButton event). */
-  private get _feedbackDisabled(): boolean {
-    return !!(this.messageData as Record<string, unknown>)?.feedbackDisabled;
-  }
-
-  /** Effective feedback state: server-confirmed value takes priority over local. */
-  private get _effectiveFeedback(): "like" | "dislike" | null {
-    if (this._feedbackDisabled) {
-      const ft = (this.messageData as Record<string, unknown>)?.feedbackType;
-      if (ft === 0) return "like";
-      if (ft === 1) return "dislike";
-    }
-    return this._feedback;
-  }
 
   override connectedCallback() {
     super.connectedCallback();
@@ -286,22 +295,6 @@ export class DefaultTextMessage extends LitElement {
   override disconnectedCallback() {
     i18next.off("languageChanged", this._onLangChange);
     super.disconnectedCallback();
-  }
-
-  private _onFeedback(type: "like" | "dislike") {
-    if (this._feedbackDisabled) return;
-    if (this._feedback === type) {
-      this._feedback = null;
-      return;
-    }
-    this._feedback = type;
-    this.dispatchEvent(
-      new CustomEvent("chativa-feedback", {
-        bubbles: true,
-        composed: true,
-        detail: { messageId: this.messageId, feedback: type },
-      })
-    );
   }
 
   private get _time(): string {
@@ -383,6 +376,25 @@ export class DefaultTextMessage extends LitElement {
     `;
   }
 
+  /** Delegated click handler for the code-block copy buttons inside the parsed Markdown. */
+  private async _onBubbleClick(e: Event) {
+    const button = (e.target as Element | null)?.closest?.(".code-copy");
+    if (!(button instanceof HTMLElement)) return;
+    const code = button.parentElement?.querySelector("pre")?.textContent ?? "";
+    if (!code || !(await copyText(code))) return;
+    EventBus.emit("message_copied", { messageId: this.messageId, format: "code" });
+    const label = t("message.copyCode");
+    const copied = t("message.copied");
+    button.textContent = copied;
+    button.setAttribute("aria-label", copied);
+    button.classList.add("copied");
+    setTimeout(() => {
+      button.textContent = label;
+      button.setAttribute("aria-label", label);
+      button.classList.remove("copied");
+    }, CODE_COPIED_MS);
+  }
+
   private _renderLinkPreviews() {
     const urls = this.messageData?.urls as string[] | undefined;
     if (!urls || urls.length === 0) return nothing;
@@ -418,9 +430,17 @@ export class DefaultTextMessage extends LitElement {
         isStreaming ? raw + STREAM_CARET_TOKEN : raw,
         { async: false }
       ) as string;
+      // Code blocks get a copy button once the text has settled — a block
+      // still streaming in would copy half its content.
+      const codeCopy =
+        !isUser &&
+        !isStreaming &&
+        chatStore.getState().theme.messageActions?.codeBlockCopy !== false;
       const withCaret = isStreaming
         ? parsed.replace(STREAM_CARET_TOKEN, STREAM_CARET_HTML)
-        : parsed;
+        : codeCopy
+          ? withCodeCopyButtons(parsed)
+          : parsed;
       bubbleContent = unsafeHTML(withCaret);
     }
 
@@ -438,29 +458,11 @@ export class DefaultTextMessage extends LitElement {
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         ${isUser && showUserAvatar ? this._renderUserAvatar(avatarCfg?.user) : nothing}
         <div class="content">
-          <div class="bubble">${bubbleContent}</div>
+          <div class="bubble"><div class="bubble-text" dir="auto" @click=${this._onBubbleClick}>${bubbleContent}</div></div>
           ${this._renderLinkPreviews()}
-          ${!isUser ? html`
-            <div class="feedback ${this._effectiveFeedback ? "active" : ""}">
-              <button
-                class="feedback-btn ${this._effectiveFeedback === "like" ? "selected-like" : ""}"
-                aria-label="${t("message.likeButton")}"
-                aria-pressed="${this._effectiveFeedback === "like"}"
-                ?disabled=${this._feedbackDisabled}
-                @click=${() => this._onFeedback("like")}
-              >👍</button>
-              <button
-                class="feedback-btn ${this._effectiveFeedback === "dislike" ? "selected-dislike" : ""}"
-                aria-label="${t("message.dislikeButton")}"
-                aria-pressed="${this._effectiveFeedback === "dislike"}"
-                ?disabled=${this._feedbackDisabled}
-                @click=${() => this._onFeedback("dislike")}
-              >👎</button>
-            </div>
-          ` : nothing}
           ${this._time || showStatus ? html`
             <div class="meta">
-              ${this._time ? html`<span class="time" aria-hidden="true">${this._time}</span>` : nothing}
+              ${this._time ? html`<span class="time" aria-hidden="true"><bdi>${this._time}</bdi></span>` : nothing}
               ${showStatus ? this._renderStatusIcon() : nothing}
             </div>
           ` : nothing}

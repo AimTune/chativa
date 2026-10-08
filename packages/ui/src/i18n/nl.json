@@ -1,0 +1,107 @@
+{
+  "greeting": "Hallo",
+  "welcome": "Welkom, {{name}}!",
+  "header": {
+    "title": "Chativa Chatbot",
+    "status": {
+      "connecting": "Verbinden…",
+      "connected": "Online",
+      "error": "Verbindingsfout",
+      "disconnected": "Verbinding verbroken",
+      "offline": "Offline"
+    },
+    "fullscreen": {
+      "enter": "Volledig scherm",
+      "exit": "Volledig scherm sluiten"
+    },
+    "close": "Sluiten",
+    "minimize": "Minimaliseren",
+    "search": {
+      "toggle": "Zoeken",
+      "placeholder": "Berichten zoeken…",
+      "clear": "Zoekopdracht wissen"
+    }
+  },
+  "input": {
+    "placeholder": "Typ een bericht…",
+    "send": "Bericht verzenden",
+    "emoji": "Emoji",
+    "attachFile": "Bestand bijvoegen",
+    "removeFile": "{{name}} verwijderen",
+    "dropHere": "Zet bestanden hier neer",
+    "dropHereSubtitle": "Loslaten om bij te voegen"
+  },
+  "messageList": {
+    "connecting": "Verbinden…",
+    "emptyTitle": "Waarmee kan ik je helpen?",
+    "emptySubtitle": "Stuur een bericht om te beginnen.",
+    "newMessage": "Nieuw bericht",
+    "loadMore": "Eerdere berichten laden",
+    "errorTitle": "Verbinding verloren",
+    "errorSubtitle": "We konden de verbinding niet herstellen. Probeer het opnieuw.",
+    "retry": "Opnieuw proberen",
+    "reconnecting": "Opnieuw verbinden… (poging {{attempt}})",
+    "searchEmpty": "Geen berichten gevonden voor je zoekopdracht.",
+    "searchResult": "Gevonden resultaten: {{count}}",
+    "loadingHistory": "Eerdere berichten laden…",
+    "ariaLabel": "Chatberichten",
+    "typingIndicator": "Assistent is aan het typen"
+  },
+  "message": {
+    "from": {
+      "bot": "Assistent",
+      "user": "Jij"
+    },
+    "likeButton": "Duim omhoog voor dit bericht",
+    "dislikeButton": "Duim omlaag voor dit bericht",
+    "statusSending": "Wordt verzonden",
+    "statusSent": "Verzonden",
+    "statusRead": "Gelezen",
+    "actionsLabel": "Berichtacties",
+    "copy": "Kopiëren",
+    "copyCode": "Code kopiëren",
+    "copied": "Gekopieerd",
+    "regenerate": "Antwoord opnieuw genereren",
+    "edit": "Bericht bewerken",
+    "editLabel": "Bewerk je bericht",
+    "editSave": "Verzenden",
+    "editCancel": "Annuleren",
+    "moreActions": "Meer acties"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Emoji zoeken…",
+    "noResults": "Geen resultaten"
+  },
+  "chatButton": {
+    "open": "Chat openen",
+    "close": "Chat sluiten"
+  },
+  "widget": {
+    "title": "Chat",
+    "disclaimer": "Door AI gegenereerde inhoud kan onjuist zijn."
+  },
+  "survey": {
+    "title": "Hoe hebben we het gedaan?",
+    "ratingLabel": "Beoordeel je ervaring",
+    "commentPlaceholder": "Wat kunnen we beter doen?",
+    "commentRequired": "Vertel ons wat er misging",
+    "submit": "Verzenden",
+    "skip": "Overslaan",
+    "thankYouTitle": "We hebben je feedback ontvangen!",
+    "thankYouBody": "Bedankt voor je waardevolle gedachten en opmerkingen.",
+    "close": "Sluiten",
+    "starLabel_one": "{{count}} ster",
+    "starLabel_other": "{{count}} sterren"
+  },
+  "toolCalls": {
+    "running": "Bezig",
+    "completed": "Voltooid",
+    "error": "Fout",
+    "parameters": "Parameters",
+    "result": "Resultaat",
+    "summary_one": "{{count}} bewerking",
+    "summary_other": "{{count}} bewerkingen",
+    "failed": "{{count}} mislukt",
+    "ariaToggle": "Details van toolaanroepen tonen of verbergen"
+  }
+}

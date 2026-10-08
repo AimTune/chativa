@@ -104,6 +104,22 @@ chat-iva {
   --chativa-button-text-align: left;
 }
 ```
+### Position and RTL
+
+`position` names a **physical** corner of the viewport. `"bottom-right"` means the bottom-right corner in every language, including Arabic or Hebrew. The launcher, the popup next to it, and the edge a `side-panel` docks to and slides in from all use that physical corner. Content inside the widget does mirror under RTL (see [Internationalisation → Right-to-left languages](./i18n.md#right-to-left-languages)).
+
+The default `position` is `"bottom-right"`. A page's own layout decides where a floating button looks right, and Chativa can't tell the default value apart from one you set explicitly. If your site is RTL and you want the launcher on the inline-end side, pick the corner yourself:
+
+```ts
+import { i18next } from "@chativa/ui";
+import { chatStore } from "@chativa/core";
+
+const rtl = i18next.dir(i18next.language) === "rtl";
+chatStore.getState().setTheme({ position: rtl ? "bottom-left" : "bottom-right" });
+```
+
+(`isRtlLanguage()` from `@chativa/ui` gives the same answer for the four languages Chativa mirrors.)
+
 
 ## Window modes
 

@@ -1,0 +1,111 @@
+{
+  "greeting": "Cześć",
+  "welcome": "Witaj, {{name}}!",
+  "header": {
+    "title": "Chatbot Chativa",
+    "status": {
+      "connecting": "Łączenie…",
+      "connected": "Online",
+      "error": "Błąd połączenia",
+      "disconnected": "Rozłączono",
+      "offline": "Offline"
+    },
+    "fullscreen": {
+      "enter": "Pełny ekran",
+      "exit": "Zamknij pełny ekran"
+    },
+    "close": "Zamknij",
+    "minimize": "Minimalizuj",
+    "search": {
+      "toggle": "Szukaj",
+      "placeholder": "Szukaj wiadomości…",
+      "clear": "Wyczyść wyszukiwanie"
+    }
+  },
+  "input": {
+    "placeholder": "Napisz wiadomość…",
+    "send": "Wyślij wiadomość",
+    "emoji": "Emoji",
+    "attachFile": "Załącz plik",
+    "removeFile": "Usuń {{name}}",
+    "dropHere": "Upuść pliki tutaj",
+    "dropHereSubtitle": "Puść, aby załączyć"
+  },
+  "messageList": {
+    "connecting": "Łączenie…",
+    "emptyTitle": "Jak mogę pomóc?",
+    "emptySubtitle": "Wyślij wiadomość, aby zacząć.",
+    "newMessage": "Nowa wiadomość",
+    "loadMore": "Wczytaj wcześniejsze wiadomości",
+    "errorTitle": "Utracono połączenie",
+    "errorSubtitle": "Nie udało się ponownie połączyć. Spróbuj jeszcze raz.",
+    "retry": "Spróbuj ponownie",
+    "reconnecting": "Ponowne łączenie… (próba {{attempt}})",
+    "searchEmpty": "Brak wiadomości pasujących do wyszukiwania.",
+    "searchResult": "Znalezione wyniki: {{count}}",
+    "loadingHistory": "Wczytywanie wcześniejszych wiadomości…",
+    "ariaLabel": "Wiadomości czatu",
+    "typingIndicator": "Asystent pisze"
+  },
+  "message": {
+    "from": {
+      "bot": "Asystent",
+      "user": "Ty"
+    },
+    "likeButton": "Podoba mi się ta wiadomość",
+    "dislikeButton": "Nie podoba mi się ta wiadomość",
+    "statusSending": "Wysyłanie",
+    "statusSent": "Wysłano",
+    "statusRead": "Przeczytano",
+    "actionsLabel": "Akcje wiadomości",
+    "copy": "Kopiuj",
+    "copyCode": "Kopiuj kod",
+    "copied": "Skopiowano",
+    "regenerate": "Wygeneruj odpowiedź ponownie",
+    "edit": "Edytuj wiadomość",
+    "editLabel": "Edytuj swoją wiadomość",
+    "editSave": "Wyślij",
+    "editCancel": "Anuluj",
+    "moreActions": "Więcej akcji"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Szukaj emoji…",
+    "noResults": "Brak wyników"
+  },
+  "chatButton": {
+    "open": "Otwórz czat",
+    "close": "Zamknij czat"
+  },
+  "widget": {
+    "title": "Czat",
+    "disclaimer": "Treści wygenerowane przez AI mogą być niedokładne."
+  },
+  "survey": {
+    "title": "Jak nam poszło?",
+    "ratingLabel": "Oceń swoje wrażenia",
+    "commentPlaceholder": "Co moglibyśmy poprawić?",
+    "commentRequired": "Powiedz nam, co poszło nie tak",
+    "submit": "Wyślij",
+    "skip": "Pomiń",
+    "thankYouTitle": "Otrzymaliśmy Twoją opinię!",
+    "thankYouBody": "Dziękujemy za cenne uwagi i komentarze.",
+    "close": "Zamknij",
+    "starLabel_one": "{{count}} gwiazdka",
+    "starLabel_few": "{{count}} gwiazdki",
+    "starLabel_many": "{{count}} gwiazdek",
+    "starLabel_other": "{{count}} gwiazdki"
+  },
+  "toolCalls": {
+    "running": "W toku",
+    "completed": "Zakończono",
+    "error": "Błąd",
+    "parameters": "Parametry",
+    "result": "Wynik",
+    "summary_one": "{{count}} operacja",
+    "summary_few": "{{count}} operacje",
+    "summary_many": "{{count}} operacji",
+    "summary_other": "{{count}} operacji",
+    "failed": "Nieudane: {{count}}",
+    "ariaToggle": "Pokaż lub ukryj szczegóły wywołań narzędzi"
+  }
+}

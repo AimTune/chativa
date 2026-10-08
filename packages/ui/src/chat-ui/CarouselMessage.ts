@@ -40,8 +40,8 @@ export class CarouselMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -105,6 +105,11 @@ export class CarouselMessage extends LitElement {
       width: 14px;
       height: 14px;
       flex-shrink: 0;
+    }
+
+    /* Prev sits on the inline-start edge, so its chevron points that way. */
+    :host(:dir(rtl)) .nav-btn svg {
+      transform: scaleX(-1);
     }
 
     /* ── Carousel track ── */
@@ -254,6 +259,14 @@ export class CarouselMessage extends LitElement {
     const card = cards[index];
     if (!card) return;
     this._currentIndex = index;
+    if (getComputedStyle(carousel).direction === "rtl") {
+      // RTL scrollLeft runs from 0 towards negative values, so offsetLeft is
+      // not a valid target. Scroll by the physical distance between the
+      // card's inline-start (right) edge and the track's instead.
+      const delta = card.getBoundingClientRect().right - carousel.getBoundingClientRect().right;
+      carousel.scrollBy({ left: delta, behavior: "smooth" });
+      return;
+    }
     carousel.scrollTo({ left: card.offsetLeft, behavior: "smooth" });
   }
 
@@ -385,7 +398,7 @@ export class CarouselMessage extends LitElement {
             </div>
           ` : nothing}
 
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;

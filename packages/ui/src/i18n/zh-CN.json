@@ -1,0 +1,105 @@
+{
+  "greeting": "你好",
+  "welcome": "欢迎，{{name}}！",
+  "header": {
+    "title": "Chativa 聊天机器人",
+    "status": {
+      "connecting": "正在连接…",
+      "connected": "在线",
+      "error": "连接错误",
+      "disconnected": "已断开连接",
+      "offline": "离线"
+    },
+    "fullscreen": {
+      "enter": "进入全屏",
+      "exit": "退出全屏"
+    },
+    "close": "关闭",
+    "minimize": "最小化",
+    "search": {
+      "toggle": "搜索",
+      "placeholder": "搜索消息…",
+      "clear": "清除搜索"
+    }
+  },
+  "input": {
+    "placeholder": "输入消息…",
+    "send": "发送消息",
+    "emoji": "表情",
+    "attachFile": "添加附件",
+    "removeFile": "移除 {{name}}",
+    "dropHere": "将文件拖放到此处",
+    "dropHereSubtitle": "松开即可添加附件"
+  },
+  "messageList": {
+    "connecting": "正在连接…",
+    "emptyTitle": "有什么可以帮您？",
+    "emptySubtitle": "发送一条消息即可开始。",
+    "newMessage": "新消息",
+    "loadMore": "加载更早的消息",
+    "errorTitle": "连接已断开",
+    "errorSubtitle": "无法重新连接，请重试。",
+    "retry": "重试",
+    "reconnecting": "正在重新连接…（第 {{attempt}} 次尝试）",
+    "searchEmpty": "没有与搜索匹配的消息。",
+    "searchResult": "找到 {{count}} 条结果",
+    "loadingHistory": "正在加载更早的消息…",
+    "ariaLabel": "聊天消息",
+    "typingIndicator": "助手正在输入"
+  },
+  "message": {
+    "from": {
+      "bot": "助手",
+      "user": "您"
+    },
+    "likeButton": "赞这条消息",
+    "dislikeButton": "踩这条消息",
+    "statusSending": "发送中",
+    "statusSent": "已发送",
+    "statusRead": "已读",
+    "actionsLabel": "消息操作",
+    "copy": "复制",
+    "copyCode": "复制代码",
+    "copied": "已复制",
+    "regenerate": "重新生成回答",
+    "edit": "编辑消息",
+    "editLabel": "编辑你的消息",
+    "editSave": "发送",
+    "editCancel": "取消",
+    "moreActions": "更多操作"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "搜索表情…",
+    "noResults": "无结果"
+  },
+  "chatButton": {
+    "open": "打开聊天",
+    "close": "关闭聊天"
+  },
+  "widget": {
+    "title": "聊天",
+    "disclaimer": "AI 生成的内容可能不准确。"
+  },
+  "survey": {
+    "title": "您对本次服务满意吗？",
+    "ratingLabel": "为您的体验评分",
+    "commentPlaceholder": "我们可以在哪些方面做得更好？",
+    "commentRequired": "请告诉我们哪里出了问题",
+    "submit": "提交",
+    "skip": "跳过",
+    "thankYouTitle": "我们已收到您的反馈！",
+    "thankYouBody": "感谢您宝贵的想法和意见。",
+    "close": "关闭",
+    "starLabel_other": "{{count}} 星"
+  },
+  "toolCalls": {
+    "running": "运行中",
+    "completed": "已完成",
+    "error": "错误",
+    "parameters": "参数",
+    "result": "结果",
+    "summary_other": "{{count}} 个操作",
+    "failed": "{{count}} 个失败",
+    "ariaToggle": "展开/收起工具调用详情"
+  }
+}

@@ -1,4 +1,4 @@
-import { LitElement, html, css, nothing } from "lit";
+import { LitElement, html, css, nothing, svg } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { t } from "@chativa/core";
 import i18next from "../i18n/i18n";
@@ -136,6 +136,11 @@ class ChatInput extends LitElement {
       height: 18px;
     }
 
+    /* The paper plane points along the reading direction. */
+    :host(:dir(rtl)) .send-btn svg {
+      transform: scaleX(-1);
+    }
+
     /* Hidden file input */
     .file-input {
       display: none;
@@ -154,7 +159,8 @@ class ChatInput extends LitElement {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px 4px 8px;
+      padding-block: 4px;
+      padding-inline: 8px 10px;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
       border-radius: 999px;
@@ -199,7 +205,7 @@ class ChatInput extends LitElement {
     .picker-popup {
       position: absolute;
       bottom: calc(100% + 8px);
-      left: 8px;
+      inset-inline-start: 8px;
       z-index: 100;
     }
 
@@ -207,8 +213,8 @@ class ChatInput extends LitElement {
     .slash-popup {
       position: absolute;
       bottom: calc(100% + 8px);
-      left: 12px;
-      right: 12px;
+      inset-inline-start: 12px;
+      inset-inline-end: 12px;
       z-index: 101;
       background: #ffffff;
       border: 1px solid #e2e8f0;
@@ -227,7 +233,7 @@ class ChatInput extends LitElement {
       border: none;
       background: none;
       width: 100%;
-      text-align: left;
+      text-align: start;
     }
 
     .slash-item:hover,
@@ -518,7 +524,7 @@ class ChatInput extends LitElement {
                 @click=${() => this._removeFile(i)}
               >
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="10" height="10">
-                  ${renderIcon("close", html`<path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>`)}
+                  ${renderIcon("close", svg`<path d="M18 6L6 18M6 6l12 12" stroke-linecap="round"/>`)}
                 </svg>
               </button>
             </div>
@@ -548,7 +554,7 @@ class ChatInput extends LitElement {
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._openFilePicker(); }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
-            ${renderIcon("attach", html`<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>`)}
+            ${renderIcon("attach", svg`<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke-linecap="round" stroke-linejoin="round"/>`)}
           </svg>
         </button>
         ` : nothing}
@@ -565,12 +571,13 @@ class ChatInput extends LitElement {
           @click=${(e: MouseEvent) => { e.stopPropagation(); this._togglePicker(); }}
         >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" xmlns="http://www.w3.org/2000/svg">
-            ${renderIcon("emoji", html`<circle cx="12" cy="12" r="10" /><path d="M8 13s1.5 2 4 2 4-2 4-2" stroke-linecap="round" /><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none" />`)}
+            ${renderIcon("emoji", svg`<circle cx="12" cy="12" r="10" /><path d="M8 13s1.5 2 4 2 4-2 4-2" stroke-linecap="round" /><circle cx="9" cy="9.5" r="1" fill="currentColor" stroke="none" /><circle cx="15" cy="9.5" r="1" fill="currentColor" stroke="none" />`)}
           </svg>
         </button>
 
         <textarea
           class="text-input"
+          dir="auto"
           rows="1"
           .value=${this.value}
           @input=${this._onInput}
@@ -594,7 +601,7 @@ class ChatInput extends LitElement {
           aria-label="${t("input.send")}"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-            ${renderIcon("send", html`<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />`)}
+            ${renderIcon("send", svg`<path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />`)}
           </svg>
         </button>
       </div>

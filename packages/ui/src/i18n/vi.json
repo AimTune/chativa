@@ -1,0 +1,105 @@
+{
+  "greeting": "Xin chào",
+  "welcome": "Chào mừng {{name}}!",
+  "header": {
+    "title": "Chatbot Chativa",
+    "status": {
+      "connecting": "Đang kết nối…",
+      "connected": "Trực tuyến",
+      "error": "Lỗi kết nối",
+      "disconnected": "Đã ngắt kết nối",
+      "offline": "Ngoại tuyến"
+    },
+    "fullscreen": {
+      "enter": "Toàn màn hình",
+      "exit": "Thoát toàn màn hình"
+    },
+    "close": "Đóng",
+    "minimize": "Thu nhỏ",
+    "search": {
+      "toggle": "Tìm kiếm",
+      "placeholder": "Tìm kiếm tin nhắn…",
+      "clear": "Xóa tìm kiếm"
+    }
+  },
+  "input": {
+    "placeholder": "Nhập tin nhắn…",
+    "send": "Gửi tin nhắn",
+    "emoji": "Biểu tượng cảm xúc",
+    "attachFile": "Đính kèm tệp",
+    "removeFile": "Xóa {{name}}",
+    "dropHere": "Thả tệp vào đây",
+    "dropHereSubtitle": "Thả ra để đính kèm"
+  },
+  "messageList": {
+    "connecting": "Đang kết nối…",
+    "emptyTitle": "Tôi có thể giúp gì cho bạn?",
+    "emptySubtitle": "Gửi một tin nhắn để bắt đầu.",
+    "newMessage": "Tin nhắn mới",
+    "loadMore": "Tải tin nhắn trước đó",
+    "errorTitle": "Mất kết nối",
+    "errorSubtitle": "Không thể kết nối lại. Vui lòng thử lại.",
+    "retry": "Thử lại",
+    "reconnecting": "Đang kết nối lại… (lần thử {{attempt}})",
+    "searchEmpty": "Không có tin nhắn nào khớp với tìm kiếm của bạn.",
+    "searchResult": "Tìm thấy {{count}} kết quả",
+    "loadingHistory": "Đang tải tin nhắn trước đó…",
+    "ariaLabel": "Tin nhắn trò chuyện",
+    "typingIndicator": "Trợ lý đang nhập"
+  },
+  "message": {
+    "from": {
+      "bot": "Trợ lý",
+      "user": "Bạn"
+    },
+    "likeButton": "Thích tin nhắn này",
+    "dislikeButton": "Không thích tin nhắn này",
+    "statusSending": "Đang gửi",
+    "statusSent": "Đã gửi",
+    "statusRead": "Đã xem",
+    "actionsLabel": "Thao tác tin nhắn",
+    "copy": "Sao chép",
+    "copyCode": "Sao chép mã",
+    "copied": "Đã sao chép",
+    "regenerate": "Tạo lại câu trả lời",
+    "edit": "Chỉnh sửa tin nhắn",
+    "editLabel": "Chỉnh sửa tin nhắn của bạn",
+    "editSave": "Gửi",
+    "editCancel": "Hủy",
+    "moreActions": "Thao tác khác"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Tìm biểu tượng cảm xúc…",
+    "noResults": "Không có kết quả"
+  },
+  "chatButton": {
+    "open": "Mở trò chuyện",
+    "close": "Đóng trò chuyện"
+  },
+  "widget": {
+    "title": "Trò chuyện",
+    "disclaimer": "Nội dung do AI tạo ra có thể không chính xác."
+  },
+  "survey": {
+    "title": "Bạn thấy dịch vụ của chúng tôi thế nào?",
+    "ratingLabel": "Đánh giá trải nghiệm của bạn",
+    "commentPlaceholder": "Chúng tôi có thể cải thiện điều gì?",
+    "commentRequired": "Vui lòng cho chúng tôi biết điều gì chưa ổn",
+    "submit": "Gửi",
+    "skip": "Bỏ qua",
+    "thankYouTitle": "Chúng tôi đã nhận được phản hồi của bạn!",
+    "thankYouBody": "Cảm ơn bạn vì những suy nghĩ và góp ý quý báu.",
+    "close": "Đóng",
+    "starLabel_other": "{{count}} sao"
+  },
+  "toolCalls": {
+    "running": "Đang chạy",
+    "completed": "Hoàn tất",
+    "error": "Lỗi",
+    "parameters": "Tham số",
+    "result": "Kết quả",
+    "summary_other": "{{count}} thao tác",
+    "failed": "{{count}} thất bại",
+    "ariaToggle": "Hiện hoặc ẩn chi tiết lệnh gọi công cụ"
+  }
+}

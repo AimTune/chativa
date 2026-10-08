@@ -69,8 +69,8 @@ export class FileMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -196,14 +196,14 @@ export class FileMessage extends LitElement {
               <div .innerHTML=${renderFileIcon(icon, color)}></div>
             </div>
             <div class="file-info">
-              <div class="file-name" title="${name}">${name}</div>
+              <div class="file-name" dir="auto" title="${name}">${name}</div>
               <div class="file-meta">${size ? formatBytes(size) : "Download"}</div>
             </div>
             <svg class="download-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
             </svg>
           </a>
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;

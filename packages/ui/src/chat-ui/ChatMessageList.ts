@@ -1,5 +1,5 @@
 import { LitElement, html, css } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, state } from "lit/decorators.js";
 import { unsafeStatic } from "lit/static-html.js";
 import { html as staticHtml } from "lit/static-html.js";
 import { t } from "@chativa/core";
@@ -7,6 +7,8 @@ import i18next from "../i18n/i18n";
 
 import { messageStore, chatStore, type StoredMessage, type ToolCall } from "@chativa/core";
 import "./ToolCallActivity";
+import "./MessageFeedback";
+import { resolveBuiltInActions, type MessageActionInputs } from "./MessageActions";
 import { resolveDisclaimerContent } from "./disclaimerContent";
 
 function resolveTag(component: typeof HTMLElement): string {
@@ -206,7 +208,101 @@ class ChatMessageList extends LitElement {
 
     /* Align with the bubble, past the 28px avatar + 8px gap */
     .tool-activity-attached.avatar-offset {
-      margin-left: 36px;
+      margin-inline-start: 36px;
+    }
+
+    /* Action bar (copy / regenerate / edit / custom) and like/dislike under
+       messages — revealed on hover/focus, pinned while one is active
+       (a feedback value selected, a "Copied" confirmation showing). */
+    .message-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      width: fit-content;
+      margin-top: 1px;
+    }
+
+    .message-toolbar.avatar-offset {
+      margin-inline-start: 36px;
+    }
+
+    .user-message .message-toolbar {
+      margin-top: 0;
+      margin-inline-start: auto;
+    }
+
+    .user-message .message-toolbar.avatar-offset {
+      margin-inline-end: 36px;
+    }
+
+    .message-toolbar > * {
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .bot-message:hover .message-toolbar > *,
+    .bot-message:focus-within .message-toolbar > *,
+    .user-message:hover .message-toolbar > *,
+    .user-message:focus-within .message-toolbar > *,
+    .message-toolbar > [active] {
+      opacity: 1;
+    }
+
+    @media (hover: none) {
+      .message-toolbar > * { opacity: 1; }
+    }
+
+    /* Inline editor that replaces the latest user bubble while editing */
+    .edit-form {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 82%;
+      margin-inline-start: auto;
+      margin-bottom: 4px;
+    }
+
+    .edit-input {
+      box-sizing: border-box;
+      width: 100%;
+      min-height: 60px;
+      padding: 8px 12px;
+      border: 1px solid var(--chativa-primary-color, #4f46e5);
+      border-radius: 12px;
+      font: inherit;
+      font-size: 0.875rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: inherit;
+      background: var(--chativa-background-color, #ffffff);
+    }
+
+    .edit-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+
+    .edit-btn {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      color: #475569;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .edit-btn.save {
+      border-color: transparent;
+      background: var(--chativa-primary-color, #4f46e5);
+      color: #ffffff;
+    }
+
+    .edit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     /* Typing indicator */
@@ -216,13 +312,14 @@ class ChatMessageList extends LitElement {
       gap: 5px;
       padding: 10px 14px;
       background: #f1f5f9;
-      border-radius: 18px 18px 18px 4px;
+      border-radius: 18px;
+      border-end-start-radius: 4px;
       width: fit-content;
       margin-top: 4px;
     }
 
     .typing-text {
-      margin-left: 4px;
+      margin-inline-start: 4px;
       color: #64748b;
       font-size: 0.8125rem;
       line-height: 1.25;
@@ -344,6 +441,10 @@ class ChatMessageList extends LitElement {
 
   private _onLangChange = () => { this.requestUpdate(); };
 
+  /** Id of the user message being edited inline, or null. */
+  @state() private _editingId: string | null = null;
+  @state() private _editText = "";
+
   private _unsubscribeMessages!: () => void;
   private _unsubscribeChatStore!: () => void;
   private _isAtBottom = true;
@@ -370,9 +471,11 @@ class ChatMessageList extends LitElement {
       this.requestUpdate()
     );
     i18next.on("languageChanged", this._onLangChange);
+    this.addEventListener("chativa-edit-start", this._onEditStart as EventListener);
   }
 
   disconnectedCallback() {
+    this.removeEventListener("chativa-edit-start", this._onEditStart as EventListener);
     this._unsubscribeMessages?.();
     this._unsubscribeChatStore?.();
     i18next.off("languageChanged", this._onLangChange);
@@ -438,8 +541,12 @@ class ChatMessageList extends LitElement {
 
     // After /clear — reset scroll flags
     if (currentCount === 0) {
+      // `_hasNewMessages` is not reactive — re-render so a pill shown before
+      // the clear does not linger over the empty list.
+      const hadPill = this._hasNewMessages;
       this._hasNewMessages = false;
       this._isAtBottom = true;
+      if (hadPill) this.requestUpdate();
       return;
     }
 
@@ -494,13 +601,90 @@ class ChatMessageList extends LitElement {
     );
   }
 
-  private _renderMessage(msg: StoredMessage, i: number, messages: StoredMessage[]) {
+  // ── Inline edit of the latest user message ─────────────────────────
+
+  private _onEditStart = (e: CustomEvent<{ messageId: string }>) => {
+    const msg = messageStore.getState().messages.find((m) => m.id === e.detail.messageId);
+    if (!msg) return;
+    this._editingId = msg.id;
+    this._editText = String(msg.data?.text ?? "");
+    this.updateComplete.then(() => {
+      const ta = this.shadowRoot?.querySelector<HTMLTextAreaElement>(".edit-input");
+      if (!ta) return;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    });
+  };
+
+  private _cancelEdit() {
+    this._editingId = null;
+    this._editText = "";
+  }
+
+  private _saveEdit() {
+    const messageId = this._editingId;
+    const text = this._editText.trim();
+    if (!messageId || !text) return;
+    this._cancelEdit();
+    this.dispatchEvent(
+      new CustomEvent("chativa-edit-message", {
+        bubbles: true,
+        composed: true,
+        detail: { messageId, text },
+      }),
+    );
+  }
+
+  private _onEditKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation(); // don't let the widget's Escape handler close the chat
+      this._cancelEdit();
+    } else if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      this._saveEdit();
+    }
+  }
+
+  private _renderEditForm() {
+    return html`
+      <div class="edit-form">
+        <textarea
+          class="edit-input"
+          dir="auto"
+          aria-label=${t("message.editLabel")}
+          .value=${this._editText}
+          @input=${(e: Event) => { this._editText = (e.target as HTMLTextAreaElement).value; }}
+          @keydown=${this._onEditKeyDown}
+        ></textarea>
+        <div class="edit-buttons">
+          <button type="button" class="edit-btn cancel" @click=${this._cancelEdit}>
+            ${t("message.editCancel")}
+          </button>
+          <button
+            type="button"
+            class="edit-btn save"
+            ?disabled=${!this._editText.trim()}
+            @click=${this._saveEdit}
+          >${t("message.editSave")}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderMessage(
+    msg: StoredMessage,
+    i: number,
+    messages: StoredMessage[],
+    actionInputs: MessageActionInputs,
+  ) {
     const tag = msg.component
       ? resolveTag(msg.component)
       : "default-text-message";
     const next = messages[i + 1];
     const isLastInGroup = !next || next.from !== msg.from;
-    const rendered = staticHtml`<${unsafeStatic(tag)}
+    const isBot = msg.from !== "user";
+    const element = staticHtml`<${unsafeStatic(tag)}
       .messageData=${msg.data}
       .sender=${msg.from ?? "bot"}
       .messageId=${msg.id}
@@ -508,17 +692,57 @@ class ChatMessageList extends LitElement {
       .hideAvatar=${!isLastInGroup}
       .status=${msg.status ?? "sent"}
     ></${unsafeStatic(tag)}>`;
+    // The action bar attaches at list level so every message type — text,
+    // buttons, card, carousel, custom or GenUI — gets it without implementing it.
+    const builtIns = resolveBuiltInActions(msg, actionInputs);
+    const isLatest = builtIns.regenerate || builtIns.edit;
+    const actions = html`
+      <message-actions
+        class="message-actions"
+        .message=${msg}
+        .isLatest=${isLatest}
+        .builtIns=${builtIns}
+      ></message-actions>
+    `;
+    const avatarCfg = chatStore.getState().theme.avatar;
+
+    if (!isBot) {
+      if (msg.id === this._editingId) return this._renderEditForm();
+      const offset = avatarCfg?.showUser !== false ? "avatar-offset" : "";
+      return html`
+        <div class="user-message">
+          ${element}
+          <div class="message-toolbar ${offset}">${actions}</div>
+        </div>
+      `;
+    }
+
+    const showBotAvatar = avatarCfg?.showBot !== false;
+
+    // Like/dislike sits in the same toolbar, so every bot message type gets it
+    // too. Order (inline-start → inline-end): feedback, then the action bar,
+    // whose "⋮" menu therefore always ends up last.
+    const rendered = html`
+      <div class="bot-message">
+        ${element}
+        <div class="message-toolbar ${showBotAvatar ? "avatar-offset" : ""}">
+          <message-feedback
+            class="message-feedback"
+            .messageId=${msg.id}
+            .messageData=${msg.data ?? {}}
+          ></message-feedback>
+          ${actions}
+        </div>
+      </div>
+    `;
 
     // Tool-call trace attaches at list level so every message type — built-in
     // or custom (e.g. a GenUI weather widget) — gets the activity line above it.
-    const toolCalls = msg.from !== "user"
-      ? (msg.data?.toolCalls as ToolCall[] | undefined)
-      : undefined;
+    const toolCalls = msg.data?.toolCalls as ToolCall[] | undefined;
     // Array.isArray also shields against connector-supplied non-array values
     // (data.toolCalls passes through core with only an undefined check).
     if (!Array.isArray(toolCalls) || toolCalls.length === 0) return rendered;
 
-    const showBotAvatar = chatStore.getState().theme.avatar?.showBot !== false;
     return html`
       <div class="tool-activity-attached ${showBotAvatar ? "avatar-offset" : ""}">
         <tool-call-activity .toolCalls=${toolCalls}></tool-call-activity>
@@ -544,7 +768,13 @@ class ChatMessageList extends LitElement {
 
   render() {
     const messages = messageStore.getState().messages;
-    const { connectorStatus, isTyping, typingMessage, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls } = chatStore.getState();
+    const { connectorStatus, isTyping, typingMessage, reconnectAttempt, hasMoreHistory, isLoadingHistory, searchQuery, activeToolCalls, theme, messageActionSupport } = chatStore.getState();
+    const actionInputs: MessageActionInputs = {
+      messages,
+      config: theme.messageActions,
+      support: messageActionSupport,
+      isTyping,
+    };
 
     const displayMessages = searchQuery
       ? messages.filter((msg) => {
@@ -639,7 +869,7 @@ class ChatMessageList extends LitElement {
                 <p class="empty-subtitle">${t("messageList.emptySubtitle")}</p>
               </div>
             `
-          : displayMessages.map((msg, i) => this._renderMessage(msg, i, displayMessages))}
+          : displayMessages.map((msg, i) => this._renderMessage(msg, i, displayMessages, actionInputs))}
 
         ${activeToolCalls.length > 0 ? html`
           <div class="tool-activity-live" role="status">

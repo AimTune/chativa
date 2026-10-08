@@ -56,6 +56,12 @@
       .hint-arrow {
         font-size: 1.2rem;
       }
+
+      /* While the Preview area is open the widget lives in its frame; the
+         floating launcher would only overlap the frame's resize corner. */
+      .sandbox-preview-active chat-bot-button {
+        display: none;
+      }
     </style>
   </head>
 
@@ -74,7 +80,14 @@
 
     <!-- Chativa web components -->
     <chat-bot-button></chat-bot-button>
-    <chat-iva></chat-iva>
+    <!--
+      Preview area (Preview tab). The stage is a transparent wrapper
+      (display: contents) until a viewport preset is picked; then it sizes
+      this same <chat-iva> inline inside a frame. One widget, one engine.
+    -->
+    <sandbox-preview-stage>
+      <chat-iva></chat-iva>
+    </sandbox-preview-stage>
 
     <!--
       === Custom launcher button examples ===

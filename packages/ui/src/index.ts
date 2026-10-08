@@ -5,7 +5,10 @@ export { ChatWidget } from "./chat-ui/ChatWidget";
 export { AgentPanel } from "./chat-ui/AgentPanel";
 export { ConversationList } from "./chat-ui/ConversationList";
 export { default as ChatBotButton } from "./chat-ui/ChatBotButton";
-export { default as i18n } from "./i18n/i18n";
+export { default as i18n, SUPPORTED_LOCALES } from "./i18n/i18n";
+export type { BundledLocale } from "./i18n/i18n";
+export { RTL_LANGUAGES, isRtlLanguage, getLanguageDirection, DirectionController } from "./i18n/rtl";
+export type { TextDirection } from "./i18n/rtl";
 export { registerCommand } from "./commands/index";
 export type { LocalizedCommandConfig, CommandTranslations } from "./commands/index";
 export { render } from "./render";
@@ -54,6 +57,8 @@ import "./chat-ui/EndOfConversationSurvey";
 import "./chat-ui/LinkPreviewCard";
 import "./chat-ui/ToolCallCard";
 import "./chat-ui/ToolCallActivity";
+import "./chat-ui/MessageFeedback";
+import "./chat-ui/MessageActions";
 
 import { MessageTypeRegistry } from "@chativa/core";
 import { EndOfConversationSurvey } from "./chat-ui/EndOfConversationSurvey";
@@ -62,6 +67,10 @@ export { LinkPreviewCard } from "./chat-ui/LinkPreviewCard";
 export type { LinkMetadata, LinkMetadataFetcher } from "./chat-ui/LinkPreviewCard";
 export { ToolCallCard } from "./chat-ui/ToolCallCard";
 export { ToolCallActivity } from "./chat-ui/ToolCallActivity";
+export { MessageFeedback } from "./chat-ui/MessageFeedback";
+export { MessageActions, resolveBuiltInActions } from "./chat-ui/MessageActions";
+export type { BuiltInMessageActions, MessageActionInputs } from "./chat-ui/MessageActions";
+export { MessageActionRegistry } from "@chativa/core";
 MessageTypeRegistry.register(
   "end-of-conversation-survey",
   EndOfConversationSurvey as unknown as typeof HTMLElement,

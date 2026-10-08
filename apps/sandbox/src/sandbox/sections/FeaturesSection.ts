@@ -1,8 +1,9 @@
 import { LitElement, html, nothing } from "lit";
 import { customElement, state } from "lit/decorators.js";
-import { chatStore, type ThemeConfig, type DeepPartial } from "@chativa/core";
+import { chatStore, type ThemeConfig, type DeepPartial, type MessageActionsConfig } from "@chativa/core";
 import i18next from "i18next";
 import { sectionStyles } from "../sandboxShared";
+import { getDummyOptions, setDummyCapabilities, subscribeDummyOptions } from "../connectorSwap";
 
 // Import i18next directly (the singleton) instead of from "@chativa/ui".
 // The @chativa/ui index has side-effect imports that call
@@ -12,6 +13,31 @@ import { sectionStyles } from "../sandboxShared";
 // `ConnectorRegistry: connector "dummy" not found` at boot.
 // @chativa/ui's i18n.ts initializes the same i18next singleton at runtime.
 
+// Languages bundled with @chativa/ui, labelled in their own language. Kept as a
+// literal (not imported from @chativa/ui) for the same reason as i18next above.
+const LANGUAGES: { label: string; value: string }[] = [
+  { label: "English", value: "en" },
+  { label: "Türkçe", value: "tr" },
+  { label: "Español", value: "es" },
+  { label: "Français", value: "fr" },
+  { label: "Deutsch", value: "de" },
+  { label: "Italiano", value: "it" },
+  { label: "Português (Brasil)", value: "pt-BR" },
+  { label: "Polski", value: "pl" },
+  { label: "Nederlands", value: "nl" },
+  { label: "Bahasa Indonesia", value: "id" },
+  { label: "Tiếng Việt", value: "vi" },
+  { label: "Русский", value: "ru" },
+  { label: "Українська", value: "uk" },
+  { label: "日本語", value: "ja" },
+  { label: "한국어", value: "ko" },
+  { label: "简体中文", value: "zh-CN" },
+  { label: "繁體中文", value: "zh-TW" },
+  { label: "हिन्दी", value: "hi" },
+  { label: "العربية", value: "ar" },
+  { label: "עברית", value: "he" },
+];
+
 @customElement("sandbox-features-section")
 export class FeaturesSection extends LitElement {
   static override styles = [sectionStyles];
@@ -19,22 +45,58 @@ export class FeaturesSection extends LitElement {
   @state() private _open = true;
   @state() private _theme: ThemeConfig = chatStore.getState().theme;
   @state() private _lang = i18next.language ?? "en";
+  @state() private _serverCaps = getDummyOptions().capabilities;
   private _unsub!: () => void;
+  private _unsubDummy!: () => void;
   private _onLang = (lng: string) => { this._lang = lng; };
 
   connectedCallback() {
     super.connectedCallback();
     this._unsub = chatStore.subscribe(() => { this._theme = chatStore.getState().theme; });
+    this._unsubDummy = subscribeDummyOptions((o) => { this._serverCaps = o.capabilities; });
     i18next.on("languageChanged", this._onLang);
   }
 
   disconnectedCallback() {
     this._unsub?.();
+    this._unsubDummy?.();
     i18next.off("languageChanged", this._onLang);
     super.disconnectedCallback();
   }
 
   private _set(o: DeepPartial<ThemeConfig>) { chatStore.getState().setTheme(o); }
+
+  /** On/Off pair; `on` is the current state, `set` receives the new one. */
+  private _onOff(label: string, on: boolean, set: (v: boolean) => void, hint?: string) {
+    return html`
+      <div>
+        <div class="sub-label" title=${hint ?? ""}>${label}</div>
+        <div class="toggle-group">
+          <button class="tg-btn ${on ? "active" : ""}" @click=${() => set(true)}>On</button>
+          <button class="tg-btn ${!on ? "active" : ""}" @click=${() => set(false)}>Off</button>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderMessageActions() {
+    const cfg: MessageActionsConfig = this._theme.messageActions ?? {};
+    const action = (key: keyof MessageActionsConfig, label: string, hint: string, defaultOn = true) =>
+      this._onOff(label, defaultOn ? cfg[key] !== false : cfg[key] === true, (v) => this._set({ messageActions: { [key]: v } }), hint);
+    const server = (key: "regenerate" | "editMessage", label: string) =>
+      this._onOff(label, this._serverCaps[key] !== false, (v) => setDummyCapabilities({ [key]: v }),
+        "Simulates the backend allowing the action (DummyConnector.setCapabilities). Off hides it even when the theme allows it.");
+    return html`
+      <div class="sub-label" style="margin-top:4px;font-weight:600">Message actions</div>
+      ${action("copy", "Copy", "Copy button on bot messages")}
+      ${action("codeBlockCopy", "Code / tool-call copy", "Copy buttons on code blocks and tool-call sections")}
+      ${action("regenerate", "Regenerate", "Regenerate button on the latest reply (theme switch)")}
+      ${action("edit", "Edit", "Edit button on the latest user message (theme switch)")}
+      ${action("fallback", "Fallback (emulate)", "Emulate regenerate / edit for connectors without them", false)}
+      ${server("regenerate", "Server allows regenerate")}
+      ${server("editMessage", "Server allows edit")}
+    `;
+  }
 
   render() {
     return html`
@@ -69,15 +131,19 @@ export class FeaturesSection extends LitElement {
             </div>
           </div>
 
+          ${this._renderMessageActions()}
+
           <!-- Language -->
           <div>
             <div class="sub-label">Language</div>
-            <div class="toggle-group">
-              ${([{ label: "English", value: "en" }, { label: "Türkçe", value: "tr" }]).map((l) => html`
-                <button class="tg-btn ${this._lang.startsWith(l.value) ? "active" : ""}"
-                  @click=${() => i18next.changeLanguage(l.value)}>${l.label}</button>
+            <select
+              style="width:100%"
+              aria-label="Language"
+              @change=${(e: Event) => i18next.changeLanguage((e.target as HTMLSelectElement).value)}>
+              ${LANGUAGES.map((l) => html`
+                <option value=${l.value} ?selected=${(i18next.resolvedLanguage ?? this._lang) === l.value}>${l.label}</option>
               `)}
-            </div>
+            </select>
           </div>
 
         </div>

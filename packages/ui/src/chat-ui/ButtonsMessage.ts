@@ -54,8 +54,8 @@ export class ButtonsMessage extends LitElement {
       margin-bottom: 2px;
     }
 
-    .message.bot { margin-right: auto; }
-    .message.user { margin-left: auto; flex-direction: row-reverse; }
+    .message.bot { margin-inline-end: auto; }
+    .message.user { margin-inline-start: auto; flex-direction: row-reverse; }
 
     .avatar {
       width: 28px;
@@ -92,7 +92,8 @@ export class ButtonsMessage extends LitElement {
       word-break: break-word;
       background: var(--chativa-bubble-bot-bg, #f1f5f9);
       color: var(--chativa-bubble-bot-color, #0f172a);
-      border-radius: 4px 16px 16px 16px;
+      border-radius: 16px;
+      border-start-start-radius: 4px;
     }
 
     .bubble p {
@@ -278,7 +279,7 @@ export class ButtonsMessage extends LitElement {
       <div class="message ${isUser ? "user" : "bot"}">
         ${!isUser && showBotAvatar ? this._renderBotAvatar(avatarCfg?.bot) : nothing}
         <div class="content">
-          ${text ? html`<div class="bubble">${renderBlockMarkdown(text)}</div>` : nothing}
+          ${text ? html`<div class="bubble"><div class="bubble-text" dir="auto">${renderBlockMarkdown(text)}</div></div>` : nothing}
 
           ${!persistent && this._selected !== null
             /* One-time mode: replace buttons with confirmation label */
@@ -306,7 +307,7 @@ export class ButtonsMessage extends LitElement {
                 </div>
               `}
 
-          ${this._time ? html`<span class="time">${this._time}</span>` : nothing}
+          ${this._time ? html`<span class="time"><bdi>${this._time}</bdi></span>` : nothing}
         </div>
       </div>
     `;

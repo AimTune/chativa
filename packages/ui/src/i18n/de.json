@@ -1,0 +1,107 @@
+{
+  "greeting": "Hallo",
+  "welcome": "Willkommen, {{name}}!",
+  "header": {
+    "title": "Chativa Chatbot",
+    "status": {
+      "connecting": "Verbindung wird hergestellt…",
+      "connected": "Online",
+      "error": "Verbindungsfehler",
+      "disconnected": "Getrennt",
+      "offline": "Offline"
+    },
+    "fullscreen": {
+      "enter": "Vollbild",
+      "exit": "Vollbild beenden"
+    },
+    "close": "Schließen",
+    "minimize": "Minimieren",
+    "search": {
+      "toggle": "Suchen",
+      "placeholder": "Nachrichten durchsuchen…",
+      "clear": "Suche löschen"
+    }
+  },
+  "input": {
+    "placeholder": "Nachricht eingeben…",
+    "send": "Nachricht senden",
+    "emoji": "Emoji",
+    "attachFile": "Datei anhängen",
+    "removeFile": "{{name}} entfernen",
+    "dropHere": "Dateien hier ablegen",
+    "dropHereSubtitle": "Zum Anhängen loslassen"
+  },
+  "messageList": {
+    "connecting": "Verbindung wird hergestellt…",
+    "emptyTitle": "Wie kann ich Ihnen helfen?",
+    "emptySubtitle": "Senden Sie eine Nachricht, um zu beginnen.",
+    "newMessage": "Neue Nachricht",
+    "loadMore": "Frühere Nachrichten laden",
+    "errorTitle": "Verbindung unterbrochen",
+    "errorSubtitle": "Die Verbindung konnte nicht wiederhergestellt werden. Bitte versuchen Sie es erneut.",
+    "retry": "Erneut versuchen",
+    "reconnecting": "Verbindung wird wiederhergestellt… (Versuch {{attempt}})",
+    "searchEmpty": "Keine Nachrichten entsprechen Ihrer Suche.",
+    "searchResult": "Gefundene Ergebnisse: {{count}}",
+    "loadingHistory": "Frühere Nachrichten werden geladen…",
+    "ariaLabel": "Chat-Nachrichten",
+    "typingIndicator": "Assistent schreibt"
+  },
+  "message": {
+    "from": {
+      "bot": "Assistent",
+      "user": "Sie"
+    },
+    "likeButton": "Diese Nachricht gefällt mir",
+    "dislikeButton": "Diese Nachricht gefällt mir nicht",
+    "statusSending": "Wird gesendet",
+    "statusSent": "Gesendet",
+    "statusRead": "Gelesen",
+    "actionsLabel": "Nachrichtenaktionen",
+    "copy": "Kopieren",
+    "copyCode": "Code kopieren",
+    "copied": "Kopiert",
+    "regenerate": "Antwort neu generieren",
+    "edit": "Nachricht bearbeiten",
+    "editLabel": "Nachricht bearbeiten",
+    "editSave": "Senden",
+    "editCancel": "Abbrechen",
+    "moreActions": "Weitere Aktionen"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Emoji suchen…",
+    "noResults": "Keine Ergebnisse"
+  },
+  "chatButton": {
+    "open": "Chat öffnen",
+    "close": "Chat schließen"
+  },
+  "widget": {
+    "title": "Chat",
+    "disclaimer": "KI-generierte Inhalte können ungenau sein."
+  },
+  "survey": {
+    "title": "Wie zufrieden waren Sie?",
+    "ratingLabel": "Bewerten Sie Ihre Erfahrung",
+    "commentPlaceholder": "Was könnten wir besser machen?",
+    "commentRequired": "Bitte sagen Sie uns, was schiefgelaufen ist",
+    "submit": "Absenden",
+    "skip": "Überspringen",
+    "thankYouTitle": "Wir haben Ihr Feedback erhalten!",
+    "thankYouBody": "Vielen Dank für Ihre wertvollen Gedanken und Anmerkungen.",
+    "close": "Schließen",
+    "starLabel_one": "{{count}} Stern",
+    "starLabel_other": "{{count}} Sterne"
+  },
+  "toolCalls": {
+    "running": "Wird ausgeführt",
+    "completed": "Abgeschlossen",
+    "error": "Fehler",
+    "parameters": "Parameter",
+    "result": "Ergebnis",
+    "summary_one": "{{count}} Vorgang",
+    "summary_other": "{{count}} Vorgänge",
+    "failed": "{{count}} fehlgeschlagen",
+    "ariaToggle": "Details der Tool-Aufrufe ein- oder ausblenden"
+  }
+}

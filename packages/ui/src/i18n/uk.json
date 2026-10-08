@@ -1,0 +1,111 @@
+{
+  "greeting": "Вітаємо",
+  "welcome": "Ласкаво просимо, {{name}}!",
+  "header": {
+    "title": "Чат-бот Chativa",
+    "status": {
+      "connecting": "Підключення…",
+      "connected": "У мережі",
+      "error": "Помилка з'єднання",
+      "disconnected": "Від'єднано",
+      "offline": "Не в мережі"
+    },
+    "fullscreen": {
+      "enter": "На весь екран",
+      "exit": "Вийти з повноекранного режиму"
+    },
+    "close": "Закрити",
+    "minimize": "Згорнути",
+    "search": {
+      "toggle": "Пошук",
+      "placeholder": "Пошук повідомлень…",
+      "clear": "Очистити пошук"
+    }
+  },
+  "input": {
+    "placeholder": "Введіть повідомлення…",
+    "send": "Надіслати повідомлення",
+    "emoji": "Емодзі",
+    "attachFile": "Прикріпити файл",
+    "removeFile": "Видалити {{name}}",
+    "dropHere": "Перетягніть файли сюди",
+    "dropHereSubtitle": "Відпустіть, щоб прикріпити"
+  },
+  "messageList": {
+    "connecting": "Підключення…",
+    "emptyTitle": "Чим я можу допомогти?",
+    "emptySubtitle": "Надішліть повідомлення, щоб почати.",
+    "newMessage": "Нове повідомлення",
+    "loadMore": "Завантажити попередні повідомлення",
+    "errorTitle": "З'єднання втрачено",
+    "errorSubtitle": "Не вдалося повторно під'єднатися. Спробуйте ще раз.",
+    "retry": "Спробувати ще раз",
+    "reconnecting": "Повторне підключення… (спроба {{attempt}})",
+    "searchEmpty": "Немає повідомлень, що відповідають пошуку.",
+    "searchResult": "Знайдено результатів: {{count}}",
+    "loadingHistory": "Завантаження попередніх повідомлень…",
+    "ariaLabel": "Повідомлення чату",
+    "typingIndicator": "Асистент друкує"
+  },
+  "message": {
+    "from": {
+      "bot": "Асистент",
+      "user": "Ви"
+    },
+    "likeButton": "Подобається це повідомлення",
+    "dislikeButton": "Не подобається це повідомлення",
+    "statusSending": "Надсилається",
+    "statusSent": "Надіслано",
+    "statusRead": "Прочитано",
+    "actionsLabel": "Дії з повідомленням",
+    "copy": "Копіювати",
+    "copyCode": "Копіювати код",
+    "copied": "Скопійовано",
+    "regenerate": "Згенерувати відповідь знову",
+    "edit": "Редагувати повідомлення",
+    "editLabel": "Відредагуйте повідомлення",
+    "editSave": "Надіслати",
+    "editCancel": "Скасувати",
+    "moreActions": "Інші дії"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Пошук емодзі…",
+    "noResults": "Нічого не знайдено"
+  },
+  "chatButton": {
+    "open": "Відкрити чат",
+    "close": "Закрити чат"
+  },
+  "widget": {
+    "title": "Чат",
+    "disclaimer": "Контент, створений ШІ, може бути неточним."
+  },
+  "survey": {
+    "title": "Як ми впоралися?",
+    "ratingLabel": "Оцініть ваш досвід",
+    "commentPlaceholder": "Що ми могли б покращити?",
+    "commentRequired": "Розкажіть, що пішло не так",
+    "submit": "Надіслати",
+    "skip": "Пропустити",
+    "thankYouTitle": "Ми отримали ваш відгук!",
+    "thankYouBody": "Дякуємо за ваші цінні думки та коментарі.",
+    "close": "Закрити",
+    "starLabel_one": "{{count}} зірка",
+    "starLabel_few": "{{count}} зірки",
+    "starLabel_many": "{{count}} зірок",
+    "starLabel_other": "{{count}} зірки"
+  },
+  "toolCalls": {
+    "running": "Виконується",
+    "completed": "Завершено",
+    "error": "Помилка",
+    "parameters": "Параметри",
+    "result": "Результат",
+    "summary_one": "{{count}} операція",
+    "summary_few": "{{count}} операції",
+    "summary_many": "{{count}} операцій",
+    "summary_other": "{{count}} операції",
+    "failed": "З помилкою: {{count}}",
+    "ariaToggle": "Показати або приховати деталі викликів інструментів"
+  }
+}

@@ -52,12 +52,16 @@ Each optional method automatically advertises a feature to the widget:
 |---|---|
 | `onConnect` / `onDisconnect` | Lifecycle callbacks (engine wires reconnect). |
 | `onTyping(cb)` | Typing indicator in the chat panel. |
+| `onProgress(cb)` | Progress text next to the typing dots ("Searching orders…"). |
 | `sendFile(file)` | File-upload button in the chat input. |
 | `loadHistory(cursor)` | Scroll-to-top pagination. |
 | `onMessageStatus(cb)` | Sending / sent / read tick indicators. |
 | `sendFeedback(id, "like" \| "dislike")` | Like/dislike on bot messages. |
+| `regenerate(messageId)` | Regenerate button on the latest bot reply. |
+| `editMessage(messageId, message)` | Edit button on the latest user message. |
+| `onCapabilities(cb)` | Lets the server switch regenerate / edit off at runtime (`cb({ regenerate: false })`). See [Message actions](../message-actions.md#supporting-them-in-a-connector). |
 | `sendSurvey(payload)` | End-of-conversation survey. |
-| `onToolCall(cb)` | Tool-call activity rows (upserted by `id`). |
+| `onToolCall(cb)` | Tool-call activity rows (upserted by `id`); each call expands into a card whose parameters / result / error can be copied. |
 | `onGenUIChunk(cb)` | Streaming GenUI components. |
 | `receiveComponentEvent(streamId, name, payload)` | Echo GenUI events back to the bot. |
 | `listConversations` / `createConversation` / `switchConversation` / `closeConversation` / `onConversationUpdate` | Multi-conversation mode. |
@@ -106,6 +110,36 @@ export class MyConnector implements IConnector {
   }
 }
 ```
+
+## Reporting progress while the bot thinks
+
+`onTyping` is a boolean — the dots are either on or off. When a reply takes a
+while because the backend is working through steps, implement `onProgress` as
+well and the widget renders your text beside the dots instead of leaving the
+user to guess.
+
+```ts
+import type { IConnector, ProgressHandler } from "@chativa/core";
+
+export class MyConnector implements IConnector {
+  private progressHandler: ProgressHandler | null = null;
+
+  onProgress(cb: ProgressHandler): void {
+    this.progressHandler = cb;
+  }
+
+  private handleServerFrame(frame: { stage?: string; message?: string }) {
+    // Any string you send is shown verbatim — pass text that is already
+    // localized for the user. `stage` is yours to use; Chativa never reads it.
+    this.progressHandler?.({ stage: frame.stage, message: frame.message });
+  }
+}
+```
+
+A `ProgressUpdate` carrying a `message` also turns the typing indicator on, so
+you don't have to call `onTyping(true)` first. Clear it by passing `null`, or
+let it clear itself — the text is dropped whenever typing stops, the connector
+disconnects, or the conversation is reset.
 
 ## Handling tool calls, GenUI and HITL
 

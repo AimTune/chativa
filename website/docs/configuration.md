@@ -85,6 +85,7 @@ Full reference (all fields, defaults, enums, and constraints) lives in the schem
 | `hideButtonOnOpen` | `boolean` | `false` | For slotted custom launchers. |
 | `avatar.{bot,user,header,showBot,showUser}` | `string \| boolean` | defaults | Avatars. |
 | `endOfConversationSurvey` | `object` | enabled | See [survey](./survey.md). |
+| `messageActions.{copy,codeBlockCopy,regenerate,edit,fallback}` | `boolean` | `true`, except `fallback: false` | Action bar under messages. Regenerate and edit show only when the connector supports them. See [message actions](./message-actions.md). |
 
 ## Setting at runtime
 

@@ -8,9 +8,11 @@ import { DataTable } from "./components/DataTable";
 import { WeatherCard } from "./components/WeatherCard";
 import { ApprovalForm } from "./components/ApprovalForm";
 import type { LinkMetadata } from "@chativa/ui";
+import { bindDummyDemoHooks, getDummyOptions } from "./sandbox/connectorSwap";
+import { registerSandboxMessageActions } from "./sandbox/messageActions";
 
 // Register connector BEFORE UI loads so connectedCallback can find it
-const connector = new DummyConnector({ replyDelay: 500 });
+const connector = new DummyConnector(getDummyOptions());
 ConnectorRegistry.register(connector);
 
 // Register custom GenUI components
@@ -23,6 +25,9 @@ GenUIRegistry.register("order-card", OrderCard);
 GenUIRegistry.register("data-table", DataTable);
 GenUIRegistry.register("weather-card", WeatherCard);
 GenUIRegistry.register("approval-form", ApprovalForm);
+
+// Custom message actions (Share / Report / Translate) in the bar under messages
+registerSandboxMessageActions();
 
 // Install link preview extension by default
 ExtensionRegistry.install(new LinkPreviewExtension({ maxUrlsPerMessage: 3 }));
@@ -80,20 +85,13 @@ const metadataFetcher = async (url: string): Promise<LinkMetadata> => {
   }
 };
 
-// Expose inject helper for sandbox demo buttons
-(window as unknown as Record<string, unknown>).chativaInject = connector.injectMessage.bind(connector);
-
-// Expose genui trigger — calls the appropriate stream demo on the connector
-(window as unknown as Record<string, unknown>).chativaGenUI = (command: string) => {
-  connector.triggerGenUI(command);
-};
+// Expose inject / GenUI / tool-call demo helpers for the sandbox demo buttons.
+// Re-bound by `swapConnector` whenever the Connector or Rules tab rebuilds
+// the dummy, so the buttons always target the live instance.
+bindDummyDemoHooks(connector);
 
 // Expose metadata fetcher for link preview cards
 (window as unknown as Record<string, unknown>).chativaMetadataFetcher = metadataFetcher;
-
-// Expose tool-call demo trigger for sandbox demo buttons
-(window as unknown as Record<string, unknown>).chativaToolDemo = (scenario: "success" | "error" | "multi" | "genui") =>
-  connector.triggerToolCalls(scenario);
 
 // Dynamic import ensures custom elements are defined after registration
 import("@chativa/ui");

@@ -1,0 +1,105 @@
+{
+  "greeting": "您好",
+  "welcome": "歡迎，{{name}}！",
+  "header": {
+    "title": "Chativa 聊天機器人",
+    "status": {
+      "connecting": "連線中…",
+      "connected": "線上",
+      "error": "連線錯誤",
+      "disconnected": "已中斷連線",
+      "offline": "離線"
+    },
+    "fullscreen": {
+      "enter": "進入全螢幕",
+      "exit": "結束全螢幕"
+    },
+    "close": "關閉",
+    "minimize": "最小化",
+    "search": {
+      "toggle": "搜尋",
+      "placeholder": "搜尋訊息…",
+      "clear": "清除搜尋"
+    }
+  },
+  "input": {
+    "placeholder": "輸入訊息…",
+    "send": "傳送訊息",
+    "emoji": "表情符號",
+    "attachFile": "附加檔案",
+    "removeFile": "移除 {{name}}",
+    "dropHere": "將檔案拖放到這裡",
+    "dropHereSubtitle": "放開即可附加"
+  },
+  "messageList": {
+    "connecting": "連線中…",
+    "emptyTitle": "有什麼可以幫您的嗎？",
+    "emptySubtitle": "傳送訊息即可開始。",
+    "newMessage": "新訊息",
+    "loadMore": "載入先前的訊息",
+    "errorTitle": "連線中斷",
+    "errorSubtitle": "無法重新連線，請再試一次。",
+    "retry": "再試一次",
+    "reconnecting": "重新連線中…（第 {{attempt}} 次嘗試）",
+    "searchEmpty": "沒有符合搜尋條件的訊息。",
+    "searchResult": "找到 {{count}} 筆結果",
+    "loadingHistory": "正在載入先前的訊息…",
+    "ariaLabel": "聊天訊息",
+    "typingIndicator": "助理正在輸入"
+  },
+  "message": {
+    "from": {
+      "bot": "助理",
+      "user": "您"
+    },
+    "likeButton": "喜歡這則訊息",
+    "dislikeButton": "不喜歡這則訊息",
+    "statusSending": "傳送中",
+    "statusSent": "已傳送",
+    "statusRead": "已讀",
+    "actionsLabel": "訊息操作",
+    "copy": "複製",
+    "copyCode": "複製程式碼",
+    "copied": "已複製",
+    "regenerate": "重新產生回答",
+    "edit": "編輯訊息",
+    "editLabel": "編輯你的訊息",
+    "editSave": "傳送",
+    "editCancel": "取消",
+    "moreActions": "更多操作"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "搜尋表情符號…",
+    "noResults": "沒有結果"
+  },
+  "chatButton": {
+    "open": "開啟聊天",
+    "close": "關閉聊天"
+  },
+  "widget": {
+    "title": "聊天",
+    "disclaimer": "AI 產生的內容可能不準確。"
+  },
+  "survey": {
+    "title": "您對這次的服務滿意嗎？",
+    "ratingLabel": "為您的體驗評分",
+    "commentPlaceholder": "我們可以改進哪些地方？",
+    "commentRequired": "請告訴我們哪裡出了問題",
+    "submit": "送出",
+    "skip": "略過",
+    "thankYouTitle": "我們已收到您的意見回饋！",
+    "thankYouBody": "感謝您寶貴的想法與意見。",
+    "close": "關閉",
+    "starLabel_other": "{{count}} 顆星"
+  },
+  "toolCalls": {
+    "running": "執行中",
+    "completed": "已完成",
+    "error": "錯誤",
+    "parameters": "參數",
+    "result": "結果",
+    "summary_other": "{{count}} 項操作",
+    "failed": "{{count}} 項失敗",
+    "ariaToggle": "展開/收合工具呼叫詳細資料"
+  }
+}

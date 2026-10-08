@@ -62,6 +62,8 @@ Every mekik transport carries the same JSON frames. The connector routes them li
 | `client_tools` | client → server | Sent by `registerTool()` / `unregisterTool()` — replaces this connection's declared toolset. |
 | `error` | server → client | Auth rejection — surfaced via `onAuthError`, followed by close code 4401. |
 | `survey` | client → server | `sendSurvey()` payload. |
+| `regenerate` | client → server | `regenerate()` — `{ type: "regenerate", messageId }`. Only sent to servers that advertise it. |
+| `edit` | client → server | `editMessage()` — `{ type: "edit", messageId, data }`. Only sent to servers that advertise it. |
 
 Unknown frame types and unknown fields are ignored on both sides — that's the protocol's forward-compatibility rule, so a newer server can't break an older client.
 
@@ -257,6 +259,40 @@ The chips are kept visible after the tap (`keepActions`) so the transcript still
     "id": "call-1", "name": "get_weather", "status": "completed", "result": "18°C" } }
 ```
 
+## Skills
+
+mekik servers can give their agents [Agent Skills](https://agentskills.io) (mekik `PROTOCOL.md` §12). The connector implements the whole client side of that contract.
+
+**Server catalog.** Right after `welcome` the server announces its skill catalog (level-1 summaries: name, description, tags). The connector caches it per URL and hands the hash back on reconnect (`hello.skillsHash`), so an unchanged catalog is never re-sent — the same ETag handshake as server-defined GenUI components:
+
+```ts
+connector.onSkills((skills) => renderSkillBadges(skills)); // replayed if it already arrived
+connector.serverSkills; // the current level-1 summaries (empty before the first catalog)
+```
+
+**Skill traces.** When the agent loads a skill, a persistent `skill` frame travels with the transcript — like `tool_call`, the same `data.id` is re-sent on replay, so treat deliveries as upserts:
+
+```ts
+connector.onSkillUse((use) => {
+  // { id, name, status: "loaded" | "error", source?, error? }
+});
+```
+
+**Client-declared skills.** The page can declare inline skills of its own — a house style, the names its screens use. Declarations travel in `hello.skills` and are re-sent on every reconnect; a `client_skills` frame replaces the set at runtime. The server side is **off by default**: a server that did not opt in (`MekikOptions.clientSkills`) ignores declarations entirely, and a client skill can never shadow a server skill.
+
+```ts
+const connector = new MekikConnector({
+  url: "wss://bot.example.com/chat",
+  skills: [{
+    name: "ui-conventions",
+    description: "How this app names its screens and actions.",
+    instructions: "# UI conventions\nUse the names from the sidebar.",
+  }],
+});
+```
+
+Like tools, the set is **sealed at construction**: `registerSkill` / `unregisterSkill` require `allowDynamicSkills: true`, so injected script cannot rewrite what a server-side model will read.
+
 ## Generative UI
 
 `genui` frames stream an [`AIChunk`](../genui/streaming.md) per `streamId`, mounting a registered GenUI component inline as it arrives. Events fired by that component travel back as `genui_event`, which makes GenUI bidirectional over the same socket:
@@ -333,13 +369,30 @@ connector.unregisterTool("route_scoped");
 connector.clientTools;                                      // frozen definitions, no handlers
 ```
 
+## Regenerate and edit
+
+The connector implements `regenerate()` and `editMessage()`, but the widget only shows the Regenerate and Edit [message actions](../message-actions.md) when the server allows them. The server allows them in its `welcome` frame:
+
+```json
+{ "type": "welcome", "data": { "conversationId": "…", "capabilities": { "regenerate": true, "edit": true } } }
+```
+
+The connector reports this through `onCapabilities`. Before the first `welcome`, and for any `welcome` without `capabilities`, both are off: a server that doesn't support the `regenerate` / `edit` frames would answer them with `bad_request`. Every `welcome` (including after a reconnect) replaces the previous report, so the buttons follow the server you are connected to.
+
+| Action | Frame sent |
+|---|---|
+| Regenerate | `{ "type": "regenerate", "messageId": "<id of the clicked bot bubble>" }` |
+| Edit | `{ "type": "edit", "messageId": "<id of the user message>", "data": { "text": "…" } }` |
+
+> **Server support pending.** The `capabilities` field and the `regenerate` / `edit` frames are not yet part of mekik's PROTOCOL.md. Current mekik servers don't advertise them, so the buttons stay hidden until server support lands.
+
 ## Offline queue
 
 With `queueOfflineMessages: true` (the default) a send that happens while the socket is down is queued and flushed on the next connect. The promise resolves **only when the payload actually reaches the wire**, so the bubble stays on "sending" instead of being stamped "sent" for a message the server never received.
 
 ## Capabilities
 
-Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`, client tools (`tools`, `registerTool` / `unregisterTool` behind `allowDynamicTools`).
+Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`, client tools (`tools`, `registerTool` / `unregisterTool` behind `allowDynamicTools`), `regenerate` / `editMessage` / `onCapabilities` (server-gated, see [Regenerate and edit](#regenerate-and-edit)).
 
 Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation.
 

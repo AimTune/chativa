@@ -1,0 +1,109 @@
+{
+  "greeting": "Hola",
+  "welcome": "¡Te damos la bienvenida, {{name}}!",
+  "header": {
+    "title": "Chatbot de Chativa",
+    "status": {
+      "connecting": "Conectando…",
+      "connected": "En línea",
+      "error": "Error de conexión",
+      "disconnected": "Desconectado",
+      "offline": "Sin conexión"
+    },
+    "fullscreen": {
+      "enter": "Pantalla completa",
+      "exit": "Salir de pantalla completa"
+    },
+    "close": "Cerrar",
+    "minimize": "Minimizar",
+    "search": {
+      "toggle": "Buscar",
+      "placeholder": "Buscar mensajes…",
+      "clear": "Borrar búsqueda"
+    }
+  },
+  "input": {
+    "placeholder": "Escribe un mensaje…",
+    "send": "Enviar mensaje",
+    "emoji": "Emoji",
+    "attachFile": "Adjuntar archivo",
+    "removeFile": "Quitar {{name}}",
+    "dropHere": "Suelta los archivos aquí",
+    "dropHereSubtitle": "Suelta para adjuntar"
+  },
+  "messageList": {
+    "connecting": "Conectando…",
+    "emptyTitle": "¿En qué puedo ayudarte?",
+    "emptySubtitle": "Envía un mensaje para empezar.",
+    "newMessage": "Nuevo mensaje",
+    "loadMore": "Cargar mensajes anteriores",
+    "errorTitle": "Conexión perdida",
+    "errorSubtitle": "No pudimos volver a conectar. Inténtalo de nuevo.",
+    "retry": "Reintentar",
+    "reconnecting": "Reconectando… (intento {{attempt}})",
+    "searchEmpty": "Ningún mensaje coincide con tu búsqueda.",
+    "searchResult": "Resultados encontrados: {{count}}",
+    "loadingHistory": "Cargando mensajes anteriores…",
+    "ariaLabel": "Mensajes del chat",
+    "typingIndicator": "El asistente está escribiendo"
+  },
+  "message": {
+    "from": {
+      "bot": "Asistente",
+      "user": "Tú"
+    },
+    "likeButton": "Me gusta este mensaje",
+    "dislikeButton": "No me gusta este mensaje",
+    "statusSending": "Enviando",
+    "statusSent": "Enviado",
+    "statusRead": "Leído",
+    "actionsLabel": "Acciones del mensaje",
+    "copy": "Copiar",
+    "copyCode": "Copiar código",
+    "copied": "Copiado",
+    "regenerate": "Regenerar respuesta",
+    "edit": "Editar mensaje",
+    "editLabel": "Edita tu mensaje",
+    "editSave": "Enviar",
+    "editCancel": "Cancelar",
+    "moreActions": "Más acciones"
+  },
+  "emojiPicker": {
+    "searchPlaceholder": "Buscar emoji…",
+    "noResults": "Sin resultados"
+  },
+  "chatButton": {
+    "open": "Abrir chat",
+    "close": "Cerrar chat"
+  },
+  "widget": {
+    "title": "Chat",
+    "disclaimer": "El contenido generado por IA puede ser inexacto."
+  },
+  "survey": {
+    "title": "¿Qué tal lo hicimos?",
+    "ratingLabel": "Valora tu experiencia",
+    "commentPlaceholder": "¿Qué podríamos mejorar?",
+    "commentRequired": "Cuéntanos qué salió mal",
+    "submit": "Enviar",
+    "skip": "Omitir",
+    "thankYouTitle": "¡Hemos recibido tu opinión!",
+    "thankYouBody": "Gracias por tus valiosas ideas y comentarios.",
+    "close": "Cerrar",
+    "starLabel_one": "{{count}} estrella",
+    "starLabel_many": "{{count}} de estrellas",
+    "starLabel_other": "{{count}} estrellas"
+  },
+  "toolCalls": {
+    "running": "En ejecución",
+    "completed": "Completado",
+    "error": "Error",
+    "parameters": "Parámetros",
+    "result": "Resultado",
+    "summary_one": "{{count}} operación",
+    "summary_many": "{{count}} de operaciones",
+    "summary_other": "{{count}} operaciones",
+    "failed": "Fallidas: {{count}}",
+    "ariaToggle": "Mostrar u ocultar los detalles de las llamadas a herramientas"
+  }
+}

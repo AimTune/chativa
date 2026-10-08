@@ -59,7 +59,7 @@ export class GenUITable extends ChativaElement {
     thead th {
       background: #f1f5f9;
       padding: 9px 14px;
-      text-align: left;
+      text-align: start;
       font-weight: 600;
       color: #475569;
       border-bottom: 1px solid #e2e8f0;

@@ -10,6 +10,8 @@ import type {
   GenUIComponentsHandler,
   GenUIComponentDefinition,
   GenUIEventOptions,
+  CapabilitiesHandler,
+  ConnectorCapabilities,
 } from "@chativa/core";
 import type { OutgoingMessage, MessageAction } from "@chativa/core";
 // Value import — deliberately from the `frames` subpath, not the package root:
@@ -94,6 +96,53 @@ export interface MekikClientTool {
 /** The wire shape of a declaration — {@link MekikClientTool} minus the handler. */
 type ClientToolDefinition = Omit<MekikClientTool, "handler">;
 
+/**
+ * One skill this client declares to the mekik server (mekik PROTOCOL.md §12.4):
+ * a house style, the names its screens use — instructions a server-side model
+ * should follow when the task matches. A client has no folder to serve, so the
+ * whole skill travels inline in the declaration (`hello.skills` or a
+ * `client_skills` frame). Ignored entirely by servers that did not opt in
+ * (`MekikOptions.clientSkills`), and a name that collides with a server skill
+ * is dropped server-side — the server's catalog is authoritative.
+ */
+export interface MekikClientSkill {
+  /** 1–64 lowercase letters, digits and single hyphens — the Agent Skills name rule. */
+  name: string;
+  /** What the skill does and when to use it — the whole trigger surface. */
+  description: string;
+  /** The markdown instructions a model reads when it loads the skill. */
+  instructions: string;
+  /** Server-side filter labels (§11.2 tag rule). */
+  tags?: string[];
+}
+
+/** Level-1 summary from the server's `skills` catalog frame (mekik PROTOCOL.md §12.2). */
+export interface MekikSkillSummary {
+  name: string;
+  description: string;
+  tags?: string[];
+  /** Stamped by the server: where the skill came from. */
+  source?: "server" | "client";
+}
+
+/** One skill use, as it travels on a persistent `skill` frame (mekik PROTOCOL.md §12.5). */
+export interface MekikSkillUse {
+  /** Replay-stable id — a resume re-emits the same id, so upsert rather than append. */
+  id: string;
+  name: string;
+  status: "loaded" | "error";
+  source?: "server" | "client";
+  error?: string;
+}
+
+/** Receives the server's skill catalog (level-1 summaries) when it arrives or changes. */
+export type MekikSkillsHandler = (skills: MekikSkillSummary[]) => void;
+/** Receives each `skill` frame — which skill the agent is following, like a tool trace. */
+export type MekikSkillUseHandler = (use: MekikSkillUse) => void;
+
+/** The Agent Skills name rule (§12.1): 1–64 lowercase letters, digits, single hyphens. */
+const SKILL_NAME = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+
 function deepFreeze<T>(value: T): T {
   if (typeof value === "object" && value !== null) {
     for (const v of Object.values(value)) deepFreeze(v);
@@ -175,6 +224,21 @@ export interface MekikConnectorOptions {
    * running (e.g. route-scoped tools in a SPA).
    */
   allowDynamicTools?: boolean;
+  /**
+   * Skills this client declares to the server (mekik PROTOCOL.md §12.4) —
+   * inline SKILL.md-style instructions a server-side model follows when the
+   * task matches. Declared in the `hello` handshake and re-sent on every
+   * (re)connect. Ignored by servers that did not opt in (`clientSkills`).
+   */
+  skills?: MekikClientSkill[];
+  /**
+   * Allow {@link MekikConnector.registerSkill} / {@link MekikConnector.unregisterSkill}
+   * after construction. Off by default for the same reason as
+   * {@link MekikConnectorOptions.allowDynamicTools}: a skill's description and
+   * instructions are text a server-side model will follow, so with the default
+   * the set is sealed at construction and held in true-private fields.
+   */
+  allowDynamicSkills?: boolean;
 }
 
 /** Identity assigned/confirmed by the server's `welcome` frame. */
@@ -237,7 +301,15 @@ export class MekikConnector implements IConnector {
   private options: Required<
     Omit<
       MekikConnectorOptions,
-      "userId" | "conversationId" | "auth" | "token" | "onAuthError" | "tools" | "allowDynamicTools"
+      | "userId"
+      | "conversationId"
+      | "auth"
+      | "token"
+      | "onAuthError"
+      | "tools"
+      | "allowDynamicTools"
+      | "skills"
+      | "allowDynamicSkills"
     >
   > &
     Pick<
@@ -267,6 +339,31 @@ export class MekikConnector implements IConnector {
    * still-open calls are re-announced via `welcome.pending` instead.
    */
   #sessionBaseSeq = 0;
+
+  // ── client skills (mekik PROTOCOL.md §12) ────────────────────────────
+  // Same posture as the tool registry above: frozen clones in true-private
+  // fields, sealed unless `allowDynamicSkills: true` was passed — a skill's
+  // text reaches a server-side model, so page-level script must not be able
+  // to rewrite what this client declared.
+  /** Frozen declaration clones, in declaration order — what `hello.skills` carries. */
+  #skillDefs: readonly MekikClientSkill[] = [];
+  /** Locked unless `allowDynamicSkills: true` was passed at construction. */
+  readonly #allowDynamicSkills: boolean = false;
+  /**
+   * The server's skill catalog (level-1 summaries) for this connection —
+   * replayed to a handler that registers after the frame arrived, like
+   * {@link onGenUIComponents}. Never contains client declarations (§12.2).
+   */
+  private _serverSkills: MekikSkillSummary[] = [];
+  private skillsHandler: MekikSkillsHandler | null = null;
+  /**
+   * Message actions the server allows, from `welcome.data.capabilities`.
+   * Both off until a welcome says otherwise: a server that never advertises
+   * them would answer a `regenerate` / `edit` frame with `bad_request`.
+   */
+  private _messageActions: ConnectorCapabilities = { regenerate: false, editMessage: false };
+  private capabilitiesHandler: CapabilitiesHandler | null = null;
+  private skillUseHandler: MekikSkillUseHandler | null = null;
 
   /** The `auth` adapter, or one desugared from the legacy `token` option. */
   private readonly authProvider: MekikAuthProvider | undefined;
@@ -326,9 +423,9 @@ export class MekikConnector implements IConnector {
   private generation = 0;
 
   constructor(options: MekikConnectorOptions) {
-    // Tools never land on `this.options` (a soft-private field): the defs and
-    // handlers go straight into the # registry below.
-    const { tools, allowDynamicTools, ...rest } = options;
+    // Tools and skills never land on `this.options` (a soft-private field):
+    // the defs and handlers go straight into the # registries below.
+    const { tools, allowDynamicTools, skills, allowDynamicSkills, ...rest } = options;
     this.options = {
       protocols: [],
       reconnect: true,
@@ -343,6 +440,8 @@ export class MekikConnector implements IConnector {
     };
     this.#allowDynamicTools = allowDynamicTools === true;
     for (const tool of tools ?? []) this.#storeTool(tool);
+    this.#allowDynamicSkills = allowDynamicSkills === true;
+    for (const skill of skills ?? []) this.#storeSkill(skill);
     // Captured before `welcome` can adopt a server-minted id: only an
     // app-configured userId scopes the storage key (see storageKey()).
     this.configuredUserId = options.userId;
@@ -441,6 +540,139 @@ export class MekikConnector implements IConnector {
   #announceTools(): void {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: "client_tools", tools: this.#toolDefs }));
+    }
+  }
+
+  // ── client skills API (mekik PROTOCOL.md §12) ────────────────────────
+
+  /** The skills this client declared (frozen clones). */
+  get clientSkills(): readonly MekikClientSkill[] {
+    return this.#skillDefs;
+  }
+
+  /**
+   * The server's skill catalog for this connection — level-1 summaries from the
+   * `skills` frame (or the local cache while the hash is unchanged). Empty
+   * before the first catalog arrives, and never includes client declarations.
+   */
+  get serverSkills(): readonly MekikSkillSummary[] {
+    return this._serverSkills;
+  }
+
+  /**
+   * Declare (or replace) one skill at runtime and re-announce the full set with
+   * a `client_skills` frame (§12.4 — the list is the connection's whole new
+   * set). Requires {@link MekikConnectorOptions.allowDynamicSkills}; with the
+   * default the set is sealed at construction, same as tools.
+   */
+  registerSkill(skill: MekikClientSkill): void {
+    this.#assertDynamicSkillsAllowed();
+    this.#storeSkill(skill);
+    this.#announceSkills();
+  }
+
+  /** Withdraw one skill at runtime and re-announce. Same lock as {@link registerSkill}. */
+  unregisterSkill(name: string): void {
+    this.#assertDynamicSkillsAllowed();
+    if (!this.#skillDefs.some((d) => d.name === name)) return;
+    this.#skillDefs = this.#skillDefs.filter((d) => d.name !== name);
+    // `[]` is meaningful on the wire: it withdraws every declared skill.
+    this.#announceSkills();
+  }
+
+  /**
+   * The server's catalog, delivered when it arrives or changes. A catalog that
+   * already arrived (or was restored from cache during the handshake) is
+   * replayed immediately, like {@link onGenUIComponents}.
+   */
+  /**
+   * Which message actions the server allows. Announced immediately (both off
+   * before the first `welcome`) and again on every `welcome`, so the Regenerate
+   * and Edit buttons appear only on servers that advertise
+   * `capabilities: { regenerate: true, edit: true }`.
+   */
+  onCapabilities(callback: CapabilitiesHandler): void {
+    this.capabilitiesHandler = callback;
+    callback({ ...this._messageActions });
+  }
+
+  /**
+   * Ask the server to re-run the latest turn and stream a new reply:
+   * `{ type: "regenerate", messageId }`. Only offered when the server's
+   * `welcome` advertised `capabilities.regenerate`.
+   */
+  async regenerate(messageId: string): Promise<void> {
+    await this.sendOrQueue(JSON.stringify({ type: "regenerate", messageId }));
+  }
+
+  /**
+   * Replace the latest user message and re-run the turn from it:
+   * `{ type: "edit", messageId, data }`. Only offered when the server's
+   * `welcome` advertised `capabilities.edit`.
+   */
+  async editMessage(messageId: string, message: OutgoingMessage): Promise<void> {
+    await this.sendOrQueue(JSON.stringify({ type: "edit", messageId, data: message.data }));
+  }
+
+  onSkills(callback: MekikSkillsHandler): void {
+    this.skillsHandler = callback;
+    if (this._serverSkills.length > 0) callback([...this._serverSkills]);
+  }
+
+  /**
+   * Each persistent `skill` frame (§12.5) — which skill the agent loaded while
+   * answering, the way `onToolCall` traces tool use. The id is replay-stable:
+   * a reconnect replays the same id, so treat deliveries as upserts.
+   */
+  onSkillUse(callback: MekikSkillUseHandler): void {
+    this.skillUseHandler = callback;
+  }
+
+  #assertDynamicSkillsAllowed(): void {
+    if (!this.#allowDynamicSkills) {
+      throw new Error(
+        "MekikConnector: the skill set is sealed. Pass `allowDynamicSkills: true` at construction to change skills at runtime.",
+      );
+    }
+  }
+
+  /** Validate (§12.4 sanitization rules), deep-clone, freeze, and store one skill. */
+  #storeSkill(skill: MekikClientSkill): void {
+    if (typeof skill?.name !== "string" || !SKILL_NAME.test(skill.name) || skill.name.length > 64) {
+      throw new Error(
+        "MekikConnector: a client skill name must be 1–64 lowercase letters, digits and single hyphens.",
+      );
+    }
+    const description = typeof skill.description === "string" ? skill.description.trim() : "";
+    if (description.length === 0 || description.length > 1024) {
+      throw new Error(
+        `MekikConnector: client skill "${skill.name}" needs a non-empty description of at most 1024 characters.`,
+      );
+    }
+    if (typeof skill.instructions !== "string") {
+      throw new Error(`MekikConnector: client skill "${skill.name}" needs string instructions.`);
+    }
+    const def = deepFreeze(
+      JSON.parse(
+        JSON.stringify({
+          name: skill.name,
+          description,
+          instructions: skill.instructions,
+          ...(skill.tags !== undefined ? { tags: skill.tags } : {}),
+        }),
+      ) as MekikClientSkill,
+    );
+    const existing = this.#skillDefs.findIndex((d) => d.name === def.name);
+    this.#skillDefs =
+      existing >= 0
+        ? this.#skillDefs.map((d, i) => (i === existing ? def : d))
+        : [...this.#skillDefs, def];
+  }
+
+  /** Replace the server's view of this connection's skill set (live socket only — `hello` covers reconnects). */
+  #announceSkills(): void {
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type: "client_skills", skills: this.#skillDefs }));
     }
   }
 
@@ -835,6 +1067,16 @@ export class MekikConnector implements IConnector {
       }
       if (this.options.resumeConversation) this.saveSession();
 
+      // Message actions the server allows (regenerate / edit). Absent means
+      // not supported — re-announce so a reconnect to a different server
+      // version can switch the buttons on or off.
+      const caps = (data.data as Record<string, unknown> | undefined)?.capabilities;
+      this._messageActions = {
+        regenerate: isRecord(caps) && caps.regenerate === true,
+        editMessage: isRecord(caps) && caps.edit === true,
+      };
+      this.capabilitiesHandler?.({ ...this._messageActions });
+
       // Frames replayed after this welcome carry seq ≤ the server's current
       // watermark — that boundary is what keeps historic (already-resolved)
       // client tool calls from re-executing (§11.3).
@@ -873,6 +1115,36 @@ export class MekikConnector implements IConnector {
     // message is sent as a normal turn, not a stray resume.
     if (data?.type === "interrupt_resolved") {
       this.openInterrupts.delete(String(data.id ?? ""));
+      return;
+    }
+
+    // Server skill catalog (§12.2): a transient frame right after `welcome`.
+    // `unchanged` confirms the cached copy already restored during the
+    // handshake; otherwise store, cache by hash, and notify — the same ETag
+    // dance as `genui_components`.
+    if (data?.type === "skills") {
+      if (data.unchanged === true) return;
+      const skills = Array.isArray(data.skills)
+        ? (data.skills as MekikSkillSummary[])
+        : [];
+      this._serverSkills = skills;
+      if (typeof data.hash === "string" && data.hash) this.saveSkillCatalog(data.hash, skills);
+      this.skillsHandler?.([...skills]);
+      return;
+    }
+
+    // Persistent `skill` trace (§12.5): which skill the agent loaded. The id is
+    // replay-stable, so a reconnect replays the same id — upsert, not append.
+    // Never surfaced as a chat bubble; apps subscribe via onSkillUse().
+    if (data?.type === "skill") {
+      const d = (data.data ?? {}) as Record<string, unknown>;
+      if (
+        typeof d.id === "string" &&
+        typeof d.name === "string" &&
+        (d.status === "loaded" || d.status === "error")
+      ) {
+        this.skillUseHandler?.(d as unknown as MekikSkillUse);
+      }
       return;
     }
 
@@ -1022,6 +1294,15 @@ export class MekikConnector implements IConnector {
       this.serverComponents = cached.components;
       this.genUIComponentsHandler?.([...cached.components]);
     }
+    // Same ETag handshake for the server's skill catalog (§12.2): restore the
+    // cached summaries now, hand the hash back, and the server answers
+    // `unchanged` instead of re-sending an identical catalog.
+    const cachedSkills = this.loadSkillCatalog();
+    const skillsHash = cachedSkills?.hash;
+    if (cachedSkills && cachedSkills.skills.length > 0) {
+      this._serverSkills = cachedSkills.skills;
+      this.skillsHandler?.([...cachedSkills.skills]);
+    }
     // mekik/1 handshake — all fields optional, server fills the gaps.
     // `token` is only present when the server authenticates (§2.1).
     ws.send(
@@ -1037,11 +1318,43 @@ export class MekikConnector implements IConnector {
         // Client tools (§11.1): the definitions only — handlers stay local.
         // Re-sent on every (re)connect, since declarations are per-connection.
         ...(this.#toolDefs.length > 0 ? { tools: this.#toolDefs } : {}),
+        // Client skills (§12.4): the connection's whole set, re-declared on
+        // every (re)connect. `skillsHash` is the catalog ETag (§12.2).
+        ...(skillsHash ? { skillsHash } : {}),
+        ...(this.#skillDefs.length > 0 ? { skills: this.#skillDefs } : {}),
       }),
     );
     this.flushQueue();
     this.connectHandler?.();
     resolve();
+  }
+
+  // ── skill catalog cache (§12.2's ETag handshake) ─────────────────────
+
+  private skillCacheKey(): string {
+    return `chativa:mekik:skills:${this.options.url}`;
+  }
+
+  private loadSkillCatalog(): { hash: string; skills: MekikSkillSummary[] } | null {
+    try {
+      if (typeof localStorage === "undefined") return null;
+      const raw = localStorage.getItem(this.skillCacheKey());
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as { hash?: unknown; skills?: unknown };
+      if (typeof parsed.hash !== "string" || !Array.isArray(parsed.skills)) return null;
+      return { hash: parsed.hash, skills: parsed.skills as MekikSkillSummary[] };
+    } catch {
+      return null;
+    }
+  }
+
+  private saveSkillCatalog(hash: string, skills: MekikSkillSummary[]): void {
+    try {
+      if (typeof localStorage === "undefined") return;
+      localStorage.setItem(this.skillCacheKey(), JSON.stringify({ hash, skills }));
+    } catch {
+      /* storage unavailable — the server just re-sends the catalog */
+    }
   }
 
   private storageKey(): string {

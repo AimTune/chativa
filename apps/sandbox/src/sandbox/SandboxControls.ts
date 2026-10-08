@@ -10,6 +10,7 @@ import {
 
 import "./sections/AppearanceSection";
 import "./sections/ConnectorSection";
+import "./sections/RulesSection";
 import "./sections/ExtensionsSection";
 import "./sections/FeaturesSection";
 import "./sections/MessagesSection";
@@ -18,10 +19,14 @@ import "./sections/TypingSection";
 import "./sections/ActionsSection";
 import "./sections/SurveySection";
 import "./sections/ConfigSection";
+import "./sections/PreviewSection";
+import "./PreviewStage";
+import { resetPreview } from "./previewState";
 
 type TabId =
   | "appearance"
   | "connector"
+  | "rules"
   | "extensions"
   | "features"
   | "messages"
@@ -29,7 +34,8 @@ type TabId =
   | "typing"
   | "survey"
   | "actions"
-  | "config";
+  | "config"
+  | "preview";
 
 interface TabDef {
   id: TabId;
@@ -43,6 +49,10 @@ interface TabDef {
    * actions, connector, config) leave it unset and the Reset button hides.
    */
   reset?: DeepPartial<ThemeConfig>;
+  /** Extra non-theme reset work for this tab (shows the Reset button too). */
+  onReset?: () => void;
+  /** Hide this tab on viewports at or below 768 px. */
+  wideOnly?: boolean;
 }
 
 /**
@@ -99,6 +109,12 @@ const TABS: TabDef[] = [
     docPath: "connectors/overview.md",
   },
   {
+    id: "rules",
+    label: "Rules",
+    icon: svg`<path d="M4 6h10M4 12h7M4 18h10"/><path d="M17 9l3 3-3 3"/>`,
+    docPath: "connectors/dummy.md",
+  },
+  {
     id: "extensions",
     label: "Extensions",
     icon: svg`<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><path d="M17 13v4a1 1 0 0 1-1 1h-4"/><path d="M13 19h4"/><path d="M15 17v4"/>`,
@@ -147,6 +163,14 @@ const TABS: TabDef[] = [
     label: "Config",
     icon: svg`<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>`,
     docPath: "configuration.md",
+  },
+  {
+    id: "preview",
+    label: "Preview",
+    icon: svg`<rect x="2" y="4" width="14" height="11" rx="1.5"/><rect x="17" y="8" width="5" height="10" rx="1"/><path d="M6 19h6M9 15v4"/>`,
+    docPath: "sandbox.md",
+    onReset: resetPreview,
+    wideOnly: true,
   },
 ];
 
@@ -411,6 +435,7 @@ export class SandboxControls extends LitElement {
         flex-shrink: 0;
         min-width: 64px;
       }
+      .tab.tab-wide-only { display: none; }
       .rail-divider {
         width: 1px;
         height: 28px;
@@ -429,10 +454,12 @@ export class SandboxControls extends LitElement {
 
   private _resetTab() {
     const def = this._activeTabDef;
+    def.onReset?.();
     if (def.reset) chatStore.getState().setTheme(def.reset);
   }
 
   private _resetAll() {
+    resetPreview();
     chatStore.getState().setTheme(FULL_RESET);
     chatStore.getState().resetSession();
     messageStore.getState().clear();
@@ -473,7 +500,7 @@ export class SandboxControls extends LitElement {
           <nav class="tab-rail" role="tablist">
             ${TABS.map((t) => html`
               <button
-                class="tab ${this._activeTab === t.id ? "active" : ""}"
+                class="tab ${this._activeTab === t.id ? "active" : ""} ${t.wideOnly ? "tab-wide-only" : ""}"
                 role="tab"
                 aria-selected=${this._activeTab === t.id}
                 title=${t.label}
@@ -526,7 +553,7 @@ export class SandboxControls extends LitElement {
                   <span>Docs</span>
                   <svg viewBox="0 0 24 24"><path d="M14 3h7v7"/><path d="M21 3l-9 9"/><path d="M21 14v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h6"/></svg>
                 </a>
-                ${tab.reset
+                ${tab.reset || tab.onReset
                   ? html`<button
                       class="toolbar-btn"
                       title="Reset every field this tab controls"
@@ -544,6 +571,9 @@ export class SandboxControls extends LitElement {
             </div>
             <div class="tab-pane ${this._activeTab === "connector" ? "active" : ""}">
               <sandbox-connector-section></sandbox-connector-section>
+            </div>
+            <div class="tab-pane ${this._activeTab === "rules" ? "active" : ""}">
+              <sandbox-rules-section></sandbox-rules-section>
             </div>
             <div class="tab-pane ${this._activeTab === "extensions" ? "active" : ""}">
               <sandbox-extensions-section></sandbox-extensions-section>
@@ -568,6 +598,9 @@ export class SandboxControls extends LitElement {
             </div>
             <div class="tab-pane ${this._activeTab === "config" ? "active" : ""}">
               <sandbox-config-section></sandbox-config-section>
+            </div>
+            <div class="tab-pane ${this._activeTab === "preview" ? "active" : ""}">
+              <sandbox-preview-section></sandbox-preview-section>
             </div>
           </div>
 

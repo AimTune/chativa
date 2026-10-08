@@ -1,0 +1,70 @@
+{
+  "name": "@chativa/svelte",
+  "version": "0.9.0",
+  "description": "Chativa Svelte — typed Svelte 5 components (ChatIva, ChatBotButton, ChativaProvider), readable stores and an SSR-safe registerChativa() for Svelte/SvelteKit apps.",
+  "author": "Hamza Agar",
+  "license": "MIT",
+  "type": "module",
+  "svelte": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "keywords": [
+    "chativa",
+    "chat",
+    "svelte",
+    "sveltekit",
+    "web-component",
+    "wrapper"
+  ],
+  "homepage": "https://github.com/AimTune/chativa#readme",
+  "bugs": {
+    "url": "https://github.com/AimTune/chativa/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AimTune/chativa.git"
+  },
+  "scripts": {
+    "build": "svelte-package --input src --output dist --tsconfig tsconfig.build.json && node -e \"require('fs').rmSync('dist/__tests__', { recursive: true, force: true })\"",
+    "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings"
+  },
+  "dependencies": {
+    "@chativa/core": "workspace:*",
+    "@chativa/ui": "workspace:*"
+  },
+  "peerDependencies": {
+    "@chativa/core": ">=0.0.1",
+    "@chativa/genui": ">=0.0.1",
+    "svelte": "^5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@chativa/genui": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@chativa/genui": "workspace:*",
+    "@sveltejs/package": "^2.5.8",
+    "@sveltejs/vite-plugin-svelte": "^6.2.4",
+    "@testing-library/svelte": "^5.4.2",
+    "@vitest/coverage-v8": "^4.0.18",
+    "jsdom": "^28.1.0",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.6",
+    "typescript": "~5.8.3",
+    "vite": "^7.0.3",
+    "vitest": "^4.0.18"
+  }
+}
