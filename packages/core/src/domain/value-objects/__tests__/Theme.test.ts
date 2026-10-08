@@ -71,3 +71,35 @@ describe("themeToCSS", () => {
     expect(css["--chativa-surface"]).toBeUndefined();
   });
 });
+
+
+describe("menu button text alignment", () => {
+  it("keeps the default CSS fallback when alignment is unset", () => {
+    expect(themeToCSS(DEFAULT_THEME)["--chativa-button-text-align"]).toBeUndefined();
+  });
+
+  it.each(["left", "center", "right"] as const)("maps %s alignment without changing the base theme", (alignment) => {
+    const theme = mergeTheme(DEFAULT_THEME, { buttonTextAlign: alignment });
+    expect(themeToCSS(theme)["--chativa-button-text-align"]).toBe(alignment);
+    expect(DEFAULT_THEME.buttonTextAlign).toBeUndefined();
+  });
+});
+
+
+describe("menu button width", () => {
+  it("leaves automatic sizing to CSS when unset", () => {
+    expect(themeToCSS(DEFAULT_THEME)["--chativa-button-width"]).toBeUndefined();
+  });
+
+  it("maps fixed width and preserves unrelated theme settings", () => {
+    const theme = mergeTheme(DEFAULT_THEME, { buttonWidth: "280px", buttonTextAlign: "left" });
+    expect(themeToCSS(theme)["--chativa-button-width"]).toBe("280px");
+    expect(themeToCSS(theme)["--chativa-button-text-align"]).toBe("left");
+    expect(DEFAULT_THEME.buttonWidth).toBeUndefined();
+  });
+
+  it("restores intrinsic sizing with explicit auto", () => {
+    const theme = mergeTheme(DEFAULT_THEME, { buttonWidth: "auto" });
+    expect(themeToCSS(theme)["--chativa-button-width"]).toBe("max-content");
+  });
+});

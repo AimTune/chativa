@@ -70,6 +70,8 @@ Full reference (all fields, defaults, enums, and constraints) lives in the schem
 | `layout.horizontalSpace / verticalSpace` | `"1"` … `"5"` | `"2"` | Panel ↔ viewport / panel ↔ button gaps. |
 | `windowMode` | `popup \| side-panel \| fullscreen \| inline` | `popup` | Presentation style. See [theming.md → Window modes](./theming.md#window-modes). |
 | `allowFullscreen` | `boolean` | `true` | Show fullscreen toggle in the header. |
+| `buttonWidth` | `string` | `"auto"` | Shared menu button width. Fits the longest label by default; accepts CSS lengths such as `"280px"`. Clamped to available space. |
+| `buttonTextAlign` | `"left" \| "center" \| "right"` | `"center"` | Text alignment for buttons-message labels, including wrapped lines. |
 | `showMessageStatus` | `boolean` | `true` | Tick indicators on user messages. |
 | `enableSearch` | `boolean` | `true` | Header search button. |
 | `enableMultiConversation` | `boolean` | `false` | Conversation list view. Requires connector hooks. See [multi-conversation.md](./multi-conversation.md). |

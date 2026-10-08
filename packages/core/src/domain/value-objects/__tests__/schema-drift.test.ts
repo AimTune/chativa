@@ -36,6 +36,8 @@ import type {
 // complain if they drift.
 
 const EXPECTED_THEME: { [K in keyof Required<ThemeConfig>]: true } = {
+  buttonTextAlign: true,
+  buttonWidth: true,
   colors: true,
   position: true,
   positionMargin: true,

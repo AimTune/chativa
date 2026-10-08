@@ -6,6 +6,8 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "buttonWidth": { "type": "string", "default": "auto", "description": "Shared buttons-message width as a CSS length (e.g. 280px or 18rem). Unset or auto fits the longest label. Clamped to available space." },
+    "buttonTextAlign": { "type": "string", "enum": ["left", "center", "right"], "default": "center", "description": "Text alignment of buttons-message labels, including wrapped lines." },
 
     "colors": {
       "type": "object",

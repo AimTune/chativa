@@ -79,6 +79,7 @@ export class ButtonsMessage extends LitElement {
     }
 
     .content {
+      min-width: 0;
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -113,10 +114,15 @@ export class ButtonsMessage extends LitElement {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      width: 220px;
+      width: var(--chativa-button-width, max-content);
+      max-width: 100%;
+      align-self: flex-start;
     }
 
     .action-btn {
+      box-sizing: border-box;
+      min-width: 0;
+      overflow-wrap: anywhere;
       width: 100%;
       padding: 9px 14px;
       background: #ffffff;
@@ -126,7 +132,7 @@ export class ButtonsMessage extends LitElement {
       font-size: 0.875rem;
       font-weight: 500;
       cursor: pointer;
-      text-align: center;
+      text-align: var(--chativa-button-text-align, center);
       font-family: inherit;
       transition: background 0.15s, color 0.15s, opacity 0.15s;
     }

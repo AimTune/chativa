@@ -45,7 +45,17 @@ export const ChatbotMixin = <T extends Constructor<LitElement>>(
     /** Push ThemeConfig colors onto the host element as CSS custom properties
      *  so that all `var(--chativa-*)` references inside shadow DOM pick them up. */
     private _applyThemeVars() {
-      const { colors } = chatStore.getState().theme;
+      const { colors, buttonTextAlign, buttonWidth } = chatStore.getState().theme;
+      if (buttonTextAlign) {
+        this.style.setProperty("--chativa-button-text-align", buttonTextAlign);
+      } else {
+        this.style.removeProperty("--chativa-button-text-align");
+      }
+      if (buttonWidth) {
+        this.style.setProperty("--chativa-button-width", buttonWidth === "auto" ? "max-content" : buttonWidth);
+      } else {
+        this.style.removeProperty("--chativa-button-width");
+      }
       this.style.setProperty("--chativa-primary-color", colors.primary);
       this.style.setProperty("--chativa-primary-dark", colors.secondary);
       this.style.setProperty("--chativa-secondary-color", colors.secondary);
