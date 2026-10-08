@@ -69,6 +69,42 @@ chatStore.getState().setTheme({
 });
 ```
 
+## Menu button width
+
+Buttons in each `buttons` message share the width of that list's longest label.
+The width adjusts automatically as labels change, without measuring text in JavaScript.
+On narrow screens the list fits the available space and labels wrap.
+This replaces the previous fixed 220px default.
+
+To set a fixed width:
+
+```ts
+chatStore.getState().setTheme({ buttonWidth: "280px" });
+```
+
+Use `buttonWidth: "auto"` to restore automatic sizing. Fixed widths also remain
+limited to the available space. With the theme option unset, you can instead
+set `--chativa-button-width: 280px` on an ancestor of `<chat-iva>` (use
+`max-content` for automatic sizing through CSS).
+
+## Menu button text alignment
+
+Set `buttonTextAlign` to `"left"`, `"center"`, or `"right"` for `buttons` messages.
+The default is `"center"`; wrapped label lines use the same alignment.
+Card actions and quick replies keep their existing styling.
+
+```ts
+chatStore.getState().setTheme({ buttonTextAlign: "left" });
+```
+
+Alternatively, when the theme leaves this option unset, use the inherited CSS variable:
+
+```css
+chat-iva {
+  --chativa-button-text-align: left;
+}
+```
+
 ## Window modes
 
 | Mode | Behaviour |

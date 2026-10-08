@@ -145,6 +145,10 @@ export type IconName =
 export type IconsConfig = Partial<Record<IconName, string>>;
 
 export interface ThemeConfig {
+    /** Text alignment of buttons-message labels. Default: "center". */
+    buttonTextAlign?: "left" | "center" | "right";
+    /** Shared buttons-message width (CSS length). Unset/auto fits the longest label. */
+    buttonWidth?: string;
     allowFullscreen?: boolean;
     colors: ThemeColors;
     position: ButtonPosition;
@@ -227,6 +231,8 @@ export function themeToCSS(theme: ThemeConfig): Record<string, string> {
         "--chativa-text-color": colors.text,
         "--chativa-border-color": colors.border,
     };
+    if (theme.buttonWidth) vars["--chativa-button-width"] = theme.buttonWidth === "auto" ? "max-content" : theme.buttonWidth;
+    if (theme.buttonTextAlign) vars["--chativa-button-text-align"] = theme.buttonTextAlign;
     if (colors.accent) vars["--chativa-accent-color"] = colors.accent;
     if (colors.surface) vars["--chativa-surface"] = colors.surface;
     if (colors.textSecondary) vars["--chativa-text-secondary"] = colors.textSecondary;
