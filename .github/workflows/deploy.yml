@@ -67,10 +67,10 @@ jobs:
             for(const tag of s.matchAll(/<meta\b[^>]*>/g)){
               const t=tag[0];
               if(!/og:image|twitter:image/.test(t))continue;
-              const c=t.match(/content="([^"]+)"/);
+              const c=t.match(/content=(?:"([^"]*)"|([^\s>]+))/);
               if(!c)continue;
-              const rel=c[1].replace(/^https?:\/\/[^/]+/,"").replace(/^\//,"");
-              if(!fs.existsSync(path.join(root,rel)))missing.push(f+" -> "+c[1]);
+              const rel=(c[1]||c[2]).replace(/^https?:\/\/[^/]+/,"").replace(/^\//,"");
+              if(!fs.existsSync(path.join(root,rel)))missing.push(f+" -> "+(c[1]||c[2]));
             }
           }
           if(missing.length){console.error("MISSING og:image/twitter:image targets:\n"+missing.join("\n"));process.exit(1);}
