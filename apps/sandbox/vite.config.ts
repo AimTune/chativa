@@ -91,6 +91,63 @@ function copyTree(src: string, dest: string): number {
   return n;
 }
 
+/**
+ * The "small token endpoint" a Converger deployment needs: the browser never
+ * sees the channel secret, so the dev server holds it and exchanges it for a
+ * short-lived Converger token (`POST /api/v1/converger/tokens/generate`).
+ *
+ *   POST /api/converger-token   { "userId"?: string, "scope"?: "channel" }
+ *   → 200 { "token": "...", "expires_in": 1800, ... }
+ *
+ * Configure with environment variables when starting `pnpm dev`:
+ *   CONVERGER_URL             Converger base URL (default http://localhost:4000)
+ *   CONVERGER_CHANNEL_SECRET  secret of a `websocket` channel (required)
+ *
+ * Dev server only — a static build has no endpoint. In production this is a
+ * route of your own backend, which also decides who the user is.
+ */
+function convergerTokenPlugin(): Plugin {
+  return {
+    name: "chativa-converger-token",
+    configureServer(server) {
+      server.middlewares.use("/api/converger-token", (req, res) => {
+        const r = res as ServerResponse;
+        const reply = (status: number, body: unknown) => {
+          r.statusCode = status;
+          r.setHeader("Content-Type", "application/json; charset=utf-8");
+          r.end(JSON.stringify(body));
+        };
+        const secret = process.env.CONVERGER_CHANNEL_SECRET;
+        if (!secret) {
+          reply(500, { error: "Set CONVERGER_CHANNEL_SECRET before `pnpm dev`." });
+          return;
+        }
+        let raw = "";
+        (req as IncomingMessage).on("data", (chunk: unknown) => (raw += String(chunk)));
+        (req as IncomingMessage).on("end", () => {
+          let input: { userId?: unknown; scope?: unknown } = {};
+          try {
+            input = raw ? (JSON.parse(raw) as typeof input) : {};
+          } catch {
+            /* a malformed body mints an anonymous end-user token */
+          }
+          const body: Record<string, unknown> = {};
+          if (typeof input.userId === "string" && input.userId) body.user = { id: input.userId };
+          if (input.scope === "channel") body.scope = "channel";
+          const base = (process.env.CONVERGER_URL ?? "http://localhost:4000").replace(/\/+$/, "");
+          fetch(`${base}/api/v1/converger/tokens/generate`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${secret}`, "content-type": "application/json" },
+            body: JSON.stringify(body),
+          })
+            .then(async (upstream) => reply(upstream.status, await upstream.json()))
+            .catch((err: unknown) => reply(502, { error: String(err) }));
+        });
+      });
+    },
+  };
+}
+
 export default defineConfig({
   root: ".",
   // VITE_BASE is set by the GitHub Pages workflow to "/sandbox/"
@@ -105,7 +162,7 @@ export default defineConfig({
       },
     },
   },
-  plugins: [publishSchemasPlugin()],
+  plugins: [publishSchemasPlugin(), convergerTokenPlugin()],
   resolve: {
     alias: {
       // More-specific subpath must precede the bare "@chativa/core" entry, or
@@ -119,6 +176,7 @@ export default defineConfig({
       "@chativa/connector-signalr": resolve(__dirname, "../../packages/connector-signalr/src/index.ts"),
       "@chativa/connector-directline": resolve(__dirname, "../../packages/connector-directline/src/index.ts"),
       "@chativa/connector-mekik": resolve(__dirname, "../../packages/connector-mekik/src/index.ts"),
+      "@chativa/connector-converger": resolve(__dirname, "../../packages/connector-converger/src/index.ts"),
     },
   },
 });

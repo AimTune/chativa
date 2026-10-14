@@ -5,8 +5,13 @@
 
 export type MessageSender = "user" | "bot";
 
-/** Delivery/read status for a message. */
-export type MessageStatus = "sending" | "sent" | "read";
+/**
+ * Delivery/read status for a message. A connector moves it forward only:
+ * `sending` → `sent` (the backend accepted it) → `delivered` (it reached the
+ * recipient's device or channel) → `read`. `failed` means the backend refused
+ * it or never acknowledged it.
+ */
+export type MessageStatus = "sending" | "sent" | "delivered" | "read" | "failed";
 
 /** A tappable chip/button sent alongside a bot message. */
 export interface MessageAction {

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { chatStore, MessageTypeRegistry } from "@chativa/core";
+import { chatStore, MessageTypeRegistry, type MessageStatus } from "@chativa/core";
 import { DefaultTextMessage } from "../DefaultTextMessage";
 import { $, $$, mount, resetGlobals, type LitLike } from "../../__tests__/testUtils";
 
@@ -8,7 +8,7 @@ type TextMsg = LitLike & {
   sender: "bot" | "user";
   timestamp: number;
   hideAvatar: boolean;
-  status: "sending" | "sent" | "read";
+  status: MessageStatus;
   metadataFetcher: ((url: string) => Promise<unknown>) | null;
 };
 
@@ -103,11 +103,26 @@ describe("DefaultTextMessage", () => {
     it.each([
       ["sending", "Sending"],
       ["sent", "Sent"],
+      ["delivered", "Delivered"],
       ["read", "Read"],
+      ["failed", "Not sent"],
     ] as const)("shows the %s indicator on user messages", async (status, label) => {
       const el = await render({ sender: "user", status, messageData: { text: "a" } });
       expect($(el, ".status-icon")!.getAttribute("aria-label")).toBe(label);
       expect($(el, ".status-icon")!.classList.contains("sending")).toBe(status === "sending");
+    });
+
+    it("draws delivered as a muted double tick and read in the primary colour", async () => {
+      const delivered = await render({ sender: "user", status: "delivered", messageData: { text: "a" } });
+      const read = await render({ sender: "user", status: "read", messageData: { text: "a" } });
+      expect(delivered.shadowRoot!.querySelectorAll(".status-icon path")).toHaveLength(2);
+      expect($(delivered, ".status-icon path")!.getAttribute("stroke")).toBe("#94a3b8");
+      expect($(read, ".status-icon path")!.getAttribute("stroke")).toContain("--chativa-primary-color");
+    });
+
+    it("marks a failed message with the failed class", async () => {
+      const el = await render({ sender: "user", status: "failed", messageData: { text: "a" } });
+      expect($(el, ".status-icon")!.classList.contains("failed")).toBe(true);
     });
 
     it("never shows status on bot messages", async () => {

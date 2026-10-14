@@ -1,5 +1,5 @@
 ---
-sidebar_position: 7
+sidebar_position: 8
 title: SSE
 description: Server-Sent Events adapter — EventSource for receive, REST POST for send.
 ---

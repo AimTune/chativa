@@ -80,6 +80,14 @@ describe("MultiConversationEngine", () => {
     await engine.destroy();
   });
 
+  it("init tells the connector which conversation it auto-activated", async () => {
+    const connector = createMockConnector([makeConv("c1", "open"), makeConv("c2", "open")]);
+    const engine = new MultiConversationEngine(connector);
+    await engine.init();
+    expect(connector.switchConversation).toHaveBeenCalledExactlyOnceWith("c1");
+    await engine.destroy();
+  });
+
   it("init prefers 'open' over 'pending' conversations for auto-activation", async () => {
     const convs = [makeConv("pending-1", "pending"), makeConv("open-1", "open")];
     const connector = createMockConnector(convs);
@@ -166,8 +174,9 @@ describe("MultiConversationEngine", () => {
   it("switchTo is a no-op when target is already active", async () => {
     const connector = createMockConnector([makeConv("c1"), makeConv("c2")]);
     const engine = new MultiConversationEngine(connector);
-    await engine.init(); // c1 is active
+    await engine.init(); // c1 is active (the connector was told once)
 
+    vi.mocked(connector.switchConversation!).mockClear();
     await engine.switchTo("c1");
 
     expect(connector.switchConversation).not.toHaveBeenCalled();

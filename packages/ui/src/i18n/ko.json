@@ -57,6 +57,8 @@
     "statusSending": "보내는 중",
     "statusSent": "보냄",
     "statusRead": "읽음",
+    "statusDelivered": "전달됨",
+    "statusFailed": "전송 실패",
     "actionsLabel": "메시지 작업",
     "copy": "복사",
     "copyCode": "코드 복사",

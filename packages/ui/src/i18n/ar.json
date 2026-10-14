@@ -57,6 +57,8 @@
     "statusSending": "جارٍ الإرسال",
     "statusSent": "تم الإرسال",
     "statusRead": "تمت القراءة",
+    "statusDelivered": "تم التسليم",
+    "statusFailed": "لم يتم الإرسال",
     "actionsLabel": "إجراءات الرسالة",
     "copy": "نسخ",
     "copyCode": "نسخ الكود",

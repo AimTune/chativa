@@ -57,6 +57,8 @@
     "statusSending": "送信中",
     "statusSent": "送信済み",
     "statusRead": "既読",
+    "statusDelivered": "配信済み",
+    "statusFailed": "送信できませんでした",
     "actionsLabel": "メッセージの操作",
     "copy": "コピー",
     "copyCode": "コードをコピー",

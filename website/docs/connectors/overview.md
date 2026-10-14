@@ -19,11 +19,12 @@ If "connector" is a new word, read [Concepts → Ports](../concepts.md#3-ports--
 | [`@chativa/connector-signalr`](./signalr.md) | `SignalRConnector` | Microsoft SignalR hub. |
 | [`@chativa/connector-directline`](./directline.md) | `DirectLineConnector` | Azure Bot Framework v3. Maps every activity type. |
 | [`@chativa/connector-mekik`](./mekik.md) | `MekikConnector` | [mekik](https://github.com/AimTune/mekik) servers — Chativa's server-side sibling. Tool calls, GenUI, HITL, watermark resume. |
+| [`@chativa/connector-converger`](./converger.md) | `ConvergerConnector` | [Converger](https://github.com/AimTune/converger) channel hubs. Everything Mekik does, plus acks, delivery / read receipts, uploads, history paging, reactions and the agent panel. |
 | [`@chativa/connector-sse`](./sse.md) | `SseConnector` | Server-Sent Events stream + REST POST. |
 | [`@chativa/connector-http`](./http.md) | `HttpConnector` | Plain REST polling — simplest deployment. |
 | [Custom](./custom.md) | _your class_ | Anything else (REST, MQTT, gRPC, IPC…). |
 
-Tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP and Mekik — see [Rich frames](./frames.md) for the shared JSON vocabulary.
+Tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP, Mekik and Converger — see [Rich frames](./frames.md) for the shared JSON vocabulary.
 
 ## Registering and selecting a connector
 
@@ -41,30 +42,34 @@ Or via `<chat-iva connector="directline">` once it's registered.
 
 All optional methods are feature-detected at runtime. A capability is "advertised" simply by implementing the method.
 
-| Capability | Method | Dummy | WS | SignalR | DirectLine | Mekik | SSE | HTTP |
-|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| Send message | `sendMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Connect / disconnect events | `onConnect` / `onDisconnect` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Typing indicator | `onTyping` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Progress messages | `onProgress` |   |   |   | ✅ |   |   |   |
-| File upload | `sendFile` | ✅ |   |   | ✅ |   |   |   |
-| History pagination | `loadHistory` | ✅ |   |   | ✅ |   | ✅ | ✅ |
-| Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   |   |   |
-| Like / dislike feedback | `sendFeedback` | ✅ |   |   | ✅ |   |   |   |
-| Regenerate reply | `regenerate` | ✅ |   |   |   | ✅¹ |   |   |
-| Edit and resend | `editMessage` | ✅ |   |   |   | ✅¹ |   |   |
-| Server-controlled action permissions | `onCapabilities` | ✅ |   |   |   | ✅ |   |   |
-| End-of-conversation survey | `sendSurvey` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Tool calls | `onToolCall` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
-| GenUI streaming | `onGenUIChunk` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
-| GenUI events back | `receiveComponentEvent` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ |
-| Human-in-the-loop chips | quick-reply chips |   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Multi-conversation | `listConversations` & co | ✅ |   |   |   |   |   |   |
+| Capability | Method | Dummy | WS | SignalR | DirectLine | Mekik | Converger | SSE | HTTP |
+|---|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| Send message | `sendMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Receive | `onMessage` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Connect / disconnect events | `onConnect` / `onDisconnect` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Typing indicator | `onTyping` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Progress messages | `onProgress` |   |   |   | ✅ |   |    |   |   |
+| File upload | `sendFile` | ✅ |   |   | ✅ |   | ✅ |   |   |
+| History pagination | `loadHistory` | ✅ |   |   | ✅ |   | ✅ | ✅ | ✅ |
+| Delivery / read status | `onMessageStatus` | ✅ |   |   | ✅ |   | ✅³ |   |   |
+| Like / dislike feedback | `sendFeedback` | ✅ |   |   | ✅ |   | ✅ |   |   |
+| Regenerate reply | `regenerate` | ✅ |   |   |   | ✅¹ | ✅¹ |   |   |
+| Edit and resend | `editMessage` | ✅ |   |   |   | ✅¹ | ✅¹ |   |   |
+| Server-controlled action permissions | `onCapabilities` | ✅ |   |   |   | ✅ | ✅ |   |   |
+| End-of-conversation survey | `sendSurvey` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅² | ✅ | ✅ |
+| Tool calls | `onToolCall` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ | ✅ |
+| GenUI streaming | `onGenUIChunk` | ✅ | ✅ | ✅ |   | ✅ | ✅ | ✅ | ✅ |
+| GenUI events back | `receiveComponentEvent` | ✅ | ✅ | ✅ |   | ✅ | ✅² | ✅ | ✅ |
+| Human-in-the-loop chips | quick-reply chips |   | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Multi-conversation | `listConversations` & co | ✅ |   |   |   |   | ✅ |   |   |
 
 > Empty cells are connectors that simply don't implement the method — the corresponding UI feature degrades gracefully (e.g. the file upload button hides itself when `sendFile` is missing).
 >
-> ¹ Only once the mekik server's `welcome` frame advertises them. See [mekik → Regenerate and edit](./mekik.md#regenerate-and-edit). Connectors without regenerate / edit can emulate them with [`messageActions.fallback`](../message-actions.md#fallback).
+> ¹ Only once the server's `welcome` frame advertises them (Converger relays the bot's flags). See [mekik → Regenerate and edit](./mekik.md#regenerate-and-edit). Connectors without regenerate / edit can emulate them with [`messageActions.fallback`](../message-actions.md#fallback).
+>
+> ² Forwarded to the conversation's bot channel; until Converger's mekik relay ships ([AimTune/converger#64](https://github.com/AimTune/converger/issues/64)) the hub answers `bot_unavailable`, which the connector ignores.
+>
+> ³ All five statuses: `sending`, `sent`, `delivered`, `read` and `failed` (see [Converger → Receipts](./converger.md#acks-and-receipts)).
 
 ## Configuration
 

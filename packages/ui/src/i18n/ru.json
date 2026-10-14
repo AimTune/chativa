@@ -57,6 +57,8 @@
     "statusSending": "Отправляется",
     "statusSent": "Отправлено",
     "statusRead": "Прочитано",
+    "statusDelivered": "Доставлено",
+    "statusFailed": "Не отправлено",
     "actionsLabel": "Действия с сообщением",
     "copy": "Копировать",
     "copyCode": "Копировать код",

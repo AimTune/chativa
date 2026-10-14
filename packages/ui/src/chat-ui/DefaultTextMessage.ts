@@ -354,14 +354,28 @@ export class DefaultTextMessage extends LitElement {
         </span>
       `;
     }
-    const color = "var(--chativa-primary-color, #4f46e5)";
-    if (this.status === "read") {
-      // Double tick — bot acknowledged the message
+    if (this.status === "failed") {
+      // Exclamation in a circle — the backend refused or never acknowledged it
       return html`
-        <span class="status-icon" aria-label="${t("message.statusRead")}">
+        <span class="status-icon failed" role="img" aria-label="${t("message.statusFailed")}">
+          <svg viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="7" cy="7" r="6" stroke="#dc2626" stroke-width="1.5"/>
+            <path d="M7 3.8v3.8" stroke="#dc2626" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="7" cy="10" r="0.9" fill="#dc2626"/>
+          </svg>
+        </span>
+      `;
+    }
+    const color = "var(--chativa-primary-color, #4f46e5)";
+    if (this.status === "read" || this.status === "delivered") {
+      // Double tick — muted when delivered, primary colour once read
+      const tick = this.status === "read" ? color : "#94a3b8";
+      const label = this.status === "read" ? t("message.statusRead") : t("message.statusDelivered");
+      return html`
+        <span class="status-icon ${this.status}" aria-label="${label}">
           <svg viewBox="0 0 18 12" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M1 6l4 4L13 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6 6l4 4L18 1" stroke=${color} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M1 6l4 4L13 1" stroke=${tick} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M6 6l4 4L18 1" stroke=${tick} stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </span>
       `;
