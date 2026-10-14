@@ -9,7 +9,8 @@
       "@chativa/connector-websocket": ["../../packages/connector-websocket/src/index.ts"],
       "@chativa/connector-signalr":   ["../../packages/connector-signalr/src/index.ts"],
       "@chativa/connector-directline":["../../packages/connector-directline/src/index.ts"],
-      "@chativa/connector-mekik":    ["../../packages/connector-mekik/src/index.ts"]
+      "@chativa/connector-mekik":    ["../../packages/connector-mekik/src/index.ts"],
+      "@chativa/connector-converger":["../../packages/connector-converger/src/index.ts"]
     }
   },
   "include": ["src"]

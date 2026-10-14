@@ -8,7 +8,9 @@ import {
 } from "@chativa/core";
 import { DirectLineConnector } from "@chativa/connector-directline";
 import { MekikConnector } from "@chativa/connector-mekik";
+import { ConvergerConnector } from "@chativa/connector-converger";
 import { sectionStyles } from "../sandboxShared";
+import { convergerSocketUrl, convergerTokenAuth } from "../convergerToken";
 import {
   buildDummyConnector,
   getDummyOptions,
@@ -17,7 +19,7 @@ import {
   swapConnector,
 } from "../connectorSwap";
 
-type ConnectorKind = "dummy" | "directline" | "mekik";
+type ConnectorKind = "dummy" | "directline" | "mekik" | "mekik-converger" | "converger";
 
 interface DummyForm {
   replyDelay: number;
@@ -27,6 +29,15 @@ interface DummyForm {
 interface MekikForm {
   url: string;
   reconnect: boolean;
+}
+
+/** Shared by both Converger presets (connector-mekik and connector-converger). */
+interface ConvergerForm {
+  /** Converger base URL; the socket is `<base>/socket/converger/v1`. */
+  base: string;
+  userId: string;
+  /** Empty: the server starts a conversation and `welcome` names it. */
+  conversationId: string;
 }
 
 interface DirectLineForm {
@@ -231,6 +242,11 @@ export class ConnectorSection extends LitElement {
     url: "ws://localhost:8790/chat",
     reconnect: true,
   };
+  @state() private _converger: ConvergerForm = {
+    base: "http://localhost:4000",
+    userId: "sandbox-user",
+    conversationId: "",
+  };
 
   private _unsub!: () => void;
   private _unsubDummy!: () => void;
@@ -307,6 +323,24 @@ export class ConnectorSection extends LitElement {
         reconnect: f.reconnect,
       });
     }
+    if (this._kind === "mekik-converger" || this._kind === "converger") {
+      const f = this._converger;
+      if (!f.base.trim()) {
+        throw new Error("Converger: base URL is required.");
+      }
+      const options = {
+        url: convergerSocketUrl(f.base),
+        // The dev server's /api/converger-token mints it (vite.config.ts).
+        auth: convergerTokenAuth({ userId: f.userId.trim() || undefined }),
+        conversationId: f.conversationId.trim() || undefined,
+        // conversationId in the query string: an L7 balancer can route by it.
+        routeInUrl: true,
+        resumeConversation: true,
+      };
+      // connector-mekik, unchanged: Converger serves it the mekik/1 profile.
+      // connector-converger: the full protocol plus receipts, upload, history.
+      return this._kind === "converger" ? new ConvergerConnector(options) : new MekikConnector(options);
+    }
     throw new Error(`Unknown connector kind: ${this._kind}`);
   }
 
@@ -382,6 +416,37 @@ export class ConnectorSection extends LitElement {
     `;
   }
 
+  private _renderConvergerOptions() {
+    return html`
+      <div class="field-grid">
+        <label for="cv-base">Converger</label>
+        <input id="cv-base" type="text" placeholder="http://localhost:4000"
+          .value=${this._converger.base}
+          @input=${(e: Event) => {
+            this._converger = { ...this._converger, base: (e.target as HTMLInputElement).value };
+          }} />
+        <label for="cv-user">User ID</label>
+        <input id="cv-user" type="text" placeholder="(optional)"
+          .value=${this._converger.userId}
+          @input=${(e: Event) => {
+            this._converger = { ...this._converger, userId: (e.target as HTMLInputElement).value };
+          }} />
+        <label for="cv-conv">Conversation</label>
+        <input id="cv-conv" type="text" placeholder="(new)"
+          .value=${this._converger.conversationId}
+          @input=${(e: Event) => {
+            this._converger = { ...this._converger, conversationId: (e.target as HTMLInputElement).value };
+          }} />
+      </div>
+      <div class="feedback ok">
+        Tokens come from this dev server's <code>/api/converger-token</code>: start
+        <code>pnpm dev</code> with <code>CONVERGER_CHANNEL_SECRET</code> (and
+        <code>CONVERGER_URL</code>), and Converger with
+        <code>CORS_ORIGINS=http://localhost:5173</code>.
+      </div>
+    `;
+  }
+
   private _renderCapabilities() {
     return html`
       <div class="cap-grid">
@@ -425,12 +490,17 @@ export class ConnectorSection extends LitElement {
                   <option value="dummy">Dummy (local mock)</option>
                   <option value="directline">DirectLine (Azure Bot Framework)</option>
                   <option value="mekik">mekik (agent bridge)</option>
+                  <option value="mekik-converger">mekik behind Converger (connector-mekik)</option>
+                  <option value="converger">Converger hub (connector-converger)</option>
                 </select>
               </div>
 
               ${this._kind === "dummy"      ? this._renderDummyOptions()      : nothing}
               ${this._kind === "directline" ? this._renderDirectLineOptions() : nothing}
               ${this._kind === "mekik"     ? this._renderMekikOptions()     : nothing}
+              ${this._kind === "mekik-converger" || this._kind === "converger"
+                ? this._renderConvergerOptions()
+                : nothing}
 
               <button class="connect-btn" @click=${() => this._connect()}>
                 Connect

@@ -57,6 +57,8 @@
     "statusSending": "Invio in corso",
     "statusSent": "Inviato",
     "statusRead": "Letto",
+    "statusDelivered": "Consegnato",
+    "statusFailed": "Non inviato",
     "actionsLabel": "Azioni del messaggio",
     "copy": "Copia",
     "copyCode": "Copia codice",

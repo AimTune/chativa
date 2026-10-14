@@ -52,6 +52,9 @@ export class MultiConversationEngine {
     const first =
       convs.find((c) => c.status === "open" || c.status === "pending") ?? convs[0];
     if (first) {
+      // Tell the connector too: a connector that holds one live session per
+      // conversation (e.g. connector-converger) opens it here.
+      await this._connector.switchConversation?.(first.id);
       conversationStore.getState().setActive(first.id);
     }
   }

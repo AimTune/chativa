@@ -309,6 +309,44 @@ describe("ChatEngine", () => {
     expect(msg?.status).toBe("sent");
   });
 
+  it("marks the message 'failed' and rethrows when sendMessage rejects", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    vi.mocked(connector.sendMessage).mockRejectedValueOnce(new Error("refused"));
+    await expect(
+      engine.send({ id: "fail-1", type: "text", data: { text: "hi" }, timestamp: 0 }),
+    ).rejects.toThrow("refused");
+    const msg = messageStore.getState().messages.find((m) => m.id === "fail-1");
+    expect(msg?.status).toBe("failed");
+  });
+
+  it("keeps a status the connector already pushed when sendMessage rejects", async () => {
+    const connector = createMockConnector();
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    vi.mocked(connector.sendMessage).mockImplementationOnce(async () => {
+      connector.simulateMessageStatus("fail-2", "read");
+      throw new Error("late");
+    });
+    await expect(
+      engine.send({ id: "fail-2", type: "text", data: { text: "hi" }, timestamp: 0 }),
+    ).rejects.toThrow("late");
+    expect(messageStore.getState().messages.find((m) => m.id === "fail-2")?.status).toBe("read");
+  });
+
+  it("rethrows without touching history when the connector does not add sent messages", async () => {
+    const connector = createMockConnector();
+    (connector as { addSentToHistory?: boolean }).addSentToHistory = false;
+    const engine = new ChatEngine(connector);
+    await engine.init();
+    vi.mocked(connector.sendMessage).mockRejectedValueOnce(new Error("nope"));
+    await expect(
+      engine.send({ id: "fail-3", type: "text", data: { text: "hi" }, timestamp: 0 }),
+    ).rejects.toThrow("nope");
+    expect(messageStore.getState().messages.find((m) => m.id === "fail-3")).toBeUndefined();
+  });
+
   // ── sendFeedback ───────────────────────────────────────────────────
 
   it("delegates sendFeedback to connector", async () => {

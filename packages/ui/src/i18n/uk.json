@@ -57,6 +57,8 @@
     "statusSending": "Надсилається",
     "statusSent": "Надіслано",
     "statusRead": "Прочитано",
+    "statusDelivered": "Доставлено",
+    "statusFailed": "Не надіслано",
     "actionsLabel": "Дії з повідомленням",
     "copy": "Копіювати",
     "copyCode": "Копіювати код",

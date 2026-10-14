@@ -390,11 +390,41 @@ The connector reports this through `onCapabilities`. Before the first `welcome`,
 
 With `queueOfflineMessages: true` (the default) a send that happens while the socket is down is queued and flushed on the next connect. The promise resolves **only when the payload actually reaches the wire**, so the bubble stays on "sending" instead of being stamped "sent" for a message the server never received.
 
+## Behind Converger
+
+[Converger](https://github.com/AimTune/converger) is a channel hub that can sit between Chativa and a mekik bot: it issues tokens, stores the transcript, replays by watermark and routes the same conversation to WhatsApp, Telegram, Slack, email or SMS. Its native WebSocket endpoint speaks a superset of mekik/1, so **this connector works against it unchanged** — nothing to install, no option to flip.
+
+1. **A token endpoint on your backend.** Never ship the channel secret to the browser. A small route of yours calls `POST /api/v1/converger/tokens/generate` with the channel secret (`Authorization: Bearer <secret>`) and the signed-in user (`{"user": {"id": "user-42"}}`), and returns the token.
+2. **The connector**, pointed at `wss://HOST/socket/converger/v1`:
+
+   ```ts
+   import { MekikConnector, TokenAuth } from "@chativa/connector-mekik";
+
+   const connector = new MekikConnector({
+     url: "wss://chat.example.com/socket/converger/v1",
+     // A function: an expired or revoked token is replaced by a fresh one.
+     auth: new TokenAuth({
+       token: async () => (await (await fetch("/api/chat-token", { method: "POST" })).json()).token,
+     }),
+     conversationId,          // from POST /api/v1/converger/conversations, or omit: welcome names a new one
+     routeInUrl: true,        // conversationId in the query string, for a load balancer that routes by conversation
+     resumeConversation: true,
+   });
+   ```
+
+   Leave `protocols` empty: a client that offers no subprotocol gets Converger's **mekik/1 profile** — no `ack`, `deliveryStatus` or `presence` frames (which this connector would render as empty bubbles), heartbeats as WebSocket pings, and `token_expired` / `token_revoked` reported as `unauthorized` so `TokenAuth` fetches a new token and reconnects with the same watermark.
+
+What works over Converger today: the `hello` / `welcome` handshake (a token's `user_id` wins over `userId`), watermark resume, user turns (stored exactly once — the message `id` is used as Converger's `clientId`), bot and agent messages, quick-reply chips, rich message types, replayed `tool_call` / `genui` / `interrupt` frames, typing, auth rejection and refresh. `regenerate` / `edit` stay hidden (`welcome` reports them false). Live frames from a mekik bot behind the hub (`run`, `genui_components`, `skills`) and the client frames forwarded to it (`resume`, `genui_event`, `client_tools`, `survey`, …) need Converger's bot relay ([AimTune/converger#64](https://github.com/AimTune/converger/issues/64)); until then the hub answers `error` `bot_unavailable`, which this connector ignores. Converger runs this connector against a real server in CI (`chativa_compat_test.exs`), so a hub change that breaks it fails Converger's build.
+
+Converger's persistent `event` (reactions, edits) and `conversationUpdate` frames are still delivered on the mekik/1 profile and render with the fallback component — register renderers named `event` and `conversationUpdate`, or drop them with an `onAfterReceive` extension.
+
+For receipts, uploads, history paging, reactions and the agent panel, use [`@chativa/connector-converger`](./converger.md) — the same class, extended. The [sandbox](../sandbox.md) has both as presets ("mekik behind Converger" and "Converger hub").
+
 ## Capabilities
 
 Implemented: `sendMessage`, `onMessage`, `onConnect` / `onDisconnect`, `onTyping`, `onToolCall`, `onGenUIChunk`, `receiveComponentEvent`, `sendSurvey`, client tools (`tools`, `registerTool` / `unregisterTool` behind `allowDynamicTools`), `regenerate` / `editMessage` / `onCapabilities` (server-gated, see [Regenerate and edit](#regenerate-and-edit)).
 
-Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation.
+Not implemented: `sendFile`, `loadHistory` (watermark replay covers resume instead), `onMessageStatus`, `sendFeedback`, multi-conversation. Behind a Converger hub, [`@chativa/connector-converger`](./converger.md) adds all five.
 
 ## React Native
 

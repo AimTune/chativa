@@ -1,5 +1,5 @@
 ---
-sidebar_position: 8
+sidebar_position: 9
 title: HTTP
 description: Plain REST polling adapter — the simplest deployment, no streaming infra required.
 ---

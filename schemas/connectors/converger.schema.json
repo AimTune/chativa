@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://chativa.aimtune.dev/schemas/connectors/converger.schema.json",
+  "title": "ConvergerConnectorOptions",
+  "description": "Constructor options for ConvergerConnector — the Converger channel hub client (Converger Protocol v1, a superset of mekik/1). Every MekikConnectorOptions field applies unchanged; the Converger-only ones follow. Source: packages/connector-converger/src/index.ts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "url"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Converger native WebSocket endpoint, wss://HOST/socket/converger/v1.",
+      "examples": [
+        "wss://chat.example.com/socket/converger/v1"
+      ]
+    },
+    "protocols": {
+      "oneOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      ],
+      "default": [
+        "converger.v1"
+      ],
+      "description": "Sub-protocol(s) passed to the WebSocket constructor. Default [\"converger.v1\"]: the full protocol (acks, receipts, presence). Offering none would get the mekik/1 profile."
+    },
+    "reconnect": {
+      "type": "boolean",
+      "default": true,
+      "description": "Auto-reconnect when the socket closes. Suppressed after an auth rejection (close code 4401)."
+    },
+    "reconnectDelay": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 2000,
+      "description": "Milliseconds to wait between reconnect attempts."
+    },
+    "maxReconnectAttempts": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 5,
+      "description": "Stop reconnecting after this many consecutive failures. Reset on a successful handshake."
+    },
+    "reconnectBackoff": {
+      "type": "string",
+      "enum": [
+        "fixed",
+        "exponential"
+      ],
+      "default": "fixed",
+      "description": "Reconnect pacing: \"fixed\" waits reconnectDelay every time; \"exponential\" grows the wait geometrically up to reconnectMaxDelay with full jitter."
+    },
+    "reconnectMaxDelay": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 30000,
+      "description": "Ceiling for \"exponential\" backoff, in milliseconds."
+    },
+    "routeInUrl": {
+      "type": "boolean",
+      "default": false,
+      "description": "Put conversationId (and userId) in the connect URL query string — Converger treats them as hints for a load balancer that routes by conversation."
+    },
+    "queueOfflineMessages": {
+      "type": "boolean",
+      "default": true,
+      "description": "Queue outgoing messages while the socket is down and flush them on (re)connect."
+    },
+    "userId": {
+      "type": "string",
+      "description": "Stable user identity sent in the hello handshake. Omit to let the server mint one (announced via the welcome frame). An authenticating server may override this with the verified identity."
+    },
+    "conversationId": {
+      "type": "string",
+      "description": "Conversation to resume. Omit to start a new one."
+    },
+    "resumeConversation": {
+      "type": "boolean",
+      "default": false,
+      "description": "Persist identity + watermark in localStorage and resume across page reloads."
+    },
+    "auth": {
+      "type": "object",
+      "description": "MekikAuthProvider adapter (TokenAuth, CookieAuth or custom) for a Converger token from POST /api/v1/converger/tokens/generate, minted by your backend. Its token also authorizes the REST calls (upload, history, reactions, conversation list). Cannot be serialised — set programmatically. Takes precedence over `token`."
+    },
+    "token": {
+      "type": "string",
+      "description": "Deprecated — shorthand for `auth: new TokenAuth({ token, maxRetries: 0 })`: a credential sent in the hello handshake with no retry on rejection. A function returning a fresh token per attempt is also accepted, but cannot be serialised — set that programmatically. Not needed for cookie-based auth.",
+      "deprecated": true
+    },
+    "onAuthError": {
+      "type": "object",
+      "description": "Callback invoked when the server rejects the connection (error frame + close code 4401). Cannot be serialised — set programmatically."
+    },
+    "tools": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "Client tools declared to the server (mekik PROTOCOL.md §11): {name, description?, parameters?, tags?, mode?, handler}. Each entry carries a handler function, so the option cannot be serialised — set programmatically. Ignored by servers that did not opt in."
+    },
+    "allowDynamicTools": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow registerTool()/unregisterTool() after construction. Off by default: with the default the toolset is sealed at construction and held in true-private fields, so injected script cannot rewire what the server-side model may trigger."
+    },
+    "skills": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "description",
+          "instructions"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "maxLength": 64
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1024
+          },
+          "instructions": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "description": "Client skills declared to the server (mekik PROTOCOL.md §12.4): inline SKILL.md-style instructions a server-side model follows when the task matches. Sent in the hello handshake and re-declared on every (re)connect. Ignored entirely by servers that did not opt in (MekikOptions.clientSkills)."
+    },
+    "allowDynamicSkills": {
+      "type": "boolean",
+      "default": false,
+      "description": "Allow registerSkill()/unregisterSkill() after construction. Off by default: a skill's description and instructions are text a server-side model will follow, so with the default the set is sealed at construction and held in true-private fields."
+    },
+    "apiUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Converger client API base. Default: derived from `url` (same host, ws→http, wss→https, path /api/v1/converger).",
+      "examples": [
+        "https://chat.example.com/api/v1/converger"
+      ]
+    },
+    "channelScoped": {
+      "type": "boolean",
+      "default": false,
+      "description": "The auth provider yields a channel-scoped token (agent consoles). REST list/create/close use it; each conversation socket uses a conversation-bound token exchanged via GET /conversations/:id. No socket opens until a conversation is chosen."
+    },
+    "historyPageSize": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 50,
+      "description": "Frames per loadHistory page (GET .../activities?direction=backward&format=frames). The newest page comes over REST and the socket replays only newer frames. 0 turns REST history off (the socket replays the whole transcript)."
+    },
+    "ackTimeout": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 15000,
+      "description": "Milliseconds sendMessage waits for the server ack before the message is marked failed. 0 waits forever."
+    },
+    "maxSendRetries": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 2,
+      "description": "How many times a send refused with a retryable error (rate_limited, too_many_in_flight, unavailable, …) is re-sent with the same clientId."
+    },
+    "readReceipts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Send read receipts ({type:\"read\", watermark}) for the other side’s messages while the widget is open."
+    },
+    "feedbackReactions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "like": {
+          "type": "string",
+          "default": "👍"
+        },
+        "dislike": {
+          "type": "string",
+          "default": "👎"
+        }
+      },
+      "description": "The reaction text sendFeedback posts as a messageReaction activity."
+    }
+  }
+}

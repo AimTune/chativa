@@ -57,6 +57,8 @@
     "statusSending": "נשלחת",
     "statusSent": "נשלחה",
     "statusRead": "נקראה",
+    "statusDelivered": "נמסרה",
+    "statusFailed": "לא נשלחה",
     "actionsLabel": "פעולות הודעה",
     "copy": "העתקה",
     "copyCode": "העתקת קוד",
