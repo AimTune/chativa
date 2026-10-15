@@ -59,6 +59,14 @@ const config: Config = {
 
   themeConfig: {
     image: "img/chativa-social-card.png",
+    metadata: [
+      { name: "twitter:card", content: "summary_large_image" },
+      {
+        name: "keywords",
+        content:
+          "chativa, chat widget, web components, AI chat, customer support, generative UI, connectors",
+      },
+    ],
     colorMode: {
       respectPrefersColorScheme: true,
     },
