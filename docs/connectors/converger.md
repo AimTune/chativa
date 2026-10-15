@@ -72,7 +72,7 @@ Converger's REST API is cross-origin from your page: add your site's origin to C
 
 > Needs a Converger with publishable keys ([AimTune/converger#195](https://github.com/AimTune/converger/issues/195)).
 
-A site with no backend of its own can use the channel's **publishable key** (`cvg_pk_...`) instead of a token endpoint. The key is safe to ship in page code: Converger only accepts it from the channel's allowed origins, and the tokens it yields are bound to one anonymous conversation.
+A site with no backend of its own can use the channel's **publishable key** (`cvg_pk_...`) instead of a token endpoint. The key is safe to ship in page code: Converger only accepts it from the key's allowed origins, and the tokens it yields are bound to one anonymous conversation. Those allowed origins also cover CORS on `/api/v1/converger/*`, so a site using a publishable key needs no `CORS_ORIGINS` entry.
 
 ```ts
 import { ConvergerConnector, PublishableKeyAuth } from "@chativa/connector-converger";
@@ -209,4 +209,4 @@ Everything in [mekik → Frame mapping](./mekik.md#frame-mapping) applies. In ad
 
 ## Sandbox
 
-The Connector tab has two presets: **mekik behind Converger** (connector-mekik, unchanged) and **Converger hub** (this connector). Each takes its token from the **Dev server** endpoint (`/api/converger-token`, which needs `pnpm dev` with `CONVERGER_URL` and `CONVERGER_CHANNEL_SECRET`), a pasted **Token**, or a **Publishable key**. `agent-panel.html?converger=http://localhost:4000` runs the agent panel on a channel-scoped token. Start Converger with `CORS_ORIGINS=http://localhost:5173`. See [Sandbox](../sandbox.md#converger).
+The Connector tab has two presets: **mekik behind Converger** (connector-mekik, unchanged) and **Converger hub** (this connector). Each takes its token from the **Dev server** endpoint (`/api/converger-token`, which needs `pnpm dev` with `CONVERGER_URL` and `CONVERGER_CHANNEL_SECRET`), a pasted **Token**, or a **Publishable key**. `agent-panel.html?converger=http://localhost:4000` runs the agent panel on a channel-scoped token. For *Dev server* and *Token*, start Converger with `CORS_ORIGINS=http://localhost:5173`; for a publishable key, add the sandbox origin to the key's allowed origins instead. See [Sandbox](../sandbox.md#converger).

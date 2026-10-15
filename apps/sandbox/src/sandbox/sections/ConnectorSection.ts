@@ -514,8 +514,9 @@ export class ConnectorSection extends LitElement {
           Paste the channel's publishable key (<code>cvg_pk_...</code>). The browser
           exchanges it at <code>/api/v1/converger/tokens/publishable</code> and keeps
           the conversation in localStorage per key, so a reload continues it. Add
-          <code>${location.origin}</code> to the channel's allowed origins; needs a
-          Converger with publishable keys (AimTune/converger#195). ${cors}
+          <code>${location.origin}</code> to the key's allowed origins, which also
+          cover CORS (no <code>CORS_ORIGINS</code> change needed). Needs a Converger
+          with publishable keys (AimTune/converger#195).
         `;
       default:
         return html`

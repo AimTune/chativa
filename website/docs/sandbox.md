@@ -52,12 +52,12 @@ Both have a **Credential** selector:
 |---|---|---|
 | Dev server (default) | `TokenAuth` with the sandbox dev server's **token endpoint**, `POST /api/converger-token` (`convergerTokenPlugin` in `apps/sandbox/vite.config.ts`) | The endpoint holds the channel secret and calls Converger's `POST /api/v1/converger/tokens/generate`, so the secret never reaches the browser — the same split your own backend should make. Only under `pnpm dev`. Sets `resumeConversation: true`. |
 | Token | A token you paste, e.g. from the Converger channel page's **Test token** action ([AimTune/converger#194](https://github.com/AimTune/converger/issues/194)) | Used as a static `TokenAuth`: once it expires, paste a new one and connect again. |
-| Publishable key | [`PublishableKeyAuth`](./connectors/converger.md#publishable-keys) with a pasted `cvg_pk_...` key | Exchanged in the browser; the conversation is kept in localStorage per key, so a reload continues it. The sandbox origin must be in the channel's allowed origins. Needs a Converger with publishable keys ([AimTune/converger#195](https://github.com/AimTune/converger/issues/195)). |
+| Publishable key | [`PublishableKeyAuth`](./connectors/converger.md#publishable-keys) with a pasted `cvg_pk_...` key | Exchanged in the browser; the conversation is kept in localStorage per key, so a reload continues it. The sandbox origin must be in the key's allowed origins, which also cover CORS (no `CORS_ORIGINS` change needed). Needs a Converger with publishable keys ([AimTune/converger#195](https://github.com/AimTune/converger/issues/195)). |
 
 All set `routeInUrl: true`. With *Dev server* or *Token*, leave *Conversation* empty to let the server start one; a publishable key's token is bound to its own conversation.
 
 ```bash
-# Converger (its repo): allow the sandbox origin
+# Converger (its repo): allow the sandbox origin (Dev server and Token modes)
 CORS_ORIGINS=http://localhost:5173 mix phx.server
 
 # Chativa: the secret of a websocket channel of that Converger
