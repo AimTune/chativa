@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { ChativaContext, Conversation, IncomingMessage, MessageStatus } from "@chativa/core";
-import { ConvergerConnector, ConvergerApiError, TokenAuth, MekikConnector } from "../index";
+import { ConvergerConnector, ConvergerApiError, TokenAuth, MekikConnector, PublishableKeyAuth } from "../index";
 import type { ConvergerConnectorOptions } from "../index";
 
 // ── Test doubles ───────────────────────────────────────────────────────
@@ -1192,5 +1192,74 @@ describe("ConvergerConnector — REST", () => {
     ws.receive({ type: "error", data: { code: "unauthorized", message: "nope" } });
     await flush();
     expect(onReject).toHaveBeenCalledOnce();
+  });
+});
+
+// ── Publishable key ────────────────────────────────────────────────────
+
+describe("ConvergerConnector — publishable key", () => {
+  const pk = () => new PublishableKeyAuth({ baseUrl: "http://hub.test", publishableKey: "cvg_pk_x", storage: null });
+  const pkSession = (conversationId: string, token: string, resumed = false) =>
+    json({ conversationId, token, expires_in: 1800, userId: "anon_1", resume: `res-${conversationId}`, resumed });
+
+  it("adopts the key's conversation and user before history and the socket", async () => {
+    const history: string[] = [];
+    mockFetch({
+      "POST /tokens/publishable": pkSession("conv-pk", "pk-tok"),
+      "GET /conversations/conv-pk/activities": (call: Call) => {
+        history.push(call.headers.get("authorization") ?? "");
+        return json({ frames: [{ type: "text", id: "a5", seq: 5, from: "bot", data: { text: "hi" } }] });
+      },
+    });
+    // A conversation remembered from somewhere else loses to the key's.
+    const { connector } = make({ auth: pk(), conversationId: "conv-other", userId: "typed", routeInUrl: true });
+    const ws = await open(connector, WELCOME("conv-pk"));
+    expect(history).toEqual(["Bearer pk-tok"]);
+    const hello = ws.frames()[0];
+    expect(hello).toMatchObject({ token: "pk-tok", conversationId: "conv-pk", userId: "anon_1", watermark: 5 });
+    expect(new URL(ws.url).searchParams.get("conversationId")).toBe("conv-pk");
+    expect((await connector.loadHistory()).messages.map((m) => m.id)).toEqual(["a5"]);
+  });
+
+  it("exchanges once per connect while the token is fresh", async () => {
+    const { calls } = mockFetch({
+      "POST /tokens/publishable": pkSession("conv-pk", "pk-tok"),
+      "GET /conversations/conv-pk/activities": json({ frames: [] }),
+    });
+    const { connector } = make({ auth: pk() });
+    await open(connector, WELCOME("conv-pk"));
+    expect(calls.filter((c) => c.url.pathname.endsWith("/tokens/publishable"))).toHaveLength(1);
+  });
+
+  it("replaces a rejected token with resume and follows a new conversation", async () => {
+    const bodies: unknown[] = [];
+    const answers = [pkSession("conv-a", "tok-a"), pkSession("conv-b", "tok-b")];
+    mockFetch({
+      "POST /tokens/publishable": (call: Call) => {
+        bodies.push(JSON.parse(String(call.body)));
+        return answers.shift()!;
+      },
+      "GET /conversations/conv-a/activities": json({ frames: [{ type: "text", id: "a9", seq: 9, from: "bot", data: { text: "x" } }] }),
+      "GET /conversations/conv-b/activities": json({ frames: [], has_more: false }),
+    });
+    const { connector } = make({ auth: pk() });
+    const ws = await open(connector, WELCOME("conv-a"));
+    ws.receive({ type: "error", data: { code: "token_expired", message: "expired" } });
+    await flush();
+    const ws2 = MockWebSocket.instances[1];
+    ws2.open();
+    expect(bodies).toEqual([{}, { resume: "res-conv-a" }]);
+    // resume was unusable: the server started conv-b, so nothing of conv-a carries over.
+    expect(ws2.frames()[0]).toMatchObject({ token: "tok-b", conversationId: "conv-b", watermark: 0 });
+    ws2.receive(WELCOME("conv-b"));
+    // History pages come from conv-b, not the prefetched conv-a page.
+    expect((await connector.loadHistory()).messages).toEqual([]);
+  });
+
+  it("fails connect() when the key cannot be exchanged", async () => {
+    mockFetch({ "POST /tokens/publishable": json({ error: { code: "origin_not_allowed", message: "no" } }, 403) });
+    const { connector } = make({ auth: pk() });
+    await expect(connector.connect()).rejects.toMatchObject({ status: 403, code: "origin_not_allowed" });
+    expect(MockWebSocket.instances).toHaveLength(0);
   });
 });
