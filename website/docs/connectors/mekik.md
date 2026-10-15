@@ -324,7 +324,7 @@ With `queueOfflineMessages: true` (the default) a send that happens while the so
 
 [Converger](https://github.com/AimTune/converger) is a channel hub that can sit between Chativa and a mekik bot: it issues tokens, stores the transcript, replays by watermark and routes the same conversation to WhatsApp, Telegram, Slack, email or SMS. Its native WebSocket endpoint speaks a superset of mekik/1, so **this connector works against it unchanged** — nothing to install, no option to flip.
 
-1. **A token endpoint on your backend.** Never ship the channel secret to the browser. A small route of yours calls `POST /api/v1/converger/tokens/generate` with the channel secret (`Authorization: Bearer <secret>`) and the signed-in user (`{"user": {"id": "user-42"}}`), and returns the token.
+1. **A token endpoint on your backend.** Never ship the channel secret to the browser. A small route of yours calls `POST /api/v1/converger/tokens/generate` with the channel secret (`Authorization: Bearer <secret>`) and the signed-in user (`{"user": {"id": "user-42"}}`), and returns the token. A site without a backend can use the channel's publishable key instead: pass `new PublishableKeyAuth({ baseUrl, publishableKey })` from [`@chativa/connector-converger`](./converger.md#publishable-keys) as `auth` (needs [AimTune/converger#195](https://github.com/AimTune/converger/issues/195)).
 2. **The connector**, pointed at `wss://HOST/socket/converger/v1`:
 
    ```ts

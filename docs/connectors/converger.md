@@ -30,7 +30,7 @@ ConnectorRegistry.register(connector);
 chatStore.getState().setConnector("converger");
 ```
 
-The package re-exports `TokenAuth`, `CookieAuth` and `MekikConnector`, so one import is enough.
+The package re-exports `TokenAuth`, `CookieAuth` and `MekikConnector`, so one import is enough. A site without a backend uses [`PublishableKeyAuth`](#publishable-keys) instead of a token endpoint.
 
 ## Options
 
@@ -67,6 +67,49 @@ Pass a **function** to `TokenAuth`: it runs before every socket, so a reconnect 
 `tokens/generate` is rate limited (10 per minute per channel by default) — cache the token on your side for its lifetime rather than minting one per page view.
 
 Converger's REST API is cross-origin from your page: add your site's origin to Converger's `CORS_ORIGINS`.
+
+## Publishable keys
+
+> Needs a Converger with publishable keys ([AimTune/converger#195](https://github.com/AimTune/converger/issues/195)).
+
+A site with no backend of its own can use the channel's **publishable key** (`cvg_pk_...`) instead of a token endpoint. The key is safe to ship in page code: Converger only accepts it from the key's allowed origins, and the tokens it yields are bound to one anonymous conversation. Those allowed origins also cover CORS on `/api/v1/converger/*`, so a site using a publishable key needs no `CORS_ORIGINS` entry.
+
+```ts
+import { ConvergerConnector, PublishableKeyAuth } from "@chativa/connector-converger";
+
+const connector = new ConvergerConnector({
+  url: "wss://chat.example.com/socket/converger/v1",
+  auth: new PublishableKeyAuth({
+    baseUrl: "https://chat.example.com",
+    publishableKey: "cvg_pk_...",
+  }),
+});
+```
+
+`PublishableKeyAuth` calls `POST /api/v1/converger/tokens/publishable` with the key as bearer:
+
+```bash
+curl -s -X POST "$CONVERGER/api/v1/converger/tokens/publishable" \
+  -H "authorization: Bearer cvg_pk_..." \
+  -H "content-type: application/json" \
+  -d '{"resume": "<from the previous answer>"}'
+# → { "conversationId": "…", "token": "eyJ…", "expires_in": 1800, "userId": "anon_…", "resume": "…", "resumed": true }
+```
+
+- **Resume.** The answer's `resume` credential and `conversationId` are kept in `localStorage` under `chativa:converger:pk:<key>`, and `resume` goes with the next exchange, so a reload continues the same conversation, history included. When `resume` is missing, expired or for another channel, Converger starts a new conversation (`resumed: false`) and the stored one is replaced.
+- **The conversation is the token's.** The connector asks for the credential before it connects and adopts its `conversationId` (and `userId`), over any `conversationId` option or one stored by `resumeConversation`. A different conversation than before starts from an empty watermark.
+- **Rejected tokens.** The token is cached until a minute before `expires_in` runs out. When the socket rejects it (`token_expired`, `token_revoked`) or a REST call gets `401`, the key is exchanged again with `resume` for a fresh token.
+- **Errors.** A failed exchange fails `connect()` with a `ConvergerApiError`: `401 unauthorized` (unknown or disabled key), `403 origin_not_allowed` (the page's origin is not allowed for the channel), `429 rate_limited` with `retryAfterMs` from the `retry-after` header.
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `baseUrl` | `string` | — | **Required.** Converger's base URL (`https://chat.example.com`); the client API base (`…/api/v1/converger`) works too. |
+| `publishableKey` | `string` | — | **Required.** The channel's `cvg_pk_...` key. |
+| `storage` | `Storage \| null` | `localStorage` | Where `resume` and the conversation id are kept. `null` keeps them in memory: a reload starts a new conversation. Every access is guarded, so blocked storage (private mode, sandboxed iframes) behaves like `null`. |
+| `storageKey` | `string` | `chativa:converger:pk:<key>` | The storage key. |
+| `maxRetries` | `number` | `1` | Re-exchanges after a rejected token before the connection gives up. |
+
+`auth.conversationId` is the current (or stored) conversation; `await auth.session()` returns the current `{ conversationId, token, expiresAt, userId, resumed }`, exchanging when needed (`{ fresh: true }` always exchanges); `auth.forget()` drops the stored `resume`, so the next connection starts a new conversation. `PublishableKeyAuth` is a plain auth provider, so `MekikConnector` takes it too ([mekik → Behind Converger](./mekik.md#behind-converger)): it then joins the token's conversation, which `welcome` names.
 
 ## Acks and receipts
 
@@ -166,4 +209,4 @@ Everything in [mekik → Frame mapping](./mekik.md#frame-mapping) applies. In ad
 
 ## Sandbox
 
-`pnpm dev` with `CONVERGER_URL` and `CONVERGER_CHANNEL_SECRET` set gives the sandbox a token endpoint (`/api/converger-token`), and the Connector tab two presets: **mekik behind Converger** (connector-mekik, unchanged) and **Converger hub** (this connector). `agent-panel.html?converger=http://localhost:4000` runs the agent panel on a channel-scoped token. Start Converger with `CORS_ORIGINS=http://localhost:5173`. See [Sandbox](../sandbox.md#converger).
+The Connector tab has two presets: **mekik behind Converger** (connector-mekik, unchanged) and **Converger hub** (this connector). Each takes its token from the **Dev server** endpoint (`/api/converger-token`, which needs `pnpm dev` with `CONVERGER_URL` and `CONVERGER_CHANNEL_SECRET`), a pasted **Token**, or a **Publishable key**. `agent-panel.html?converger=http://localhost:4000` runs the agent panel on a channel-scoped token. For *Dev server* and *Token*, start Converger with `CORS_ORIGINS=http://localhost:5173`; for a publishable key, add the sandbox origin to the key's allowed origins instead. See [Sandbox](../sandbox.md#converger).

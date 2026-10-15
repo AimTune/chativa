@@ -10,7 +10,13 @@ import { DirectLineConnector } from "@chativa/connector-directline";
 import { MekikConnector } from "@chativa/connector-mekik";
 import { ConvergerConnector } from "@chativa/connector-converger";
 import { sectionStyles } from "../sandboxShared";
-import { convergerSocketUrl, convergerTokenAuth } from "../convergerToken";
+import {
+  convergerPublishableAuth,
+  convergerSocketUrl,
+  convergerStaticAuth,
+  convergerTokenAuth,
+  type ConvergerCredentialMode,
+} from "../convergerToken";
 import {
   buildDummyConnector,
   getDummyOptions,
@@ -35,9 +41,16 @@ interface MekikForm {
 interface ConvergerForm {
   /** Converger base URL; the socket is `<base>/socket/converger/v1`. */
   base: string;
+  /** Where the token comes from. */
+  credential: ConvergerCredentialMode;
+  /** "Dev server" only: the user the dev server mints the token for. */
   userId: string;
-  /** Empty: the server starts a conversation and `welcome` names it. */
+  /** Empty: the server starts a conversation and `welcome` names it. Not for a publishable key. */
   conversationId: string;
+  /** "Token": pasted by hand. */
+  token: string;
+  /** "Publishable key": `cvg_pk_...`. */
+  publishableKey: string;
 }
 
 interface DirectLineForm {
@@ -244,8 +257,11 @@ export class ConnectorSection extends LitElement {
   };
   @state() private _converger: ConvergerForm = {
     base: "http://localhost:4000",
+    credential: "dev-server",
     userId: "sandbox-user",
     conversationId: "",
+    token: "",
+    publishableKey: "",
   };
 
   private _unsub!: () => void;
@@ -330,18 +346,36 @@ export class ConnectorSection extends LitElement {
       }
       const options = {
         url: convergerSocketUrl(f.base),
-        // The dev server's /api/converger-token mints it (vite.config.ts).
-        auth: convergerTokenAuth({ userId: f.userId.trim() || undefined }),
-        conversationId: f.conversationId.trim() || undefined,
+        auth: this._convergerAuth(),
+        // A publishable key's token is bound to the key's own conversation.
+        conversationId:
+          f.credential === "publishable-key" ? undefined : f.conversationId.trim() || undefined,
         // conversationId in the query string: an L7 balancer can route by it.
         routeInUrl: true,
-        resumeConversation: true,
+        // Only the dev server's user is stable across reloads; a pasted token
+        // carries its own, and a publishable key keeps its conversation itself.
+        resumeConversation: f.credential === "dev-server",
       };
       // connector-mekik, unchanged: Converger serves it the mekik/1 profile.
       // connector-converger: the full protocol plus receipts, upload, history.
       return this._kind === "converger" ? new ConvergerConnector(options) : new MekikConnector(options);
     }
     throw new Error(`Unknown connector kind: ${this._kind}`);
+  }
+
+  /** The auth provider for the Converger presets' credential mode. */
+  private _convergerAuth() {
+    const f = this._converger;
+    if (f.credential === "token") {
+      if (!f.token.trim()) throw new Error("Converger: paste a token.");
+      return convergerStaticAuth(f.token);
+    }
+    if (f.credential === "publishable-key") {
+      if (!f.publishableKey.trim()) throw new Error("Converger: paste a publishable key (cvg_pk_...).");
+      return convergerPublishableAuth(f.base, f.publishableKey);
+    }
+    // The dev server's /api/converger-token mints it (vite.config.ts).
+    return convergerTokenAuth({ userId: f.userId.trim() || undefined });
   }
 
   private _renderDummyOptions() {
@@ -417,34 +451,80 @@ export class ConnectorSection extends LitElement {
   }
 
   private _renderConvergerOptions() {
+    const f = this._converger;
+    const set = (patch: Partial<ConvergerForm>) => {
+      this._converger = { ...this._converger, ...patch };
+    };
+    const value = (e: Event) => (e.target as HTMLInputElement).value;
     return html`
       <div class="field-grid">
         <label for="cv-base">Converger</label>
         <input id="cv-base" type="text" placeholder="http://localhost:4000"
-          .value=${this._converger.base}
-          @input=${(e: Event) => {
-            this._converger = { ...this._converger, base: (e.target as HTMLInputElement).value };
-          }} />
-        <label for="cv-user">User ID</label>
-        <input id="cv-user" type="text" placeholder="(optional)"
-          .value=${this._converger.userId}
-          @input=${(e: Event) => {
-            this._converger = { ...this._converger, userId: (e.target as HTMLInputElement).value };
-          }} />
-        <label for="cv-conv">Conversation</label>
-        <input id="cv-conv" type="text" placeholder="(new)"
-          .value=${this._converger.conversationId}
-          @input=${(e: Event) => {
-            this._converger = { ...this._converger, conversationId: (e.target as HTMLInputElement).value };
-          }} />
+          .value=${f.base}
+          @input=${(e: Event) => set({ base: value(e) })} />
+        <label for="cv-credential">Credential</label>
+        <select id="cv-credential" class="kind" .value=${f.credential}
+          @change=${(e: Event) => set({ credential: value(e) as ConvergerCredentialMode })}>
+          <option value="dev-server">Dev server</option>
+          <option value="token">Token</option>
+          <option value="publishable-key">Publishable key</option>
+        </select>
+        ${f.credential === "dev-server"
+          ? html`
+              <label for="cv-user">User ID</label>
+              <input id="cv-user" type="text" placeholder="(optional)"
+                .value=${f.userId}
+                @input=${(e: Event) => set({ userId: value(e) })} />`
+          : nothing}
+        ${f.credential === "token"
+          ? html`
+              <label for="cv-token">Token</label>
+              <input id="cv-token" type="password" placeholder="Converger token (required)"
+                .value=${f.token}
+                @input=${(e: Event) => set({ token: value(e) })} />`
+          : nothing}
+        ${f.credential === "publishable-key"
+          ? html`
+              <label for="cv-pk">Key</label>
+              <input id="cv-pk" type="text" placeholder="cvg_pk_... (required)"
+                .value=${f.publishableKey}
+                @input=${(e: Event) => set({ publishableKey: value(e) })} />`
+          : html`
+              <label for="cv-conv">Conversation</label>
+              <input id="cv-conv" type="text" placeholder="(new)"
+                .value=${f.conversationId}
+                @input=${(e: Event) => set({ conversationId: value(e) })} />`}
       </div>
-      <div class="feedback ok">
-        Tokens come from this dev server's <code>/api/converger-token</code>: start
-        <code>pnpm dev</code> with <code>CONVERGER_CHANNEL_SECRET</code> (and
-        <code>CONVERGER_URL</code>), and Converger with
-        <code>CORS_ORIGINS=http://localhost:5173</code>.
-      </div>
+      <div class="feedback ok">${this._renderConvergerHint()}</div>
     `;
+  }
+
+  /** What the selected credential mode needs, from this dev server and from Converger. */
+  private _renderConvergerHint() {
+    const cors = html`Start Converger with <code>CORS_ORIGINS=${location.origin}</code>.`;
+    switch (this._converger.credential) {
+      case "token":
+        return html`
+          Paste a Converger token, e.g. from the channel page's <b>Test token</b>
+          action. It is used as is: once it expires, paste a new one and connect
+          again. ${cors}
+        `;
+      case "publishable-key":
+        return html`
+          Paste the channel's publishable key (<code>cvg_pk_...</code>). The browser
+          exchanges it at <code>/api/v1/converger/tokens/publishable</code> and keeps
+          the conversation in localStorage per key, so a reload continues it. Add
+          <code>${location.origin}</code> to the key's allowed origins, which also
+          cover CORS (no <code>CORS_ORIGINS</code> change needed). Needs a Converger
+          with publishable keys (AimTune/converger#195).
+        `;
+      default:
+        return html`
+          Tokens come from this dev server's <code>/api/converger-token</code>: start
+          <code>pnpm dev</code> with <code>CONVERGER_CHANNEL_SECRET</code> (and
+          <code>CONVERGER_URL</code>). ${cors}
+        `;
+    }
   }
 
   private _renderCapabilities() {

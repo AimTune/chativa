@@ -22,6 +22,16 @@ import type {
   MekikConnectorOptions,
   MekikCredential,
 } from "@chativa/connector-mekik";
+import { ConvergerApiError } from "./errors";
+import type { ConvergerCredential } from "./PublishableKeyAuth";
+
+export { ConvergerApiError } from "./errors";
+export { PublishableKeyAuth } from "./PublishableKeyAuth";
+export type {
+  ConvergerCredential,
+  PublishableKeyAuthOptions,
+  PublishableKeySession,
+} from "./PublishableKeyAuth";
 
 // Everything an app needs comes from this one package: the auth adapters and
 // the base class are connector-mekik's, re-exported unchanged.
@@ -81,21 +91,6 @@ export interface ConvergerConnectorOptions extends MekikConnectorOptions {
   feedbackReactions?: { like?: string; dislike?: string };
 }
 
-/** A non-2xx answer from the Converger client API. */
-export class ConvergerApiError extends Error {
-  /** HTTP status (0 for an `error` frame on the socket). */
-  readonly status: number;
-  /** Converger's stable error code, e.g. `conversation_closed`. */
-  readonly code: string;
-
-  constructor(status: number, code: string, message: string) {
-    super(message);
-    this.name = "ConvergerApiError";
-    this.status = status;
-    this.code = code;
-  }
-}
-
 interface PendingSend {
   payload: string;
   conversationId: string | undefined;
@@ -151,6 +146,11 @@ function tokenOf(credential: MekikCredential): string | undefined {
   if (credential.token) return credential.token;
   const query = credential.query ?? {};
   return query.token ?? Object.values(query)[0];
+}
+
+/** A provider whose credential names its conversation ({@link PublishableKeyAuth}). */
+function isConversationBound(provider: MekikAuthProvider | undefined): boolean {
+  return (provider as { conversationBound?: unknown } | undefined)?.conversationBound === true;
 }
 
 /** The chativa message type for an attachment's content type. */
@@ -285,6 +285,14 @@ export class ConvergerConnector extends MekikConnector {
       // An agent console has nothing to open until a conversation is chosen.
       this.connectHandler?.();
       return;
+    }
+    if (!this.#channelScoped && isConversationBound(this.#auth)) {
+      // A conversation-bound credential decides the conversation: learn it
+      // before the history prefetch, which needs to know whose page to fetch.
+      const credential = await this.#auth!.authenticate({ url: this.options.url, attempt: 0, previousError: null });
+      const token = tokenOf(credential);
+      if (token) this.#baseToken = token;
+      this.#adoptConversation(credential);
     }
     await this.#prefetchNewestPage();
     this.#historyFloor = this.watermark;
@@ -926,6 +934,8 @@ export class ConvergerConnector extends MekikConnector {
     const credential = this.#auth ? await this.#auth.authenticate(ctx) : {};
     const token = tokenOf(credential);
     if (token) this.#baseToken = token;
+    // Already bound: the conversation is the credential's, not ours to choose.
+    if (this.#adoptConversation(credential)) return credential;
     const conversationId = this.options.conversationId;
     if (!conversationId) return credential;
     let bound = this.#freshBoundToken(conversationId);
@@ -936,6 +946,25 @@ export class ConvergerConnector extends MekikConnector {
       return { query: { ...credential.query, [key]: bound } };
     }
     return { token: bound };
+  }
+
+  /**
+   * Follow a credential that names its conversation (and user). A different
+   * conversation than the one this connector was on — the old one could not be
+   * resumed — starts from scratch: no watermark, no prefetched page. Returns
+   * whether the credential named one.
+   */
+  #adoptConversation(credential: ConvergerCredential): boolean {
+    const { conversationId, userId } = credential;
+    if (typeof userId === "string" && userId) this.options.userId = userId;
+    if (typeof conversationId !== "string" || !conversationId) return false;
+    if (conversationId !== this.options.conversationId) {
+      this.options.conversationId = conversationId;
+      this.watermark = 0;
+      this.#historyFloor = 0;
+      this.#firstPage = null;
+    }
+    return true;
   }
 
   async #onReject(error: MekikAuthError, ctx: MekikAuthContext): Promise<MekikAuthDecision> {
