@@ -34,6 +34,15 @@ describe("DefaultTextMessage", () => {
     expect($(el, ".avatar svg")).not.toBeNull();
   });
 
+  it("opens links in bot markdown in a new tab", async () => {
+    const el = await render({ messageData: { text: "Read [here](https://example.com)" } });
+    const link = $<HTMLAnchorElement>(el, ".bubble a")!;
+
+    expect(link.getAttribute("href")).toBe("https://example.com");
+    expect(link.getAttribute("target")).toBe("_blank");
+    expect(link.getAttribute("rel")).toBe("noopener noreferrer");
+  });
+
   it("renders user text verbatim (no markdown) unless flagged with _markdown", async () => {
     const plain = await render({ sender: "user", messageData: { text: "**raw**" } });
     expect($(plain, ".message")!.classList.contains("user")).toBe(true);
