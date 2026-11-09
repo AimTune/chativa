@@ -1,5 +1,5 @@
 ---
-sidebar_position: 9
+sidebar_position: 10
 title: Rich frames (GenUI / HITL)
 description: The shared JSON frame vocabulary — tool calls, Generative UI and human-in-the-loop chips work the same over WebSocket, SignalR, SSE, HTTP and Mekik.
 ---

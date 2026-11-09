@@ -44,6 +44,7 @@ Each connector's constructor `Options` interface:
 | [connectors/sse.schema.json](./connectors/sse.schema.json) | `connector-sse/src/SseConnector.ts` → `SseConnectorOptions` |
 | [connectors/http.schema.json](./connectors/http.schema.json) | `connector-http/src/HttpConnector.ts` → `HttpConnectorOptions` |
 | [connectors/mekik.schema.json](./connectors/mekik.schema.json) | `connector-mekik/src/index.ts` → `MekikConnectorOptions` |
+| [connectors/converger.schema.json](./connectors/converger.schema.json) | `connector-converger/src/index.ts` → `ConvergerConnectorOptions` (every `MekikConnectorOptions` field plus the Converger-only ones) |
 
 ## How to use a schema in your editor
 

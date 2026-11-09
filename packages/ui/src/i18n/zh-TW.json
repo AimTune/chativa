@@ -57,6 +57,8 @@
     "statusSending": "傳送中",
     "statusSent": "已傳送",
     "statusRead": "已讀",
+    "statusDelivered": "已送達",
+    "statusFailed": "傳送失敗",
     "actionsLabel": "訊息操作",
     "copy": "複製",
     "copyCode": "複製程式碼",

@@ -294,11 +294,13 @@ interface PersistedSession {
  * DirectLine-style resume, multi-tab and multi-device included.
  */
 export class MekikConnector implements IConnector {
-  readonly name = "mekik";
+  readonly name: string = "mekik";
   readonly addSentToHistory = true;
 
-  private ws: WebSocket | null = null;
-  private options: Required<
+  // `protected` (not `private`) where @chativa/connector-converger extends the
+  // class: it reuses the socket, options and watermark instead of copying them.
+  protected ws: WebSocket | null = null;
+  protected options: Required<
     Omit<
       MekikConnectorOptions,
       | "userId"
@@ -368,8 +370,8 @@ export class MekikConnector implements IConnector {
   /** The `auth` adapter, or one desugared from the legacy `token` option. */
   private readonly authProvider: MekikAuthProvider | undefined;
 
-  private messageHandler: MessageHandler | null = null;
-  private connectHandler: ConnectHandler | null = null;
+  protected messageHandler: MessageHandler | null = null;
+  protected connectHandler: ConnectHandler | null = null;
   private disconnectHandler: DisconnectHandler | null = null;
   private typingHandler: TypingHandler | null = null;
   private toolCallHandler: ToolCallHandler | null = null;
@@ -398,7 +400,7 @@ export class MekikConnector implements IConnector {
   /** Set by disconnect(); suppresses auto-reconnect without mutating options. */
   private closedByUser = false;
   private queue: Array<{ payload: string; resolve: () => void }> = [];
-  private watermark = 0;
+  protected watermark = 0;
   /** The app-configured userId (not a server-minted one) — scopes the storage key. */
   private readonly configuredUserId?: string;
   /**
@@ -845,7 +847,30 @@ export class MekikConnector implements IConnector {
       await this.sendOrQueue(JSON.stringify(resume.frame));
       return;
     }
-    await this.sendOrQueue(JSON.stringify(message));
+    await this.sendOrQueue(JSON.stringify(this.encodeTurn(message)));
+  }
+
+  /**
+   * Extension hook: the wire shape of a normal user turn. Called synchronously
+   * by {@link sendMessage}, never for a `resume`. mekik/1 sends the
+   * OutgoingMessage as-is; a subclass may add fields (Converger adds `clientId`).
+   */
+  protected encodeTurn(message: OutgoingMessage): unknown {
+    return message;
+  }
+
+  /**
+   * Extension hook: claim a parsed frame before the mekik/1 routing sees it.
+   * Runs after the watermark update. Return true to consume the frame; a
+   * subclass may also mutate it and return false to let routing continue.
+   */
+  protected interceptFrame(_frame: Record<string, unknown>): boolean {
+    return false;
+  }
+
+  /** Extension hook: extra fields for the `hello` handshake (mekik/1 sends none). */
+  protected helloExtras(): Record<string, unknown> {
+    return {};
   }
 
   /**
@@ -1014,6 +1039,8 @@ export class MekikConnector implements IConnector {
       this.watermark = data.seq;
       if (this.options.resumeConversation) this.saveSession();
     }
+
+    if (this.interceptFrame(data)) return;
 
     // Error frame: { type: "error", data: { code, message } }. Only an auth
     // rejection (code "unauthorized", followed by a 4401 close) tears the
@@ -1202,7 +1229,7 @@ export class MekikConnector implements IConnector {
    * keeps the bubble on "sending" instead of stamping "sent" for a message
    * the server never received.
    */
-  private sendOrQueue(payload: string): Promise<void> {
+  protected sendOrQueue(payload: string): Promise<void> {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(payload);
       return Promise.resolve();
@@ -1308,6 +1335,7 @@ export class MekikConnector implements IConnector {
     ws.send(
       JSON.stringify({
         type: "hello",
+        ...this.helloExtras(),
         userId: this.options.userId,
         conversationId: this.options.conversationId,
         watermark: this.watermark,

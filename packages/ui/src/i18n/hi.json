@@ -57,6 +57,8 @@
     "statusSending": "भेजा जा रहा है",
     "statusSent": "भेजा गया",
     "statusRead": "पढ़ा गया",
+    "statusDelivered": "पहुँच गया",
+    "statusFailed": "नहीं भेजा गया",
     "actionsLabel": "संदेश क्रियाएँ",
     "copy": "कॉपी करें",
     "copyCode": "कोड कॉपी करें",

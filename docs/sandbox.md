@@ -12,7 +12,7 @@ The sandbox is a single Vite app at `apps/sandbox/`. The customisation panel doc
 | Tab | What it controls | Source |
 |---|---|---|
 | Appearance | Theme presets, colors, position, size, layout, window mode | `apps/sandbox/src/sandbox/sections/AppearanceSection.ts` |
-| Connector | Active connector + status, kind picker (Dummy, DirectLine, mekik), per-kind options, capability matrix | `ConnectorSection.ts` |
+| Connector | Active connector + status, kind picker (Dummy, DirectLine, mekik, [mekik behind Converger, Converger hub](#converger)), per-kind options, capability matrix | `ConnectorSection.ts` |
 | Rules | Add / edit / reorder / remove `DummyConnector` [scripted rules](./connectors/dummy.md#scripted-rules); **Apply** rebuilds the dummy | `RulesSection.ts` |
 | Features | `enableSearch`, `enableFileUpload`, `enableMultiConversation`, `showMessageStatus`, `allowFullscreen`, `hideButtonOnOpen`, message actions (theme switches + simulated server permissions), language | `FeaturesSection.ts` |
 | Messages | Inject demo messages of every built-in type | `MessagesSection.ts` |
@@ -29,6 +29,35 @@ There are also two extra entry points:
 
 - `theme-editor.html` — visual color/layout editor that exports JSON or `ThemeBuilder` code.
 - `agent-panel.html` — multi-conversation demo against `DummyConnector`.
+
+## Converger
+
+Two Connector-tab presets talk to a [Converger](https://github.com/AimTune/converger) hub:
+
+| Preset | Connector | What it shows |
+|---|---|---|
+| mekik behind Converger | `MekikConnector`, unchanged ([mekik → Behind Converger](./connectors/mekik.md#behind-converger)) | The mekik/1 profile: text, chips, rich messages, tool calls, GenUI, resume. |
+| Converger hub | `ConvergerConnector` ([Converger](./connectors/converger.md)) | The same plus acks, delivered / read ticks, uploads, history paging and reactions. |
+
+Both have a **Credential** selector:
+
+| Credential | Token from | Notes |
+|---|---|---|
+| Dev server (default) | `TokenAuth` with the sandbox dev server's **token endpoint**, `POST /api/converger-token` (`convergerTokenPlugin` in `apps/sandbox/vite.config.ts`) | The endpoint holds the channel secret and calls Converger's `POST /api/v1/converger/tokens/generate`, so the secret never reaches the browser — the same split your own backend should make. Only under `pnpm dev`. Sets `resumeConversation: true`. |
+| Token | A token you paste, e.g. from the Converger channel page's **Test token** action ([AimTune/converger#194](https://github.com/AimTune/converger/issues/194)) | Used as a static `TokenAuth`: once it expires, paste a new one and connect again. |
+| Publishable key | [`PublishableKeyAuth`](./connectors/converger.md#publishable-keys) with a pasted `cvg_pk_...` key | Exchanged in the browser; the conversation is kept in localStorage per key, so a reload continues it. The sandbox origin must be in the key's allowed origins, which also cover CORS (no `CORS_ORIGINS` change needed). Needs a Converger with publishable keys ([AimTune/converger#195](https://github.com/AimTune/converger/issues/195)). |
+
+All set `routeInUrl: true`. With *Dev server* or *Token*, leave *Conversation* empty to let the server start one; a publishable key's token is bound to its own conversation.
+
+```bash
+# Converger (its repo): allow the sandbox origin (Dev server and Token modes)
+CORS_ORIGINS=http://localhost:5173 mix phx.server
+
+# Chativa: the secret of a websocket channel of that Converger
+CONVERGER_URL=http://localhost:4000 CONVERGER_CHANNEL_SECRET=... pnpm dev
+```
+
+`agent-panel.html?converger=http://localhost:4000` runs the [agent panel](./multi-conversation.md) on `ConvergerConnector` with a channel-scoped token (`scope: "channel"`): the channel's conversations, switching, new and close. The token endpoint exists only under `pnpm dev`; on the static build (GitHub Pages) use *Token* or *Publishable key*.
 
 ## Theme presets
 

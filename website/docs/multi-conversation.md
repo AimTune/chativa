@@ -42,7 +42,7 @@ interface IConnector {
 `MultiConversationEngine` (in `application/`) wraps a single `ChatEngine` and is responsible for:
 
 - Calling `listConversations()` to populate `conversationStore`.
-- Routing `switchConversation(id)` calls and swapping the active `messageStore`.
+- Routing `switchConversation(id)` calls and swapping the active `messageStore` — including for the conversation it auto-activates after `listConversations()`, so a connector that keeps one live session per conversation (such as [Converger](./connectors/converger.md#agent-panel)) opens it there.
 - Subscribing to `onConversationUpdate` for unread counts / status changes.
 - Lazy-loading per-conversation message history.
 

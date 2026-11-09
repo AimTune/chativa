@@ -57,6 +57,8 @@
     "statusSending": "Mengirim",
     "statusSent": "Terkirim",
     "statusRead": "Dibaca",
+    "statusDelivered": "Terkirim ke penerima",
+    "statusFailed": "Tidak terkirim",
     "actionsLabel": "Tindakan pesan",
     "copy": "Salin",
     "copyCode": "Salin kode",

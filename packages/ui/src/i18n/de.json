@@ -57,6 +57,8 @@
     "statusSending": "Wird gesendet",
     "statusSent": "Gesendet",
     "statusRead": "Gelesen",
+    "statusDelivered": "Zugestellt",
+    "statusFailed": "Nicht gesendet",
     "actionsLabel": "Nachrichtenaktionen",
     "copy": "Kopieren",
     "copyCode": "Code kopieren",

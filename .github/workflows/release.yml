@@ -58,6 +58,9 @@ jobs:
       - name: Publish @chativa/connector-mekik
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-mekik
+      - name: Publish @chativa/connector-converger
+        run: pnpm publish --access public --no-git-checks
+        working-directory: packages/connector-converger
       - name: Publish @chativa/connector-http
         run: pnpm publish --access public --no-git-checks
         working-directory: packages/connector-http

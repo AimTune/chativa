@@ -1,5 +1,5 @@
 ---
-sidebar_position: 10
+sidebar_position: 11
 title: Custom
 description: Write your own connector — the IConnector contract, optional capability hooks, and the publishing checklist.
 ---
@@ -55,7 +55,7 @@ Each optional method automatically advertises a feature to the widget:
 | `onProgress(cb)` | Progress text next to the typing dots ("Searching orders…"). |
 | `sendFile(file)` | File-upload button in the chat input. |
 | `loadHistory(cursor)` | Scroll-to-top pagination. |
-| `onMessageStatus(cb)` | Sending / sent / read tick indicators. |
+| `onMessageStatus(cb)` | Tick indicators: `sending`, `sent`, `delivered` (muted double tick), `read`, `failed` (red mark). Statuses should only move forward. |
 | `sendFeedback(id, "like" \| "dislike")` | Like/dislike on bot messages. |
 | `regenerate(messageId)` | Regenerate button on the latest bot reply. |
 | `editMessage(messageId, message)` | Edit button on the latest user message. |
@@ -73,6 +73,7 @@ import type {
   HistoryResult,
   SurveyPayload,
   GenUIChunkHandler,
+  MessageStatus,
 } from "@chativa/core";
 
 export class MyConnector implements IConnector {
@@ -92,7 +93,7 @@ export class MyConnector implements IConnector {
     return res.json() as Promise<HistoryResult>;
   }
 
-  onMessageStatus(cb: (id: string, status: "sent" | "read") => void): void {
+  onMessageStatus(cb: (id: string, status: MessageStatus) => void): void {
     this.statusCallback = cb;
   }
 

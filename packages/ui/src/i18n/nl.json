@@ -57,6 +57,8 @@
     "statusSending": "Wordt verzonden",
     "statusSent": "Verzonden",
     "statusRead": "Gelezen",
+    "statusDelivered": "Afgeleverd",
+    "statusFailed": "Niet verzonden",
     "actionsLabel": "Berichtacties",
     "copy": "Kopiëren",
     "copyCode": "Code kopiëren",

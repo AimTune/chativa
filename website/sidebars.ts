@@ -27,6 +27,7 @@ const sidebars: SidebarsConfig = {
         "connectors/signalr",
         "connectors/directline",
         "connectors/mekik",
+        "connectors/converger",
         "connectors/sse",
         "connectors/http",
         "connectors/frames",

@@ -57,6 +57,8 @@
     "statusSending": "Đang gửi",
     "statusSent": "Đã gửi",
     "statusRead": "Đã xem",
+    "statusDelivered": "Đã chuyển",
+    "statusFailed": "Chưa gửi được",
     "actionsLabel": "Thao tác tin nhắn",
     "copy": "Sao chép",
     "copyCode": "Sao chép mã",

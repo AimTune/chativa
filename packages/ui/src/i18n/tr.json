@@ -57,6 +57,8 @@
     "statusSending": "Gönderiliyor",
     "statusSent": "Gönderildi",
     "statusRead": "Okundu",
+    "statusDelivered": "İletildi",
+    "statusFailed": "Gönderilemedi",
     "actionsLabel": "Mesaj işlemleri",
     "copy": "Kopyala",
     "copyCode": "Kodu kopyala",

@@ -230,7 +230,20 @@ export class ChatEngine {
       });
     }
 
-    await this.connector.sendMessage(transformed);
+    try {
+      await this.connector.sendMessage(transformed);
+    } catch (err) {
+      // A rejected send must not leave the bubble spinning on "sending".
+      if (this.connector.addSentToHistory !== false) {
+        const current = messageStore
+          .getState()
+          .messages.find((m) => m.id === transformed.id);
+        if (current?.status === "sending") {
+          messageStore.getState().updateById(transformed.id, { status: "failed" });
+        }
+      }
+      throw err;
+    }
     EventBus.emit("message_sent", transformed);
 
     if (this.connector.addSentToHistory !== false) {
