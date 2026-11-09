@@ -15,6 +15,13 @@ const STREAM_CARET_HTML = '<span class="stream-caret" aria-hidden="true"></span>
 
 const CODE_COPIED_MS = 1500;
 
+function linksInNewTabs(html: string): string {
+  return html.replace(
+    /<a\b(?![^>]*\btarget=)([^>]*)>/gi,
+    '<a$1 target="_blank" rel="noopener noreferrer">',
+  );
+}
+
 /** Wrap every `<pre>` block in a container with a copy button (see `_onBubbleClick`). */
 function withCodeCopyButtons(parsed: string): string {
   if (!parsed.includes("<pre>")) return parsed;
@@ -426,10 +433,10 @@ export class DefaultTextMessage extends LitElement {
     } else {
       // Parse with a private-use sentinel appended so the caret lands inline,
       // right after the last character, instead of after the whole block.
-      const parsed = marked.parse(
+      const parsed = linksInNewTabs(marked.parse(
         isStreaming ? raw + STREAM_CARET_TOKEN : raw,
         { async: false }
-      ) as string;
+      ) as string);
       // Code blocks get a copy button once the text has settled — a block
       // still streaming in would copy half its content.
       const codeCopy =
