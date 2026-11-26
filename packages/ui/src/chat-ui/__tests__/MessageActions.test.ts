@@ -117,6 +117,10 @@ describe("clipboard utils", () => {
     expect(markdownToPlainText("**Hello** [world](https://x.y)\n\n- one\n- `two`")).toBe("Hello world\n\none\ntwo");
   });
 
+  it("keeps numeric asterisks when copying Markdown as plain text", () => {
+    expect(markdownToPlainText("- **8x2*6 / 8x4*4**")).toBe("8x2*6 / 8x4*4");
+  });
+
   it("copyText uses the Clipboard API", async () => {
     await expect(copyText("abc")).resolves.toBe(true);
     expect(writeText).toHaveBeenCalledWith("abc");

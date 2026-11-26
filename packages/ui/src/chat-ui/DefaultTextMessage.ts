@@ -1,11 +1,11 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { marked } from "marked";
 import { t, escapeHtml, EventBus } from "@chativa/core";
 import i18next from "../i18n/i18n";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageStatus } from "@chativa/core";
 import { copyText } from "../utils/clipboard";
+import { renderMarkdown } from "../utils/markdown";
 import type { LinkMetadataFetcher } from "./LinkPreviewCard";
 import "./LinkPreviewCard";
 
@@ -447,10 +447,9 @@ export class DefaultTextMessage extends LitElement {
     } else {
       // Parse with a private-use sentinel appended so the caret lands inline,
       // right after the last character, instead of after the whole block.
-      const parsed = linksInNewTabs(marked.parse(
+      const parsed = linksInNewTabs(renderMarkdown(
         isStreaming ? raw + STREAM_CARET_TOKEN : raw,
-        { async: false }
-      ) as string);
+      ));
       // Code blocks get a copy button once the text has settled — a block
       // still streaming in would copy half its content.
       const codeCopy =

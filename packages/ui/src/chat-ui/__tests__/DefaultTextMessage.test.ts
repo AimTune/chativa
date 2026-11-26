@@ -34,6 +34,21 @@ describe("DefaultTextMessage", () => {
     expect($(el, ".avatar svg")).not.toBeNull();
   });
 
+  it("preserves numeric asterisks in markdown-formatted technical values", async () => {
+    const el = await render({
+      messageData: {
+        text: "- **8x2 / 8x2*6 / 8x2/4 / 8x4 / 8x4*4:** chassis",
+      },
+    });
+    const bubble = $(el, ".bubble")!;
+
+    expect(bubble.textContent).toContain("8x2*6");
+    expect(bubble.textContent).toContain("8x4*4");
+    expect(bubble.textContent).not.toContain("8x26");
+    expect(bubble.textContent).not.toContain("8x44");
+    expect($(el, ".bubble em")).toBeNull();
+  });
+
   it("opens links in bot markdown in a new tab", async () => {
     const el = await render({ messageData: { text: "Read [here](https://example.com)" } });
     const link = $<HTMLAnchorElement>(el, ".bubble a")!;
