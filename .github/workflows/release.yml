@@ -40,57 +40,27 @@ jobs:
       - name: Build packages
         run: pnpm build
 
-      - name: Publish @chativa/core
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/core
-      - name: Publish @chativa/connector-dummy
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-dummy
-      - name: Publish @chativa/connector-websocket
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-websocket
-      - name: Publish @chativa/connector-signalr
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-signalr
-      - name: Publish @chativa/connector-directline
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-directline
-      - name: Publish @chativa/connector-mekik
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-mekik
-      - name: Publish @chativa/connector-converger
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-converger
-      - name: Publish @chativa/connector-http
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-http
-      - name: Publish @chativa/connector-sse
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/connector-sse
-      - name: Publish @chativa/genui
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/genui
-      - name: Publish @chativa/ui
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/ui
-      - name: Publish @chativa/react
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/react
-      - name: Publish @chativa/rn-webview
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/rn-webview
-      - name: Publish @chativa/vue
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/vue
-      - name: Publish @chativa/vue2
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/vue2
-      - name: Publish @chativa/angular
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/angular
-      - name: Publish @chativa/svelte
-        run: pnpm publish --access public --no-git-checks
-        working-directory: packages/svelte
+      # Publish in dependency order. Versions already on npm are skipped, so a
+      # failed release can be re-run without tripping over the packages that
+      # went out the first time.
+      - name: Publish packages
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          for pkg in core \
+                     connector-dummy connector-websocket connector-signalr \
+                     connector-directline connector-mekik connector-converger \
+                     connector-http connector-sse \
+                     genui ui \
+                     react rn-webview vue vue2 angular svelte; do
+            name="@chativa/$pkg"
+            if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+              echo "$name@$VERSION already on npm, skipping"
+              continue
+            fi
+            (cd "packages/$pkg" && pnpm publish --access public --no-git-checks)
+          done
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
