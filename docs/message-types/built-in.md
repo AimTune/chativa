@@ -14,6 +14,8 @@ All registered automatically by importing `@chativa/ui`.
 | `video` | `VideoMessage` | `{ src, poster?, caption? }` |
 | `genui` | `GenUIMessage` | `{ streamId: string }` — see [genui/overview.md](../genui/overview.md). |
 
+Numeric asterisks such as `8x4*4` are rendered literally, including inside Markdown emphasis.
+
 `MessageAction` shape: `{ label: string, value?: string, url?: string }`. See [`schemas/messages/message-action.schema.json`](../../schemas/messages/message-action.schema.json).
 
 Bot-authored `buttons` and `quick-reply` bubbles show the bot avatar, honouring the theme's `avatar.bot` URL and `showBot` flag — see [theming.md → Avatars](../theming.md#avatars).

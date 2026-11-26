@@ -1,18 +1,18 @@
 import { LitElement, html, css, nothing } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { unsafeHTML } from "lit/directives/unsafe-html.js";
-import { marked } from "marked";
 import { MessageTypeRegistry, chatStore, type MessageSender, type MessageAction } from "@chativa/core";
+import { renderMarkdown } from "../utils/markdown";
 
 /** Strip the wrapping <p>…</p> that marked adds for inline content. */
 function renderInlineMarkdown(text: string): ReturnType<typeof unsafeHTML> {
-  const html = (marked.parse(text, { async: false }) as string).replace(/^<p>(.*)<\/p>\n?$/s, "$1");
+  const html = renderMarkdown(text).replace(/^<p>(.*)<\/p>\n?$/s, "$1");
   return unsafeHTML(html);
 }
 
 /** Render the message body with the same Markdown/HTML support as regular bot messages. */
 function renderBlockMarkdown(text: string): ReturnType<typeof unsafeHTML> {
-  const parsed = marked.parse(text, { async: false }) as string;
+  const parsed = renderMarkdown(text);
   const linksInNewTabs = parsed.replace(
     /<a\b(?![^>]*\btarget=)([^>]*)>/gi,
     '<a$1 target="_blank" rel="noopener noreferrer">',

@@ -1,4 +1,4 @@
-import { marked } from "marked";
+import { renderMarkdown } from "./markdown";
 
 /**
  * Write text to the clipboard. Uses the async Clipboard API when the page is
@@ -42,7 +42,7 @@ const LINE_BLOCKS = "li,tr";
  * Parsed in an inert DOMParser document so nothing in the markup loads or runs.
  */
 export function markdownToPlainText(markdown: string): string {
-  const html = marked.parse(markdown, { async: false }) as string;
+  const html = renderMarkdown(markdown);
   const doc = new DOMParser().parseFromString(html, "text/html");
   // Drop the formatting newlines marked puts between block tags (outside code)
   // — the block pass below adds exactly one line break per block instead.

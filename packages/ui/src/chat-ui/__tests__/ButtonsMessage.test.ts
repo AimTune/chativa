@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { marked } from "marked";
+import { renderMarkdown } from "../../utils/markdown";
 
 const { getStateMock, storeState } = vi.hoisted(() => {
   const storeState: { theme: { avatar?: { bot?: string; showBot?: boolean } } } = {
@@ -34,7 +34,7 @@ import { ButtonsMessage } from "../ButtonsMessage";
 
 /** Mirrors the renderInlineMarkdown helper in ButtonsMessage.ts */
 function renderInlineMarkdown(text: string): string {
-  return (marked.parse(text, { async: false }) as string).replace(/^<p>(.*)<\/p>\n?$/s, "$1");
+  return renderMarkdown(text).replace(/^<p>(.*)<\/p>\n?$/s, "$1");
 }
 
 describe("ButtonsMessage — label markdown rendering", () => {
@@ -44,6 +44,12 @@ describe("ButtonsMessage — label markdown rendering", () => {
 
   it("renders italic label", () => {
     expect(renderInlineMarkdown("_Return_")).toContain("<em>Return</em>");
+  });
+
+  it("preserves numeric asterisks inside bold labels", () => {
+    expect(renderInlineMarkdown("**8x2*6 / 8x4*4**")).toContain(
+      "<strong>8x2*6 / 8x4*4</strong>",
+    );
   });
 
   it("renders plain label unchanged", () => {
@@ -61,7 +67,7 @@ describe("ButtonsMessage — body markdown rendering", () => {
     const message = new ButtonsMessage();
     message.sender = "bot";
     message.messageData = {
-      text: "Read [here](https://example.com).\n\nAre you a customer?",
+      text: "Read [here](https://example.com).\n\nAre you a customer?\n\n**8x2*6 / 8x4*4**",
       buttons: [{ label: "Yes" }],
     };
 
@@ -73,6 +79,7 @@ describe("ButtonsMessage — body markdown rendering", () => {
       '<a href="https://example.com" target="_blank" rel="noopener noreferrer">here</a>',
     );
     expect(bodyHtml).toContain("</p>\n<p>Are you a customer?</p>");
+    expect(bodyHtml).toContain("<strong>8x2*6 / 8x4*4</strong>");
   });
 });
 
