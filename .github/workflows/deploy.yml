@@ -54,6 +54,29 @@ jobs:
           # Ensure GitHub Pages does not strip the _next-style underscore-prefixed directories.
           touch website/build/.nojekyll
 
+      - name: Verify og:image targets exist in build
+        run: |
+          node -e '
+          const fs=require("fs"),path=require("path");
+          const root="website/build";
+          const files=[];
+          (function walk(d){for(const e of fs.readdirSync(d,{withFileTypes:true})){const p=path.join(d,e.name);e.isDirectory()?walk(p):/\.html$/.test(p)&&files.push(p);}})(root);
+          const missing=[];
+          for(const f of files){
+            const s=fs.readFileSync(f,"utf8");
+            for(const tag of s.matchAll(/<meta\b[^>]*>/g)){
+              const t=tag[0];
+              if(!/og:image|twitter:image/.test(t))continue;
+              const c=t.match(/content=(?:"([^"]*)"|([^\s>]+))/);
+              if(!c)continue;
+              const rel=(c[1]||c[2]).replace(/^https?:\/\/[^/]+/,"").replace(/^\//,"");
+              if(!fs.existsSync(path.join(root,rel)))missing.push(f+" -> "+(c[1]||c[2]));
+            }
+          }
+          if(missing.length){console.error("MISSING og:image/twitter:image targets:\n"+missing.join("\n"));process.exit(1);}
+          console.log("OK: all og:image/twitter:image targets resolve in build/");
+          '
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website/build
